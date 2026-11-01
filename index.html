@@ -6,36 +6,58 @@
     <title>傳說對決 Arena of Valor Canvas Edition</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #070d18; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #050a12; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; }
         #game-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
         canvas { background: #0b131e; display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; background: #070d18; z-index: 100; pointer-events: auto; padding: 25px; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; background: radial-gradient(circle at center, rgba(30, 60, 100, 0.4) 0%, rgba(5, 10, 18, 0.95) 100%); z-index: 100; pointer-events: auto; padding: 15px; }
         .hidden { display: none !important; }
 
-        .lobby-header { display: flex; justify-content: space-between; align-items: center; width: 100%; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; padding: 12px 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        .logo-area { display: flex; align-items: center; gap: 12px; }
-        .logo-title { font-size: 1.5rem; font-weight: 900; color: #f3c654; letter-spacing: 2px; font-style: italic; text-shadow: 0 0 10px rgba(243,198,84,0.5); }
-        .sub-tag { background: #1b2a40; color: #00d2ff; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #00d2ff; }
-        .coin-box { background: #121d2f; border: 1px solid #f3c654; border-radius: 20px; padding: 6px 18px; color: #f3c654; font-weight: bold; font-size: 1.05rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
-
-        .lobby-body { display: flex; flex: 1; gap: 20px; overflow: hidden; width: 100%; }
+        /* 頂部資源與功能列 */
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 5px 10px; }
+        .profile-area { display: flex; align-items: center; gap: 10px; }
+        .avatar-box { width: 46px; height: 46px; border-radius: 50%; border: 2px solid #f3c654; background: #1a2a40; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; position: relative; box-shadow: 0 0 10px rgba(243,198,84,0.5); }
+        .live-tag { position: absolute; bottom: -5px; background: #e53935; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
         
-        .sidebar { width: 240px; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; display: flex; flex-direction: column; padding: 15px; gap: 10px; }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 8px; background: rgba(255,255,255,0.03); cursor: pointer; color: #aaa; font-weight: bold; transition: 0.2s; }
-        .nav-item.active { background: linear-gradient(90deg, #1d3557 0%, rgba(29,53,87,0) 100%); border-left: 4px solid #00d2ff; color: #fff; }
+        .resource-group { display: flex; gap: 15px; background: rgba(0, 0, 0, 0.4); padding: 4px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); font-size: 0.9rem; font-weight: bold; }
+        .res-item { display: flex; align-items: center; gap: 5px; }
+        .res-gold { color: #f3c654; }
+        .res-ruby { color: #ff5252; }
+        .res-coupon { color: #00e676; }
 
-        .modes-container { flex: 1; display: flex; gap: 20px; height: 100%; }
-        .mode-card { flex: 1; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
-        .mode-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #00d2ff, #f3c654); }
-        
-        .mode-tag { background: #1b2a40; color: #00d2ff; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; width: fit-content; margin-bottom: 15px; }
-        .mode-title { font-size: 2rem; font-weight: bold; color: #fff; margin-bottom: 10px; }
-        .mode-desc { color: #8a9bb8; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px; }
-        
-        .match-btn-1v1 { background: linear-gradient(180deg, #00a8ff 0%, #0055ff 100%); border: 2px solid #80d4ff; color: #fff; font-weight: bold; padding: 14px; font-size: 1.15rem; border-radius: 8px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(0,85,255,0.4); }
-        .match-btn-5v5 { background: linear-gradient(180deg, #ff3366 0%, #cc0044 100%); border: 2px solid #ff80aa; color: #fff; font-weight: bold; padding: 14px; font-size: 1.15rem; border-radius: 8px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(255,51,102,0.4); }
+        .system-icons { display: flex; gap: 12px; font-size: 1.1rem; color: #cfd8dc; }
+        .sys-btn { background: rgba(255,255,255,0.08); width: 34px; height: 34px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
 
+        /* 主畫面兩側面板 */
+        .main-content { flex: 1; display: flex; justify-content: space-between; padding: 10px 0; position: relative; }
+        .left-sidebar { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+        .side-icon-btn { width: 40px; height: 40px; background: rgba(15, 30, 50, 0.8); border: 1px solid #3a5375; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+
+        .right-events { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+        .event-banner { width: 140px; height: 50px; background: linear-gradient(135deg, #102a45 0%, #1e4975 100%); border: 1px solid #3b82f6; border-radius: 6px; padding: 6px; display: flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .event-banner-title { font-size: 0.75rem; font-weight: bold; color: #fff; }
+        .event-sub-btn { width: 140px; background: rgba(10, 22, 38, 0.85); border: 1px solid #2a4365; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: bold; color: #e2e8f0; cursor: pointer; }
+
+        /* 英雄展示中央藝術背景 */
+        .hero-heroine-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; opacity: 0.85; }
+        .heroine-avatar { font-size: 9rem; text-shadow: 0 0 40px rgba(0, 210, 255, 0.6); }
+
+        /* 底部經典功能導覽列與開始按鈕 */
+        .bottom-bar { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; padding: 0 10px 5px 10px; }
+        .bottom-nav { display: flex; gap: 12px; background: rgba(6, 14, 26, 0.85); padding: 8px 18px; border-radius: 12px; border: 1px solid #1e3a5f; }
+        .nav-btn { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: bold; color: #94a3b8; cursor: pointer; }
+        .nav-btn:hover, .nav-btn.active { color: #fff; }
+
+        .start-group { display: flex; align-items: flex-end; gap: 15px; }
+        .mode-select-btn { background: rgba(13, 27, 46, 0.9); border: 1px solid #00d2ff; border-radius: 50%; width: 55px; height: 55px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 0 15px rgba(0,210,255,0.3); }
+        .mode-select-btn .icon { font-size: 1.2rem; }
+        .mode-select-btn .label { font-size: 0.65rem; color: #00d2ff; font-weight: bold; margin-top: 2px; }
+
+        .start-match-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%); border: 2px solid #fef08a; width: 170px; height: 60px; border-radius: 30px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 0 25px rgba(245, 158, 11, 0.6); clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%); }
+        .start-match-btn .start-text { font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
+        .start-match-btn .sub-text { font-size: 0.75rem; color: #fef3c7; font-weight: bold; }
+
+        /* 遊戲內即時 HUD */
         .top-score-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 15px; background: rgba(8, 14, 22, 0.88); border: 1px solid #f3c654; border-radius: 20px; padding: 6px 20px; z-index: 20; font-size: 1rem; font-weight: bold; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .score-blue { color: #00d2ff; }
         .score-red { color: #ff4444; }
@@ -64,6 +86,7 @@
         #skill-2 { bottom: 90px; right: 100px; border-color: #00e676; }
         #skill-1 { bottom: 10px; right: 115px; border-color: #ff9100; }
 
+        /* 選角彈窗與勝負結算 */
         .hero-pick-modal { width: 90%; max-width: 850px; height: 80%; background: rgba(10, 16, 26, 0.97); border: 2px solid #f3c654; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; pointer-events: auto; }
         .pick-header { border-bottom: 1px solid #3d526e; padding-bottom: 12px; margin-bottom: 15px; text-align: center; color: #f3c654; font-size: 1.6rem; font-weight: bold; }
         .pick-body { display: flex; flex: 1; gap: 20px; overflow: hidden; }
@@ -73,7 +96,6 @@
         .preview-box { width: 220px; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; }
         .btn-confirm { background: linear-gradient(180deg, #f3c654 0%, #a87e20 100%); border: 2px solid #ffe89e; color: #111; font-weight: bold; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
 
-        /* 遊戲勝負結算視窗 */
         .result-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(5, 10, 18, 0.9); z-index: 200; }
         .result-box { background: rgba(13, 23, 38, 0.95); border: 2px solid #f3c654; border-radius: 15px; padding: 30px; text-align: center; width: 85%; max-width: 420px; box-shadow: 0 0 30px rgba(243, 198, 84, 0.4); }
         .result-title-win { font-size: 3rem; font-weight: 900; color: #ffd700; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); margin-bottom: 10px; }
@@ -90,7 +112,7 @@
         <span class="score-blue" id="score-blue">0</span>
         <span>VS</span>
         <span class="score-red" id="score-red">0</span>
-        <span class="gold-text" id="gold-display">🪙 500</span>
+        <span class="gold-text" id="gold-display">🪙 2,900</span>
         <span class="kda-text" id="kda-display">KDA: 0 / 0 / 0</span>
     </div>
 
@@ -103,41 +125,80 @@
         </div>
     </div>
 
-    <!-- 主選單大廳 -->
+    <!-- 主畫面大廳 (還原最新截圖介面) -->
     <div id="menu-screen" class="overlay">
-        <div class="lobby-header">
-            <div class="logo-area">
-                <span style="font-size: 1.8rem;">👑</span>
-                <span class="logo-title">ARENA OF VALOR</span>
-                <span class="sub-tag">傳說對決</span>
+        <!-- 頂部列 -->
+        <div class="top-navbar">
+            <div class="profile-area">
+                <div class="avatar-box">
+                    <span>🧙‍♀️</span>
+                    <span class="live-tag">LIVE</span>
+                </div>
             </div>
-            <div class="coin-box" id="header-gold">🪙 500</div>
+
+            <div class="resource-group">
+                <div class="res-item res-gold">🟡 2,900</div>
+                <div class="res-item res-ruby">🔻 49</div>
+                <div class="res-item res-coupon">💎 5,000 +</div>
+            </div>
+
+            <div class="system-icons">
+                <div class="sys-btn">📷</div>
+                <div class="sys-btn">🚩</div>
+                <div class="sys-btn">✉️</div>
+                <div class="sys-btn">⚙️</div>
+                <div class="sys-btn">☰</div>
+            </div>
         </div>
 
-        <div class="lobby-body">
-            <div class="sidebar">
-                <div class="nav-item active">⚔️ 對戰模式</div>
-                <div class="nav-item">🛡️ 英雄與皮膚</div>
-                <div class="nav-item">⚙️ 自訂英雄</div>
+        <!-- 主體內容區 -->
+        <div class="main-content">
+            <div class="left-sidebar">
+                <div class="side-icon-btn">👤</div>
+                <div class="side-icon-btn">📊</div>
+                <div class="side-icon-btn">👥</div>
             </div>
 
-            <div class="modes-container">
-                <div class="mode-card">
-                    <div>
-                        <div class="mode-tag">1v1 單人對決</div>
-                        <div class="mode-title">1v1 墨家機關道</div>
-                        <div class="mode-desc">斜向單一路線對決，含雙方主堡出兵、對線草叢與防禦塔。</div>
-                    </div>
-                    <button class="match-btn-1v1" id="btn-1v1">進入 1v1 配對</button>
-                </div>
+            <div class="hero-heroine-bg">
+                <div class="heroine-avatar">🧚‍♀️</div>
+            </div>
 
-                <div class="mode-card">
+            <div class="right-events">
+                <div class="event-banner">
+                    <span style="font-size:1.5rem;">🏆</span>
                     <div>
-                        <div class="mode-tag">5v5 經典競技</div>
-                        <div class="mode-title">5v5 傳說戰場</div>
-                        <div class="mode-desc">完整三路地圖（上路、中路、下路），含防禦塔、分路小兵與 AI 隊友對戰。</div>
+                        <div style="font-size:0.6rem; color:#f3c654;">AIC 06/16-07/10</div>
+                        <div class="event-banner-title">福利商店</div>
                     </div>
-                    <button class="match-btn-5v5" id="btn-5v5">進入 5v5 配對</button>
+                </div>
+                <div class="event-sub-btn"><span>🎉 活動大廳</span><span>🔴</span></div>
+                <div class="event-sub-btn"><span>⚔️ 對戰獎勵</span></div>
+                <div class="event-sub-btn"><span>📖 傳說聖典</span><span>🔴</span></div>
+            </div>
+        </div>
+
+        <!-- 底部導覽與開啟對戰入口 -->
+        <div class="bottom-bar">
+            <div class="bottom-nav">
+                <div class="nav-btn">🛒 商店</div>
+                <div class="nav-btn">🎒 背包</div>
+                <div class="nav-btn active">🛡️ 英雄</div>
+                <div class="nav-btn">⚔️ 備戰</div>
+                <div class="nav-btn">📊 生涯</div>
+            </div>
+
+            <div class="start-group">
+                <div class="mode-select-btn" id="btn-mode-1v1">
+                    <span class="icon">⚔️</span>
+                    <span class="label">1v1 單挑</span>
+                </div>
+                <div class="mode-select-btn" id="btn-mode-5v5">
+                    <span class="icon">🏰</span>
+                    <span class="label">5v5 經典</span>
+                </div>
+                <div class="start-match-btn" id="btn-start-match">
+                    <span class="start-text">START</span>
+                    <span class="sub-text">排位賽 / 對戰</span>
                 </div>
             </div>
         </div>
@@ -150,8 +211,8 @@
             <div class="pick-body">
                 <div class="hero-grid" id="hero-select-grid"></div>
                 <div class="preview-box">
-                    <h2 id="selected-hero-name" style="color:#f3c654; margin-bottom: 5px;">凡恩</h2>
-                    <p id="selected-hero-type" style="color:#aaa; margin-bottom: 25px;">射手 / 物理攻擊</p>
+                    <h2 id="selected-hero-name" style="color:#f3c654; margin-bottom: 5px;">克里希</h2>
+                    <p id="selected-hero-type" style="color:#aaa; margin-bottom: 25px;">法師 / 魔法攻擊</p>
                     <button class="btn-confirm" id="btn-confirm-hero">確定選擇</button>
                 </div>
             </div>
@@ -178,8 +239,8 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let MAP_SIZE = 4200;
 let isRunning = false;
-let gameMode = '5v5';
-let selectedHeroKey = 'valhein';
+let gameMode = '1v1';
+let selectedHeroKey = 'krixi';
 
 function resizeCanvas() {
     canvas.width = window.innerWidth;
@@ -189,14 +250,14 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 const HERO_DB = {
-    'valhein': { name: '凡恩', type: '射手 (AD)', atk: 85, range: 250, color1: '#c29b38', color2: '#ffe89e' },
     'krixi': { name: '克里希', type: '法師 (AP)', atk: 70, range: 220, color1: '#43a047', color2: '#a5d6a7' },
+    'valhein': { name: '凡恩', type: '射手 (AD)', atk: 85, range: 250, color1: '#c29b38', color2: '#ffe89e' },
     'zuka': { name: '祖卡', type: '戰士 (AD)', atk: 110, range: 140, color1: '#ff9800', color2: '#ffe082' }
 };
 
 const ITEMS_DB = [
-    { id: 'ad_1', name: '聖劍', cost: 300, atk: 30 },
     { id: 'ap_1', name: '魔法書', cost: 300, atk: 25 },
+    { id: 'ad_1', name: '聖劍', cost: 300, atk: 30 },
     { id: 'def_1', name: '守衛鎧甲', cost: 400, hp: 400 }
 ];
 
@@ -224,8 +285,9 @@ function bindClick(id, fn) {
     el.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); fn(e); }, { passive: false });
 }
 
-bindClick('btn-1v1', () => openHeroPick('1v1'));
-bindClick('btn-5v5', () => openHeroPick('5v5'));
+bindClick('btn-mode-1v1', () => openHeroPick('1v1'));
+bindClick('btn-mode-5v5', () => openHeroPick('5v5'));
+bindClick('btn-start-match', () => openHeroPick('1v1'));
 bindClick('btn-confirm-hero', () => confirmStartGame());
 bindClick('btn-back-lobby', () => backToLobby());
 
@@ -266,7 +328,6 @@ attackBtn.addEventListener('pointerdown', () => { showAttackRange = true; perfor
 attackBtn.addEventListener('pointerup', () => showAttackRange = false);
 attackBtn.addEventListener('pointercancel', () => showAttackRange = false);
 
-// 【全面優化拖曳技能與瞄準線顯示】
 document.querySelectorAll('.skill-btn').forEach(btn => {
     btn.addEventListener('pointerdown', e => {
         let skillId = parseInt(btn.dataset.skill);
@@ -349,11 +410,10 @@ class Hero extends Entity {
         super(x, y, team, 26);
         this.startX = x; this.startY = y;
         this.heroKey = heroKey; this.heroData = heroData; this.isPlayer = isPlayer;
-        this.gold = 500; this.exp = 0; this.level = 1;
+        this.gold = 2900; this.exp = 0; this.level = 1;
         this.atk = heroData.atk; this.range = heroData.range;
         this.speed = 4.5;
         this.maxHp = 2500; this.hp = 2500;
-        this.hasRedBuff = false; this.hasBlueBuff = false;
         this.minionIncomeTimer = 0;
     }
     update() {
@@ -371,16 +431,6 @@ class Hero extends Entity {
                 this.minionIncomeTimer = 0;
                 document.getElementById('header-gold').innerText = `🪙 ${Math.floor(this.gold)}`;
             }
-
-            entities.forEach(e => {
-                if (e instanceof Minion && e.alive && Math.hypot(e.x - this.x, e.y - this.y) < 400) {
-                    if (Math.random() < 0.005) {
-                        let bounty = Math.floor(Math.random() * (100 - 50 + 1)) + 50;
-                        this.gold += bounty;
-                        document.getElementById('header-gold').innerText = `🪙 ${Math.floor(this.gold)}`;
-                    }
-                }
-            });
 
             this.exp += 0.08;
             if (this.exp >= this.level * 100 && this.level < 15) {
@@ -419,15 +469,11 @@ class Hero extends Entity {
 
         let screenX = this.x - camera.x, screenY = this.y - camera.y;
 
-        if (this.hasRedBuff) { ctx.beginPath(); ctx.arc(screenX, screenY, this.radius + 6, 0, Math.PI * 2); ctx.strokeStyle = '#ff3300'; ctx.lineWidth = 3; ctx.stroke(); }
-        if (this.hasBlueBuff) { ctx.beginPath(); ctx.arc(screenX, screenY, this.radius + 10, 0, Math.PI * 2); ctx.strokeStyle = '#00aaff'; ctx.lineWidth = 3; ctx.stroke(); }
-
         ctx.save();
         ctx.translate(screenX, screenY);
         ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = this.heroData.color1; ctx.fill();
         ctx.lineWidth = 4; ctx.strokeStyle = this.heroData.color2; ctx.stroke();
-        ctx.lineWidth = 1.5; ctx.strokeStyle = '#000'; ctx.stroke();
         ctx.restore();
 
         if (this.isPlayer && showAttackRange) {
@@ -553,7 +599,6 @@ function castSkill(skillId, dirX, dirY) {
     if (!player || !player.alive) return;
     skillCooldowns[skillId] = skillMaxCDs[skillId];
 
-    // 平衡後的傷害數值
     if (player.heroKey === 'valhein') {
         if (skillId === 1) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 11, size: 18, color: '#ffd700', dmg: 140, team: player.team });
         else if (skillId === 2) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 9, size: 16, color: '#00e5ff', dmg: 110, team: player.team });
@@ -600,7 +645,7 @@ function updateTopScopeUI() {
     document.getElementById('kda-display').innerText = `KDA: ${kills} / ${deaths} / ${assists}`;
     document.getElementById('level-display').innerText = `Lv.${player ? player.level : 1}`;
     document.getElementById('gold-display').innerText = `🪙 ${Math.floor(player ? player.gold : 0)}`;
-    document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player ? player.gold : 500)}`;
+    document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player ? player.gold : 2900)}`;
 
     for (let id = 1; id <= 3; id++) {
         let reqLevel = id === 1 ? 1 : (id === 2 ? 2 : 4);
@@ -679,7 +724,7 @@ function confirmStartGame() {
     player = new Hero(400, MAP_SIZE - 400, 'blue', selectedHeroKey, true);
     entities.push(player);
 
-    entities.push(new Hero(MAP_SIZE - 400, 400, 'red', 'krixi', false));
+    entities.push(new Hero(MAP_SIZE - 400, 400, 'red', 'valhein', false));
 
     if (gameMode === '1v1') {
         entities.push(new NexusBase(400, MAP_SIZE - 400, 'blue'));
@@ -734,7 +779,6 @@ function gameLoop() {
     minionSpawnTimer += 1/60;
     if (minionSpawnTimer >= 15) { spawnMinionWave(); minionSpawnTimer = 0; }
 
-    // 【即時繪製瞄準方向線】
     if (activeSkillDrag && player && player.alive) {
         let pX = player.x - camera.x;
         let pY = player.y - camera.y;
