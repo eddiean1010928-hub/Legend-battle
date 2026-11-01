@@ -13,7 +13,6 @@
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; background: radial-gradient(circle at center, rgba(30, 60, 100, 0.4) 0%, rgba(5, 10, 18, 0.95) 100%); z-index: 100; pointer-events: auto; padding: 15px; }
         .hidden { display: none !important; }
 
-        /* 頂部資源與功能列 */
         .top-navbar { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 5px 10px; }
         .profile-area { display: flex; align-items: center; gap: 10px; }
         .avatar-box { width: 46px; height: 46px; border-radius: 50%; border: 2px solid #f3c654; background: #1a2a40; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; position: relative; box-shadow: 0 0 10px rgba(243,198,84,0.5); }
@@ -28,7 +27,6 @@
         .system-icons { display: flex; gap: 12px; font-size: 1.1rem; color: #cfd8dc; }
         .sys-btn { background: rgba(255,255,255,0.08); width: 34px; height: 34px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
 
-        /* 主畫面兩側面板 */
         .main-content { flex: 1; display: flex; justify-content: space-between; padding: 10px 0; position: relative; }
         .left-sidebar { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
         .side-icon-btn { width: 40px; height: 40px; background: rgba(15, 30, 50, 0.8); border: 1px solid #3a5375; border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
@@ -38,11 +36,9 @@
         .event-banner-title { font-size: 0.75rem; font-weight: bold; color: #fff; }
         .event-sub-btn { width: 140px; background: rgba(10, 22, 38, 0.85); border: 1px solid #2a4365; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: bold; color: #e2e8f0; cursor: pointer; }
 
-        /* 英雄展示中央藝術背景 */
         .hero-heroine-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; opacity: 0.85; }
         .heroine-avatar { font-size: 9rem; text-shadow: 0 0 40px rgba(0, 210, 255, 0.6); }
 
-        /* 底部經典功能導覽列與開始按鈕 */
         .bottom-bar { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; padding: 0 10px 5px 10px; }
         .bottom-nav { display: flex; gap: 12px; background: rgba(6, 14, 26, 0.85); padding: 8px 18px; border-radius: 12px; border: 1px solid #1e3a5f; }
         .nav-btn { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: bold; color: #94a3b8; cursor: pointer; }
@@ -57,7 +53,6 @@
         .start-match-btn .start-text { font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: 2px; font-style: italic; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
         .start-match-btn .sub-text { font-size: 0.75rem; color: #fef3c7; font-weight: bold; }
 
-        /* 遊戲內即時 HUD */
         .top-score-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 15px; background: rgba(8, 14, 22, 0.88); border: 1px solid #f3c654; border-radius: 20px; padding: 6px 20px; z-index: 20; font-size: 1rem; font-weight: bold; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .score-blue { color: #00d2ff; }
         .score-red { color: #ff4444; }
@@ -86,7 +81,6 @@
         #skill-2 { bottom: 90px; right: 100px; border-color: #00e676; }
         #skill-1 { bottom: 10px; right: 115px; border-color: #ff9100; }
 
-        /* 選角彈窗與勝負結算 */
         .hero-pick-modal { width: 90%; max-width: 850px; height: 80%; background: rgba(10, 16, 26, 0.97); border: 2px solid #f3c654; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; pointer-events: auto; }
         .pick-header { border-bottom: 1px solid #3d526e; padding-bottom: 12px; margin-bottom: 15px; text-align: center; color: #f3c654; font-size: 1.6rem; font-weight: bold; }
         .pick-body { display: flex; flex: 1; gap: 20px; overflow: hidden; }
@@ -120,14 +114,13 @@
     <div id="result-screen" class="result-overlay hidden">
         <div class="result-box">
             <div id="result-title" class="result-title-win">VICTORY</div>
-            <p id="result-subtitle" style="color: #aaa; margin-bottom: 20px;">成功摧毀敵方陣營！</p>
+            <p id="result-subtitle" style="color: #aaa; margin-bottom: 20px;">成功摧毀敵方主堡！</p>
             <button class="btn-confirm" id="btn-back-lobby">返回遊戲大廳</button>
         </div>
     </div>
 
-    <!-- 主畫面大廳 (還原最新截圖介面) -->
+    <!-- 主畫面大廳 -->
     <div id="menu-screen" class="overlay">
-        <!-- 頂部列 -->
         <div class="top-navbar">
             <div class="profile-area">
                 <div class="avatar-box">
@@ -151,7 +144,6 @@
             </div>
         </div>
 
-        <!-- 主體內容區 -->
         <div class="main-content">
             <div class="left-sidebar">
                 <div class="side-icon-btn">👤</div>
@@ -177,7 +169,6 @@
             </div>
         </div>
 
-        <!-- 底部導覽與開啟對戰入口 -->
         <div class="bottom-bar">
             <div class="bottom-nav">
                 <div class="nav-btn">🛒 商店</div>
@@ -387,14 +378,8 @@ class Entity {
                 document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player.gold)}`;
             }
             if (this instanceof Hero) {
-                if (sourceTeam === 'blue') { 
-                    blueKills++; 
-                    if (this === player) { deaths++; showGameResult(false); } 
-                    else { kills++; showGameResult(true); } 
-                } else { 
-                    redKills++; 
-                    if (this === player) { deaths++; showGameResult(false); } 
-                }
+                if (sourceTeam === 'blue') { blueKills++; kills++; } 
+                else { redKills++; }
                 updateTopScopeUI();
             } else if (this instanceof NexusBase) {
                 if (this.team === 'red') showGameResult(true);
@@ -466,7 +451,6 @@ class Hero extends Entity {
     }
     draw(ctx) {
         if (!this.alive) return;
-
         let screenX = this.x - camera.x, screenY = this.y - camera.y;
 
         ctx.save();
@@ -580,10 +564,9 @@ class Minion extends Entity {
 }
 
 function spawnMinionWave() {
-    for (let i = 0; i < 3; i++) {
-        entities.push(new Minion(400 + i*30, MAP_SIZE - 400 - i*30, 'blue'));
-        entities.push(new Minion(MAP_SIZE - 400 - i*30, 400 + i*30, 'red'));
-    }
+    // 兵線從藍方/紅方主堡附近生成並沿斜線推進
+    entities.push(new Minion(450, MAP_SIZE - 450, 'blue'));
+    entities.push(new Minion(MAP_SIZE - 450, 450, 'red'));
 }
 
 function performAttack() {
@@ -624,11 +607,11 @@ function showGameResult(win) {
     if (win) {
         resTitle.className = 'result-title-win';
         resTitle.innerText = 'VICTORY';
-        resSub.innerText = '恭喜你！成功戰勝敵方陣營！';
+        resSub.innerText = '恭喜你！成功摧毀敵方主堡！';
     } else {
         resTitle.className = 'result-title-lose';
         resTitle.innerText = 'DEFEAT';
-        resSub.innerText = '勝敗乃兵家常事，再接再厲！';
+        resSub.innerText = '主堡被摧毀了，再接再厲！';
     }
 }
 
@@ -726,16 +709,12 @@ function confirmStartGame() {
 
     entities.push(new Hero(MAP_SIZE - 400, 400, 'red', 'valhein', false));
 
-    if (gameMode === '1v1') {
-        entities.push(new NexusBase(400, MAP_SIZE - 400, 'blue'));
-        entities.push(new NexusBase(MAP_SIZE - 400, 400, 'red'));
+    // 1v1 單挑配置：設置雙方主堡與中間斜向防禦塔
+    entities.push(new NexusBase(400, MAP_SIZE - 400, 'blue'));
+    entities.push(new NexusBase(MAP_SIZE - 400, 400, 'red'));
 
-        entities.push(new Turret(1200, MAP_SIZE - 1200, 'blue'));
-        entities.push(new Turret(MAP_SIZE - 1200, 1200, 'red'));
-    } else {
-        entities.push(new Turret(1400, MAP_SIZE - 1400, 'blue'));
-        entities.push(new Turret(MAP_SIZE - 1400, 1400, 'red'));
-    }
+    entities.push(new Turret(1400, MAP_SIZE - 1400, 'blue'));
+    entities.push(new Turret(MAP_SIZE - 1400, 1400, 'red'));
 
     spawnMinionWave();
     isRunning = true;
@@ -760,19 +739,12 @@ function gameLoop() {
     ctx.fillStyle = '#0f1923';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (gameMode === '1v1') {
-        ctx.strokeStyle = '#1e2d3d'; ctx.lineWidth = 200;
-        ctx.beginPath();
-        ctx.moveTo(400 - camera.x, MAP_SIZE - 400 - camera.y);
-        ctx.lineTo(MAP_SIZE - 400 - camera.x, 400 - camera.y);
-        ctx.stroke();
-
-        ctx.fillStyle = 'rgba(46, 125, 50, 0.4)';
-        let midX = MAP_SIZE / 2 - camera.x;
-        let midY = MAP_SIZE / 2 - camera.y;
-        ctx.fillRect(midX - 180, midY - 60, 100, 40);
-        ctx.fillRect(midX + 80, midY + 20, 100, 40);
-    }
+    // 繪製斜向單一路線 (1v1 墨家機關道)
+    ctx.strokeStyle = '#1e2d3d'; ctx.lineWidth = 180;
+    ctx.beginPath();
+    ctx.moveTo(400 - camera.x, MAP_SIZE - 400 - camera.y);
+    ctx.lineTo(MAP_SIZE - 400 - camera.x, 400 - camera.y);
+    ctx.stroke();
 
     entities.forEach(e => { if (e.update) e.update(); e.draw(ctx); });
 
