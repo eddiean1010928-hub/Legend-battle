@@ -4,20 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>傳說對決 Arena of Valor Canvas Edition</title>
+    <!-- 引入 Google 官方 Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
         body, html { width: 100%; height: 100%; overflow: hidden; background: #050a12; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; }
         #game-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
-        canvas { background: #0b131e; display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        canvas { background: #0f1923; display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
         
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; background: radial-gradient(circle at center, rgba(30, 60, 100, 0.4) 0%, rgba(5, 10, 18, 0.95) 100%); z-index: 100; pointer-events: auto; padding: 15px; }
         .hidden { display: none !important; }
 
-        .top-navbar { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 5px 10px; }
+        .top-navbar { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 5px 10px; z-index: 10; }
         .profile-area { display: flex; align-items: center; gap: 10px; }
-        .avatar-box { width: 46px; height: 46px; border-radius: 50%; border: 2px solid #f3c654; background: #1a2a40; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; position: relative; box-shadow: 0 0 10px rgba(243,198,84,0.5); }
-        .live-tag { position: absolute; bottom: -5px; background: #e53935; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px; font-weight: bold; }
         
+        /* 玩家頭像與真實 Google 帳號顯示 */
+        .user-profile-box { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 20px; border: 1px solid #f3c654; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; }
+        .user-name { font-size: 0.85rem; font-weight: bold; color: #f3c654; }
+
         .resource-group { display: flex; gap: 15px; background: rgba(0, 0, 0, 0.4); padding: 4px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); font-size: 0.9rem; font-weight: bold; }
         .res-item { display: flex; align-items: center; gap: 5px; }
         .res-gold { color: #f3c654; }
@@ -73,16 +78,18 @@
         .controls-right { position: absolute; bottom: 15px; right: 20px; width: 210px; height: 210px; pointer-events: none; }
         .attack-btn { position: absolute; bottom: 5px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto; }
         
-        .skill-btn { position: absolute; width: 54px; height: 54px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; touch-action: none; }
+        .skill-btn { position: absolute; width: 62px; height: 62px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; touch-action: none; }
         .skill-btn.locked { border-color: #555; opacity: 0.5; filter: grayscale(1); }
+        .skill-desc-label { position: absolute; bottom: -18px; width: 70px; text-align: center; font-size: 0.65rem; color: #ffeb3b; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.9); pointer-events: none; }
         .skill-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.9rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
 
         #skill-3 { bottom: 130px; right: 20px; border-color: #e040fb; }
         #skill-2 { bottom: 90px; right: 100px; border-color: #00e676; }
         #skill-1 { bottom: 10px; right: 115px; border-color: #ff9100; }
 
-        .hero-pick-modal { width: 90%; max-width: 850px; height: 80%; background: rgba(10, 16, 26, 0.97); border: 2px solid #f3c654; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; pointer-events: auto; }
-        .pick-header { border-bottom: 1px solid #3d526e; padding-bottom: 12px; margin-bottom: 15px; text-align: center; color: #f3c654; font-size: 1.6rem; font-weight: bold; }
+        .hero-pick-modal { width: 90%; max-width: 850px; height: 80%; background: rgba(10, 16, 26, 0.97); border: 2px solid #f3c654; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; pointer-events: auto; position: relative; }
+        .pick-header { border-bottom: 1px solid #3d526e; padding-bottom: 12px; margin-bottom: 15px; text-align: center; color: #f3c654; font-size: 1.6rem; font-weight: bold; position: relative; }
+        .back-btn { position: absolute; left: 0; top: 0; background: #1b2a40; border: 1px solid #3d526e; color: #fff; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; font-weight: bold; }
         .pick-body { display: flex; flex: 1; gap: 20px; overflow: hidden; }
         .hero-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; overflow-y: auto; }
         .hero-card { background: rgba(255,255,255,0.05); border: 1px solid #334455; border-radius: 8px; padding: 12px 8px; text-align: center; cursor: pointer; }
@@ -123,9 +130,26 @@
     <div id="menu-screen" class="overlay">
         <div class="top-navbar">
             <div class="profile-area">
-                <div class="avatar-box">
-                    <span>🧙‍♀️</span>
-                    <span class="live-tag">LIVE</span>
+                <!-- Google 官方登入按鈕容器 -->
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin" 
+                     data-type="standard" 
+                     data-size="medium" 
+                     data-theme="outline" 
+                     data-text="sign_in_with" 
+                     data-shape="pill" 
+                     data-logo_alignment="left"
+                     id="google-signin-btn-container">
+                </div>
+
+                <!-- 登入成功後顯示的用戶頭像與名稱 -->
+                <div id="user-profile" class="user-profile-box hidden">
+                    <img id="user-avatar" class="user-avatar" src="" alt="Avatar">
+                    <span id="user-name" class="user-name"></span>
                 </div>
             </div>
 
@@ -195,10 +219,13 @@
         </div>
     </div>
 
-    <!-- 選角大廳 -->
+    <!-- 選角大廳 (含返回鍵) -->
     <div id="pick-screen" class="overlay hidden">
         <div class="hero-pick-modal">
-            <div class="pick-header">選擇登場英雄</div>
+            <div class="pick-header">
+                <button class="back-btn" id="btn-pick-back">⬅ 返回</button>
+                選擇登場英雄
+            </div>
             <div class="pick-body">
                 <div class="hero-grid" id="hero-select-grid"></div>
                 <div class="preview-box">
@@ -210,7 +237,7 @@
         </div>
     </div>
 
-    <!-- 戰鬥操作 HUD -->
+    <!-- 戰鬥操作 HUD (含技能說明文字) -->
     <div id="hud-layer" class="hidden">
         <div class="fast-buy-container" id="fast-buy-list"></div>
         <div class="joystick-container" id="joystick">
@@ -218,14 +245,52 @@
         </div>
         <div class="controls-right">
             <div class="attack-btn" id="btn-attack">⚔️</div>
-            <div class="skill-btn" id="skill-3" data-skill="3">大招<div class="skill-cd-overlay hidden" id="cd-3"></div></div>
-            <div class="skill-btn" id="skill-2" data-skill="2">二技<div class="skill-cd-overlay hidden" id="cd-2"></div></div>
-            <div class="skill-btn" id="skill-1" data-skill="1">一技<div class="skill-cd-overlay hidden" id="cd-1"></div></div>
+            <div class="skill-btn" id="skill-3" data-skill="3">
+                大招
+                <div class="skill-desc-label">範圍</div>
+                <div class="skill-cd-overlay hidden" id="cd-3"></div>
+            </div>
+            <div class="skill-btn" id="skill-2" data-skill="2">
+                二技
+                <div class="skill-desc-label">暈眩</div>
+                <div class="skill-cd-overlay hidden" id="cd-2"></div>
+            </div>
+            <div class="skill-btn" id="skill-1" data-skill="1">
+                一技
+                <div class="skill-desc-label">傷害</div>
+                <div class="skill-cd-overlay hidden" id="cd-1"></div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+// 解析 Google 回傳 JWT Token 的函式
+function parseJwt(token) {
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    let jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
+// Google 登入成功後的回調函數
+function handleCredentialResponse(response) {
+    const responsePayload = parseJwt(response.credential);
+    console.log("ID: " + responsePayload.sub);
+    console.log('Full Name: ' + responsePayload.name);
+    console.log('Image URL: ' + responsePayload.picture);
+    console.log('Email: ' + responsePayload.email);
+
+    // 隱藏登入按鈕，顯示玩家資訊
+    document.getElementById('google-signin-btn-container').classList.add('hidden');
+    let userProfile = document.getElementById('user-profile');
+    document.getElementById('user-avatar').src = responsePayload.picture;
+    document.getElementById('user-name').innerText = responsePayload.name;
+    userProfile.classList.remove('hidden');
+}
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let MAP_SIZE = 4200;
@@ -280,6 +345,7 @@ bindClick('btn-mode-1v1', () => openHeroPick('1v1'));
 bindClick('btn-mode-5v5', () => openHeroPick('5v5'));
 bindClick('btn-start-match', () => openHeroPick('1v1'));
 bindClick('btn-confirm-hero', () => confirmStartGame());
+bindClick('btn-pick-back', () => backToMenuFromPick());
 bindClick('btn-back-lobby', () => backToLobby());
 
 joystick.addEventListener('pointerdown', e => {
@@ -564,7 +630,6 @@ class Minion extends Entity {
 }
 
 function spawnMinionWave() {
-    // 兵線從藍方/紅方主堡附近生成並沿斜線推進
     entities.push(new Minion(450, MAP_SIZE - 450, 'blue'));
     entities.push(new Minion(MAP_SIZE - 450, 450, 'red'));
 }
@@ -622,13 +687,17 @@ function backToLobby() {
     document.getElementById('menu-screen').classList.remove('hidden');
 }
 
+function backToMenuFromPick() {
+    document.getElementById('pick-screen').classList.add('hidden');
+    document.getElementById('menu-screen').classList.remove('hidden');
+}
+
 function updateTopScopeUI() {
     document.getElementById('score-blue').innerText = blueKills;
     document.getElementById('score-red').innerText = redKills;
     document.getElementById('kda-display').innerText = `KDA: ${kills} / ${deaths} / ${assists}`;
     document.getElementById('level-display').innerText = `Lv.${player ? player.level : 1}`;
     document.getElementById('gold-display').innerText = `🪙 ${Math.floor(player ? player.gold : 0)}`;
-    document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player ? player.gold : 2900)}`;
 
     for (let id = 1; id <= 3; id++) {
         let reqLevel = id === 1 ? 1 : (id === 2 ? 2 : 4);
@@ -666,7 +735,6 @@ function renderFastBuy() {
                 player.atk += item.atk || 0;
                 player.maxHp += item.hp || 0;
                 player.hp = Math.min(player.maxHp, player.hp + (item.hp || 0));
-                document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player.gold)}`;
             });
             container.appendChild(div);
         }
@@ -709,7 +777,6 @@ function confirmStartGame() {
 
     entities.push(new Hero(MAP_SIZE - 400, 400, 'red', 'valhein', false));
 
-    // 1v1 單挑配置：設置雙方主堡與中間斜向防禦塔
     entities.push(new NexusBase(400, MAP_SIZE - 400, 'blue'));
     entities.push(new NexusBase(MAP_SIZE - 400, 400, 'red'));
 
@@ -739,7 +806,6 @@ function gameLoop() {
     ctx.fillStyle = '#0f1923';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 繪製斜向單一路線 (1v1 墨家機關道)
     ctx.strokeStyle = '#1e2d3d'; ctx.lineWidth = 180;
     ctx.beginPath();
     ctx.moveTo(400 - camera.x, MAP_SIZE - 400 - camera.y);
