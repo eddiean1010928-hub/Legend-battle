@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>傳說對決 Arena of Valor Canvas Edition</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #070d18; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; }
+        #game-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        canvas { background: #0b131e; display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; background: #070d18; z-index: 100; pointer-events: auto; padding: 25px; }
+        .hidden { display: none !important; }
+
+        /* 頂部大廳導覽列 */
+        .lobby-header { display: flex; justify-content: space-between; align-items: center; width: 100%; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; padding: 12px 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-title { font-size: 1.5rem; font-weight: 900; color: #f3c654; letter-spacing: 2px; font-style: italic; text-shadow: 0 0 10px rgba(243,198,84,0.5); }
+        .sub-tag { background: #1b2a40; color: #00d2ff; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #00d2ff; }
+        .coin-box { background: #121d2f; border: 1px solid #f3c654; border-radius: 20px; padding: 6px 18px; color: #f3c654; font-weight: bold; font-size: 1.05rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+
+        /* 主體佈局 (左側欄 + 右側模式) */
+        .lobby-body { display: flex; flex: 1; gap: 20px; overflow: hidden; width: 100%; }
+        
+        /* 左側選單列 */
+        .sidebar { width: 240px; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; display: flex; flex-direction: column; padding: 15px; gap: 10px; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 8px; background: rgba(255,255,255,0.03); cursor: pointer; color: #aaa; font-weight: bold; transition: 0.2s; }
+        .nav-item.active { background: linear-gradient(90deg, #1d3557 0%, rgba(29,53,87,0) 100%); border-left: 4px solid #00d2ff; color: #fff; }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+
+        /* 右側對戰模式卡片區 */
+        .modes-container { flex: 1; display: flex; gap: 20px; height: 100%; }
+        .mode-card { flex: 1; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
+        .mode-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #00d2ff, #f3c654); }
+        
+        .mode-tag { background: #1b2a40; color: #00d2ff; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; width: fit-content; margin-bottom: 15px; }
+        .mode-title { font-size: 2rem; font-weight: bold; color: #fff; margin-bottom: 10px; }
+        .mode-desc { color: #8a9bb8; font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px; }
+        
+        .match-btn-1v1 { background: linear-gradient(180deg, #00a8ff 0%, #0055ff 100%); border: 2px solid #80d4ff; color: #fff; font-weight: bold; padding: 14px; font-size: 1.15rem; border-radius: 8px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(0,85,255,0.4); }
+        .match-btn-5v5 { background: linear-gradient(180deg, #ff3366 0%, #cc0044 100%); border: 2px solid #ff80aa; color: #fff; font-weight: bold; padding: 14px; font-size: 1.15rem; border-radius: 8px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(255,51,102,0.4); }
+        .match-btn-1v1:active, .match-btn-5v5:active { transform: scale(0.98); }
+
+        /* 遊戲內即時 HUD */
+        .top-score-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 15px; background: rgba(8, 14, 22, 0.88); border: 1px solid #f3c654; border-radius: 20px; padding: 6px 20px; z-index: 20; font-size: 1rem; font-weight: bold; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .score-blue { color: #00d2ff; }
+        .score-red { color: #ff4444; }
+        .gold-text { color: #ffd700; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 10px; }
+        .kda-text { color: #ffeb3b; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 10px; }
+        .level-text { color: #00e676; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 10px; }
+
+        #hud-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        #hud-layer * { pointer-events: auto; }
+
+        .joystick-container { position: absolute; bottom: 25px; left: 25px; width: 125px; height: 125px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+        .joystick-knob { width: 45px; height: 45px; background: rgba(243, 198, 84, 0.85); border: 2px solid #fff; border-radius: 50%; position: absolute; pointer-events: none; }
+
+        .fast-buy-container { position: absolute; top: 80px; left: 15px; display: flex; flex-direction: column; gap: 10px; width: 110px; z-index: 50; }
+        .fast-buy-item { background: rgba(12, 20, 31, 0.95); border: 1px solid #f3c654; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: auto; }
+        .fast-buy-item .cost { color: #ffd700; font-size: 0.8rem; font-weight: bold; margin-top: 2px; }
+
+        .controls-right { position: absolute; bottom: 15px; right: 20px; width: 210px; height: 210px; pointer-events: none; }
+        .attack-btn { position: absolute; bottom: 5px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto; }
+        
+        .skill-btn { position: absolute; width: 54px; height: 54px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; }
+        .skill-btn.locked { border-color: #555; opacity: 0.5; filter: grayscale(1); }
+        .skill-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.9rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
+
+        #skill-3 { bottom: 130px; right: 20px; border-color: #e040fb; }
+        #skill-2 { bottom: 90px; right: 100px; border-color: #00e676; }
+        #skill-1 { bottom: 10px; right: 115px; border-color: #ff9100; }
+
+        /* 選角彈窗 */
+        .hero-pick-modal { width: 90%; max-width: 850px; height: 80%; background: rgba(10, 16, 26, 0.97); border: 2px solid #f3c654; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; pointer-events: auto; }
+        .pick-header { border-bottom: 1px solid #3d526e; padding-bottom: 12px; margin-bottom: 15px; text-align: center; color: #f3c654; font-size: 1.6rem; font-weight: bold; }
+        .pick-body { display: flex; flex: 1; gap: 20px; overflow: hidden; }
+        .hero-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; overflow-y: auto; }
+        .hero-card { background: rgba(255,255,255,0.05); border: 1px solid #334455; border-radius: 8px; padding: 12px 8px; text-align: center; cursor: pointer; }
+        .hero-card.active { border-color: #f3c654; background: rgba(243, 198, 84, 0.25); }
+        .preview-box { width: 220px; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; }
+        .btn-confirm { background: linear-gradient(180deg, #f3c654 0%, #a87e20 100%); border: 2px solid #ffe89e; color: #111; font-weight: bold; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="top-hud" class="top-score-bar hidden">
+        <span class="level-text" id="level-display">Lv.1</span>
+        <span class="score-blue" id="score-blue">0</span>
+        <span>VS</span>
+        <span class="score-red" id="score-red">0</span>
+        <span class="gold-text" id="gold-display">🪙 3,800</span>
+        <span class="kda-text" id="kda-display">KDA: 0 / 0 / 0</span>
+    </div>
+
+    <!-- 主選單大廳 -->
+    <div id="menu-screen" class="overlay">
+        <div class="lobby-header">
+            <div class="logo-area">
+                <span style="font-size: 1.8rem;">👑</span>
+                <span class="logo-title">ARENA OF VALOR</span>
+                <span class="sub-tag">傳說對決</span>
+            </div>
+            <div class="coin-box" id="header-gold">🪙 3,800</div>
+        </div>
+
+        <div class="lobby-body">
+            <!-- 左側選單 -->
+            <div class="sidebar">
+                <div class="nav-item active">⚔️ 對戰模式</div>
+                <div class="nav-item">🛡️ 英雄與皮膚</div>
+                <div class="nav-item">⚙️ 自訂英雄</div>
+            </div>
+
+            <!-- 右側模式卡片 -->
+            <div class="modes-container">
+                <!-- 1v1 模式 -->
+                <div class="mode-card">
+                    <div>
+                        <div class="mode-tag">1v1 單人對決</div>
+                        <div class="mode-title">1v1 墨家機關道</div>
+                        <div class="mode-desc">單一路線對決，快速兵線與防禦塔拆除對戰。</div>
+                    </div>
+                    <button class="match-btn-1v1" id="btn-1v1">進入 1v1 配對</button>
+                </div>
+
+                <!-- 5v5 模式 -->
+                <div class="mode-card">
+                    <div>
+                        <div class="mode-tag">5v5 經典競技</div>
+                        <div class="mode-title">5v5 傳說戰場</div>
+                        <div class="mode-desc">完整三路地圖（上路、中路、下路），含防禦塔、分路小兵與 AI 隊友對戰。</div>
+                    </div>
+                    <button class="match-btn-5v5" id="btn-5v5">進入 5v5 配對</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 選角大廳 -->
+    <div id="pick-screen" class="overlay hidden">
+        <div class="hero-pick-modal">
+            <div class="pick-header">選擇登場英雄</div>
+            <div class="pick-body">
+                <div class="hero-grid" id="hero-select-grid"></div>
+                <div class="preview-box">
+                    <h2 id="selected-hero-name" style="color:#f3c654; margin-bottom: 5px;">凡恩</h2>
+                    <p id="selected-hero-type" style="color:#aaa; margin-bottom: 25px;">射手 / 物理攻擊</p>
+                    <button class="btn-confirm" id="btn-confirm-hero">確定選擇</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 戰鬥操作 HUD -->
+    <div id="hud-layer" class="hidden">
+        <div class="fast-buy-container" id="fast-buy-list"></div>
+        <div class="joystick-container" id="joystick">
+            <div class="joystick-knob" id="joystick-knob"></div>
+        </div>
+        <div class="controls-right">
+            <div class="attack-btn" id="btn-attack">⚔️</div>
+            <div class="skill-btn" id="skill-3" data-skill="3">大招<div class="skill-cd-overlay hidden" id="cd-3"></div></div>
+            <div class="skill-btn" id="skill-2" data-skill="2">二技<div class="skill-cd-overlay hidden" id="cd-2"></div></div>
+            <div class="skill-btn" id="skill-1" data-skill="1">一技<div class="skill-cd-overlay hidden" id="cd-1"></div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let MAP_SIZE = 4200;
+let isRunning = false;
+let gameMode = '5v5';
+let selectedHeroKey = 'valhein';
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const HERO_DB = {
+    'valhein': { name: '凡恩', type: '射手 (AD)', atk: 150, range: 250, color1: '#c29b38', color2: '#ffe89e' },
+    'krixi': { name: '克里希', type: '法師 (AP)', atk: 120, range: 220, color1: '#43a047', color2: '#a5d6a7' },
+    'zuka': { name: '祖卡', type: '戰士 (AD)', atk: 180, range: 140, color1: '#ff9800', color2: '#ffe082' }
+};
+
+const ITEMS_DB = [
+    { id: 'ad_1', name: '聖劍', cost: 300, atk: 50 },
+    { id: 'ap_1', name: '魔法書', cost: 300, atk: 40 },
+    { id: 'def_1', name: '守衛鎧甲', cost: 400, hp: 500 }
+];
+
+let blueKills = 0, redKills = 0;
+let kills = 0, deaths = 0, assists = 0;
+let player = null, entities = [], skillEffects = [], attackEffects = [], camera = { x: 0, y: 0 };
+let minionSpawnTimer = 0;
+
+let joystickDir = { x: 0, y: 0 };
+let joystickTouchId = null;
+let joystickCenter = { x: 0, y: 0 };
+let activeSkillDrag = null;
+let showAttackRange = false;
+
+let skillCooldowns = { 1: 0, 2: 0, 3: 0 };
+const skillMaxCDs = { 1: 3.0, 2: 5.0, 3: 10.0 };
+
+const joystick = document.getElementById('joystick');
+const knob = document.getElementById('joystick-knob');
+
+function bindClick(id, fn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', (e) => { e.stopPropagation(); fn(e); });
+    el.addEventListener('touchstart', (e) => { e.stopPropagation(); e.preventDefault(); fn(e); }, { passive: false });
+}
+
+bindClick('btn-1v1', () => openHeroPick('1v1'));
+bindClick('btn-5v5', () => openHeroPick('5v5'));
+bindClick('btn-confirm-hero', () => confirmStartGame());
+
+joystick.addEventListener('pointerdown', e => {
+    joystickTouchId = e.pointerId;
+    joystick.setPointerCapture(e.pointerId);
+    const rect = joystick.getBoundingClientRect();
+    joystickCenter.x = rect.left + rect.width / 2;
+    joystickCenter.y = rect.top + rect.height / 2;
+    updateJoystick(e.clientX, e.clientY);
+});
+joystick.addEventListener('pointermove', e => {
+    if (e.pointerId === joystickTouchId) updateJoystick(e.clientX, e.clientY);
+});
+function resetJoystick(e) {
+    if (e.pointerId === joystickTouchId) {
+        joystickTouchId = null;
+        joystickDir = { x: 0, y: 0 };
+        knob.style.transform = `translate(0px, 0px)`;
+    }
+}
+joystick.addEventListener('pointerup', resetJoystick);
+joystick.addEventListener('pointercancel', resetJoystick);
+
+function updateJoystick(clientX, clientY) {
+    let dx = clientX - joystickCenter.x;
+    let dy = clientY - joystickCenter.y;
+    let dist = Math.hypot(dx, dy);
+    let maxDist = 40;
+    if (dist > maxDist) { dx = (dx / dist) * maxDist; dy = (dy / dist) * maxDist; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    joystickDir.x = dx / maxDist;
+    joystickDir.y = dy / maxDist;
+}
+
+const attackBtn = document.getElementById('btn-attack');
+attackBtn.addEventListener('pointerdown', () => { showAttackRange = true; performAttack(); });
+attackBtn.addEventListener('pointerup', () => showAttackRange = false);
+attackBtn.addEventListener('pointercancel', () => showAttackRange = false);
+
+document.querySelectorAll('.skill-btn').forEach(btn => {
+    btn.addEventListener('pointerdown', e => {
+        let skillId = parseInt(btn.dataset.skill);
+        let reqLevel = skillId === 1 ? 1 : (skillId === 2 ? 2 : 4);
+        if (player.level < reqLevel || skillCooldowns[skillId] > 0 || !player.alive) return;
+
+        btn.setPointerCapture(e.pointerId);
+        activeSkillDrag = { skillId: skillId, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, dirX: 0, dirY: -1 };
+    });
+    btn.addEventListener('pointermove', e => {
+        if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
+            let dx = e.clientX - activeSkillDrag.startX;
+            let dy = e.clientY - activeSkillDrag.startY;
+            let len = Math.hypot(dx, dy);
+            if (len > 8) { activeSkillDrag.dirX = dx / len; activeSkillDrag.dirY = dy / len; }
+        }
+    });
+    function releaseSkill(e) {
+        if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
+            castSkill(activeSkillDrag.skillId, activeSkillDrag.dirX, activeSkillDrag.dirY);
+            activeSkillDrag = null;
+        }
+    }
+    btn.addEventListener('pointerup', releaseSkill);
+    btn.addEventListener('pointercancel', releaseSkill);
+});
+
+class Entity {
+    constructor(x, y, team, radius = 22) {
+        this.x = x; this.y = y; this.team = team;
+        this.radius = radius; this.hp = 3500; this.maxHp = 3500; this.alive = true;
+    }
+    takeDamage(dmg, sourceTeam) {
+        if (!this.alive) return;
+        this.hp -= dmg;
+        if (this.hp <= 0) {
+            this.hp = 0; this.alive = false;
+            if (sourceTeam === 'blue' && player && player.alive) {
+                player.gold += 200;
+                document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player.gold)}`;
+            }
+            if (this instanceof Hero) {
+                if (sourceTeam === 'blue') { 
+                    blueKills++; 
+                    if (this === player) { deaths++; startRespawnTimer(); } 
+                    else kills++; 
+                } else { 
+                    redKills++; 
+                    if (this === player) { deaths++; startRespawnTimer(); } 
+                }
+                updateTopScopeUI();
+            }
+        }
+    }
+}
+
+let respawnTimer = 0;
+function startRespawnTimer() { respawnTimer = 3.0; }
+
+class Hero extends Entity {
+    constructor(x, y, team, heroKey, isPlayer = false) {
+        let heroData = HERO_DB[heroKey];
+        super(x, y, team, 26);
+        this.startX = x; this.startY = y;
+        this.heroKey = heroKey; this.heroData = heroData; this.isPlayer = isPlayer;
+        this.gold = 3800; this.exp = 0; this.level = 1;
+        this.atk = heroData.atk; this.range = heroData.range;
+        this.speed = 4.8;
+        this.maxHp = 4000; this.hp = 4000;
+        this.hasRedBuff = false; this.hasBlueBuff = false;
+        this.minionIncomeTimer = 0;
+    }
+    update() {
+        if (!this.alive) {
+            if (this.isPlayer && respawnTimer > 0) {
+                respawnTimer -= 1/60;
+                if (respawnTimer <= 0) {
+                    this.x = this.startX; this.y = this.startY;
+                    this.hp = this.maxHp;
+                    this.alive = true;
+                }
+            }
+            return;
+        }
+
+        if (this.isPlayer) {
+            if (joystickDir.x !== 0 || joystickDir.y !== 0) {
+                this.x += joystickDir.x * this.speed;
+                this.y += joystickDir.y * this.speed;
+            }
+            
+            this.minionIncomeTimer += 1/60;
+            if (this.minionIncomeTimer >= 1.0) {
+                this.gold += 3;
+                this.minionIncomeTimer = 0;
+                document.getElementById('header-gold').innerText = `🪙 ${Math.floor(this.gold)}`;
+            }
+
+            entities.forEach(e => {
+                if (e instanceof Minion && e.alive && Math.hypot(e.x - this.x, e.y - this.y) < 400) {
+                    if (Math.random() < 0.01) {
+                        let bounty = Math.floor(Math.random() * (160 - 50 + 1)) + 50;
+                        this.gold += bounty;
+                        document.getElementById('header-gold').innerText = `🪙 ${Math.floor(this.gold)}`;
+                    }
+                }
+            });
+
+            this.exp += 0.08;
+            if (this.exp >= this.level * 100 && this.level < 15) {
+                this.level++;
+                this.maxHp += 500;
+                this.hp = this.maxHp;
+                updateTopScopeUI();
+            }
+        } else {
+            let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 400);
+            if (target) {
+                let dx = target.x - this.x, dy = target.y - this.y;
+                let dist = Math.hypot(dx, dy);
+                if (dist > this.range) {
+                    this.x += (dx / dist) * (this.speed * 0.6);
+                    this.y += (dy / dist) * (this.speed * 0.6);
+                } else {
+                    target.takeDamage(this.atk * 0.4, this.team);
+                }
+            } else {
+                let targetX = this.team === 'blue' ? MAP_SIZE - 400 : 400;
+                let targetY = this.team === 'blue' ? 400 : MAP_SIZE - 400;
+                let dx = targetX - this.x, dy = targetY - this.y;
+                let dist = Math.hypot(dx, dy);
+                if (dist > 50) {
+                    this.x += (dx / dist) * (this.speed * 0.5);
+                    this.y += (dy / dist) * (this.speed * 0.5);
+                }
+            }
+        }
+        this.x = Math.max(100, Math.min(MAP_SIZE - 100, this.x));
+        this.y = Math.max(100, Math.min(MAP_SIZE - 100, this.y));
+    }
+    draw(ctx) {
+        if (!this.alive) {
+            if (this.isPlayer && respawnTimer > 0) {
+                let screenX = canvas.width / 2;
+                let screenY = canvas.height / 2 - 50;
+                ctx.fillStyle = 'rgba(255, 68, 68, 0.9)';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`陣亡 - ${Math.ceil(respawnTimer)} 秒後重生`, screenX, screenY);
+            }
+            return;
+        }
+
+        let screenX = this.x - camera.x, screenY = this.y - camera.y;
+
+        if (this.hasRedBuff) { ctx.beginPath(); ctx.arc(screenX, screenY, this.radius + 6, 0, Math.PI * 2); ctx.strokeStyle = '#ff3300'; ctx.lineWidth = 3; ctx.stroke(); }
+        if (this.hasBlueBuff) { ctx.beginPath(); ctx.arc(screenX, screenY, this.radius + 10, 0, Math.PI * 2); ctx.strokeStyle = '#00aaff'; ctx.lineWidth = 3; ctx.stroke(); }
+
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.heroData.color1; ctx.fill();
+        ctx.lineWidth = 4; ctx.strokeStyle = this.heroData.color2; ctx.stroke();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = '#000'; ctx.stroke();
+        ctx.restore();
+
+        if (this.isPlayer && showAttackRange) {
+            ctx.beginPath(); ctx.arc(screenX, screenY, this.range, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.08)'; ctx.fill();
+        }
+
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(screenX - 30, screenY - 42, 60, 6);
+        ctx.fillStyle = this.team === 'blue' ? '#00e676' : '#ff1744';
+        ctx.fillRect(screenX - 30, screenY - 42, (this.hp / this.maxHp) * 60, 6);
+    }
+}
+
+class Turret extends Entity {
+    constructor(x, y, team) {
+        super(x, y, team, 35);
+        this.maxHp = 6000; this.hp = 6000;
+        this.range = 320; this.atk = 220; this.cooldown = 0;
+    }
+    update() {
+        if (!this.alive) return;
+        if (this.cooldown > 0) this.cooldown -= 1/60;
+        if (this.cooldown <= 0) {
+            let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < this.range);
+            if (target) {
+                target.takeDamage(this.atk, this.team);
+                this.cooldown = 1.0;
+            }
+        }
+    }
+    draw(ctx) {
+        if (!this.alive) return;
+        let screenX = this.x - camera.x, screenY = this.y - camera.y;
+
+        ctx.beginPath(); ctx.arc(screenX, screenY, this.range, 0, Math.PI * 2);
+        ctx.strokeStyle = this.team === 'blue' ? 'rgba(0, 210, 255, 0.25)' : 'rgba(255, 68, 68, 0.25)';
+        ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = this.team === 'blue' ? 'rgba(0, 210, 255, 0.03)' : 'rgba(255, 68, 68, 0.03)'; ctx.fill();
+
+        ctx.fillStyle = '#ffeb3b'; ctx.font = '11px Arial'; ctx.textAlign = 'center';
+        ctx.fillText(`攻擊範圍: ${this.range}`, screenX, screenY - 52);
+
+        ctx.beginPath(); ctx.arc(screenX, screenY, 32, 0, Math.PI * 2);
+        ctx.fillStyle = '#263238'; ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = '#546e7a'; ctx.stroke();
+
+        ctx.fillStyle = this.team === 'blue' ? '#1565c0' : '#c62828';
+        ctx.fillRect(screenX - 18, screenY - 26, 36, 42);
+        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2;
+        ctx.strokeRect(screenX - 18, screenY - 26, 36, 42);
+
+        ctx.fillStyle = '#000'; ctx.fillRect(screenX - 30, screenY - 40, 60, 6);
+        ctx.fillStyle = '#00e676'; ctx.fillRect(screenX - 30, screenY - 40, (this.hp / this.maxHp) * 60, 6);
+    }
+}
+
+class NeutralMonster extends Entity {
+    constructor(x, y, name, color) {
+        super(x, y, 'neutral', 24);
+        this.name = name; this.color = color; this.hp = 1500; this.maxHp = 1500;
+    }
+    draw(ctx) {
+        if (!this.alive) return;
+        let screenX = this.x - camera.x, screenY = this.y - camera.y;
+        ctx.beginPath(); ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.color; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.fillText(this.name, screenX, screenY - 30);
+    }
+}
+
+class Minion extends Entity {
+    constructor(x, y, team) {
+        super(x, y, team, 14);
+        this.hp = 600; this.maxHp = 600; this.speed = 2.0; this.atk = 30;
+    }
+    update() {
+        if (!this.alive) return;
+        let enemy = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 60);
+        if (enemy) {
+            enemy.takeDamage(this.atk * 0.3, this.team);
+        } else {
+            let targetX = this.team === 'blue' ? MAP_SIZE - 300 : 300;
+            let targetY = this.team === 'blue' ? 300 : MAP_SIZE - 300;
+            let dx = targetX - this.x, dy = targetY - this.y;
+            let dist = Math.hypot(dx, dy);
+            if (dist > 20) {
+                this.x += (dx / dist) * this.speed;
+                this.y += (dy / dist) * this.speed;
+            }
+        }
+    }
+    draw(ctx) {
+        if (!this.alive) return;
+        let screenX = this.x - camera.x, screenY = this.y - camera.y;
+        ctx.beginPath(); ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.team === 'blue' ? '#42a5f5' : '#ef5350'; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(screenX - 15, screenY - 20, 30, 4);
+        ctx.fillStyle = this.team === 'blue' ? '#00e676' : '#ff1744';
+        ctx.fillRect(screenX - 15, screenY - 20, (this.hp / this.maxHp) * 30, 4);
+    }
+}
+
+function spawnMinionWave() {
+    for (let i = 0; i < 3; i++) {
+        entities.push(new Minion(300 + i*25, MAP_SIZE - 300 - i*25, 'blue'));
+        entities.push(new Minion(MAP_SIZE - 300 - i*25, 300 + i*25, 'red'));
+    }
+}
+
+function performAttack() {
+    if (!player || !player.alive) return;
+    let target = entities.find(e => e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= player.range);
+    if (target) {
+        target.takeDamage(player.atk, player.team);
+        attackEffects.push({ x: target.x, y: target.y, life: 0.3, radius: 28 });
+
+        if (!target.alive && target instanceof NeutralMonster) {
+            if (target.name === '紅Buff') player.hasRedBuff = true;
+            if (target.name === '藍Buff') player.hasBlueBuff = true;
+        }
+    }
+}
+
+function castSkill(skillId, dirX, dirY) {
+    if (!player || !player.alive) return;
+    skillCooldowns[skillId] = skillMaxCDs[skillId];
+
+    if (player.heroKey === 'valhein') {
+        if (skillId === 1) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 12, size: 20, color: '#ffd700', dmg: 300, team: player.team });
+        else if (skillId === 2) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 10, size: 18, color: '#00e5ff', dmg: 250, team: player.team });
+        else if (skillId === 3) {
+            for (let angleOff = -0.5; angleOff <= 0.5; angleOff += 0.2) {
+                let cos = Math.cos(angleOff), sin = Math.sin(angleOff);
+                skillEffects.push({ x: player.x, y: player.y, dirX: dirX * cos - dirY * sin, dirY: dirX * sin + dirY * cos, life: 1.0, speed: 14, size: 22, color: '#ff3d00', dmg: 400, team: player.team });
+            }
+        }
+    } else {
+        if (skillId === 1) { player.x += dirX * 150; player.y += dirY * 150; }
+        else skillEffects.push({ x: player.x + dirX * 120, y: player.y + dirY * 120, dirX: 0, dirY: 0, life: 0.8, speed: 0, size: 50, color: '#e040fb', dmg: 350, team: player.team });
+    }
+}
+
+function updateTopScopeUI() {
+    document.getElementById('score-blue').innerText = blueKills;
+    document.getElementById('score-red').innerText = redKills;
+    document.getElementById('kda-display').innerText = `KDA: ${kills} / ${deaths} / ${assists}`;
+    document.getElementById('level-display').innerText = `Lv.${player ? player.level : 1}`;
+    document.getElementById('gold-display').innerText = `🪙 ${Math.floor(player ? player.gold : 0)}`;
+    document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player ? player.gold : 3800)}`;
+
+    for (let id = 1; id <= 3; id++) {
+        let reqLevel = id === 1 ? 1 : (id === 2 ? 2 : 4);
+        let btn = document.getElementById(`skill-${id}`);
+        let cdOverlay = document.getElementById(`cd-${id}`);
+
+        if (player && player.level < reqLevel) {
+            btn.classList.add('locked');
+            cdOverlay.classList.remove('hidden');
+            cdOverlay.innerText = `Lv.${reqLevel}`;
+        } else {
+            btn.classList.remove('locked');
+            if (skillCooldowns[id] > 0) {
+                cdOverlay.classList.remove('hidden');
+                cdOverlay.innerText = skillCooldowns[id].toFixed(1);
+            } else {
+                cdOverlay.classList.add('hidden');
+            }
+        }
+    }
+}
+
+function renderFastBuy() {
+    let container = document.getElementById('fast-buy-list');
+    container.innerHTML = '';
+    ITEMS_DB.forEach(item => {
+        if (player && player.gold >= item.cost) {
+            let div = document.createElement('div');
+            div.className = 'fast-buy-item';
+            div.innerHTML = `<b>${item.name}</b><span class="cost">🪙${item.cost}</span>`;
+            
+            div.addEventListener('click', (e) => {
+                e.stopPropagation();
+                player.gold -= item.cost;
+                player.atk += item.atk || 0;
+                player.maxHp += item.hp || 0;
+                player.hp = Math.min(player.maxHp, player.hp + (item.hp || 0));
+                document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player.gold)}`;
+            });
+            div.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                player.gold -= item.cost;
+                player.atk += item.atk || 0;
+                player.maxHp += item.hp || 0;
+                player.hp = Math.min(player.maxHp, player.hp + (item.hp || 0));
+                document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player.gold)}`;
+            }, { passive: false });
+
+            container.appendChild(div);
+        }
+    });
+}
+
+function openHeroPick(mode) {
+    gameMode = mode;
+    document.getElementById('menu-screen').classList.add('hidden');
+    document.getElementById('pick-screen').classList.remove('hidden');
+
+    let grid = document.getElementById('hero-select-grid');
+    grid.innerHTML = '';
+    Object.keys(HERO_DB).forEach(key => {
+        let hero = HERO_DB[key];
+        let card = document.createElement('div');
+        card.className = `hero-card ${key === selectedHeroKey ? 'active' : ''}`;
+        card.innerHTML = `<b>${hero.name}</b><br><span style="font-size:0.75rem;">${hero.type}</span>`;
+        card.onclick = (e) => {
+            e.stopPropagation();
+            selectedHeroKey = key;
+            document.querySelectorAll('.hero-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            document.getElementById('selected-hero-name').innerText = hero.name;
+            document.getElementById('selected-hero-type').innerText = hero.type;
+        };
+        grid.appendChild(card);
+    });
+}
+
+function confirmStartGame() {
+    document.getElementById('pick-screen').classList.add('hidden');
+    document.getElementById('hud-layer').classList.remove('hidden');
+    document.getElementById('top-hud').classList.remove('hidden');
+
+    entities = [];
+    player = new Hero(400, MAP_SIZE - 400, 'blue', selectedHeroKey, true);
+    entities.push(player);
+
+    entities.push(new Hero(MAP_SIZE - 400, 400, 'red', 'krixi', false));
+
+    if (gameMode === '5v5') {
+        entities.push(new NeutralMonster(1400, 2800, '藍Buff', '#00aaff'));
+        entities.push(new NeutralMonster(2800, 1400, '紅Buff', '#ff4400'));
+        entities.push(new Turret(1400, MAP_SIZE - 1400, 'blue'));
+        entities.push(new Turret(MAP_SIZE - 1400, 1400, 'red'));
+    } else {
+        entities.push(new Turret(MAP_SIZE / 2, MAP_SIZE / 2, 'red'));
+    }
+
+    spawnMinionWave();
+    isRunning = true;
+    requestAnimationFrame(gameLoop);
+}
+
+function gameLoop() {
+    if (!isRunning) return;
+
+    for (let id in skillCooldowns) {
+        if (skillCooldowns[id] > 0) {
+            skillCooldowns[id] -= 1/60;
+            if (skillCooldowns[id] < 0) skillCooldowns[id] = 0;
+        }
+    }
+    updateTopScopeUI();
+
+    player.update();
+    camera.x = player.x - canvas.width / 2;
+    camera.y = player.y - canvas.height / 2;
+
+    ctx.fillStyle = '#0f1923';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = '#1e2d3d'; ctx.lineWidth = 160;
+    ctx.beginPath();
+    if (gameMode === '1v1') {
+        ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y);
+        ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
+    } else {
+        ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
+        ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(300 - camera.x, 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
+        ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
+    }
+    ctx.stroke();
+
+    entities.forEach(e => { if (e.update) e.update(); e.draw(ctx); });
+
+    minionSpawnTimer += 1/60;
+    if (minionSpawnTimer >= 15) { spawnMinionWave(); minionSpawnTimer = 0; }
+
+    for (let i = attackEffects.length - 1; i >= 0; i--) {
+        let af = attackEffects[i];
+        af.life -= 0.05;
+        ctx.beginPath(); ctx.arc(af.x - camera.x, af.y - camera.y, af.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 235, 59, 0.8)'; ctx.lineWidth = 3; ctx.stroke();
+        if (af.life <= 0) attackEffects.splice(i, 1);
+    }
+
+    for (let i = skillEffects.length - 1; i >= 0; i--) {
+        let fx = skillEffects[i];
+        fx.x += fx.dirX * fx.speed; fx.y += fx.dirY * fx.speed; fx.life -= 0.025;
+        ctx.beginPath(); ctx.arc(fx.x - camera.x, fx.y - camera.y, fx.size, 0, Math.PI * 2);
+        ctx.fillStyle = fx.color; ctx.fill();
+
+        entities.forEach(e => {
+            if (e.alive && e.team !== fx.team && Math.hypot(e.x - fx.x, e.y - fx.y) < fx.size + 10) {
+                e.takeDamage(fx.dmg, fx.team);
+            }
+        });
+        if (fx.life <= 0) skillEffects.splice(i, 1);
+    }
+
+    renderFastBuy();
+    requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
