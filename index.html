@@ -56,7 +56,7 @@
         .controls-right { position: absolute; bottom: 15px; right: 20px; width: 210px; height: 210px; pointer-events: none; }
         .attack-btn { position: absolute; bottom: 5px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto; }
         
-        .skill-btn { position: absolute; width: 54px; height: 54px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; }
+        .skill-btn { position: absolute; width: 54px; height: 54px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; touch-action: none; }
         .skill-btn.locked { border-color: #555; opacity: 0.5; filter: grayscale(1); }
         .skill-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.9rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
 
@@ -72,6 +72,12 @@
         .hero-card.active { border-color: #f3c654; background: rgba(243, 198, 84, 0.25); }
         .preview-box { width: 220px; background: rgba(0,0,0,0.4); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; }
         .btn-confirm { background: linear-gradient(180deg, #f3c654 0%, #a87e20 100%); border: 2px solid #ffe89e; color: #111; font-weight: bold; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-size: 1.1rem; }
+
+        /* 遊戲勝負結算視窗 */
+        .result-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(5, 10, 18, 0.9); z-index: 200; }
+        .result-box { background: rgba(13, 23, 38, 0.95); border: 2px solid #f3c654; border-radius: 15px; padding: 30px; text-align: center; width: 85%; max-width: 420px; box-shadow: 0 0 30px rgba(243, 198, 84, 0.4); }
+        .result-title-win { font-size: 3rem; font-weight: 900; color: #ffd700; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); margin-bottom: 10px; }
+        .result-title-lose { font-size: 3rem; font-weight: 900; color: #ff3366; text-shadow: 0 0 20px rgba(255, 51, 102, 0.8); margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -84,8 +90,17 @@
         <span class="score-blue" id="score-blue">0</span>
         <span>VS</span>
         <span class="score-red" id="score-red">0</span>
-        <span class="gold-text" id="gold-display">🪙 3,800</span>
+        <span class="gold-text" id="gold-display">🪙 500</span>
         <span class="kda-text" id="kda-display">KDA: 0 / 0 / 0</span>
+    </div>
+
+    <!-- 勝負結算視窗 -->
+    <div id="result-screen" class="result-overlay hidden">
+        <div class="result-box">
+            <div id="result-title" class="result-title-win">VICTORY</div>
+            <p id="result-subtitle" style="color: #aaa; margin-bottom: 20px;">成功摧毀敵方陣營！</p>
+            <button class="btn-confirm" id="btn-back-lobby">返回遊戲大廳</button>
+        </div>
     </div>
 
     <!-- 主選單大廳 -->
@@ -96,7 +111,7 @@
                 <span class="logo-title">ARENA OF VALOR</span>
                 <span class="sub-tag">傳說對決</span>
             </div>
-            <div class="coin-box" id="header-gold">🪙 3,800</div>
+            <div class="coin-box" id="header-gold">🪙 500</div>
         </div>
 
         <div class="lobby-body">
@@ -174,15 +189,15 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 const HERO_DB = {
-    'valhein': { name: '凡恩', type: '射手 (AD)', atk: 150, range: 250, color1: '#c29b38', color2: '#ffe89e' },
-    'krixi': { name: '克里希', type: '法師 (AP)', atk: 120, range: 220, color1: '#43a047', color2: '#a5d6a7' },
-    'zuka': { name: '祖卡', type: '戰士 (AD)', atk: 180, range: 140, color1: '#ff9800', color2: '#ffe082' }
+    'valhein': { name: '凡恩', type: '射手 (AD)', atk: 85, range: 250, color1: '#c29b38', color2: '#ffe89e' },
+    'krixi': { name: '克里希', type: '法師 (AP)', atk: 70, range: 220, color1: '#43a047', color2: '#a5d6a7' },
+    'zuka': { name: '祖卡', type: '戰士 (AD)', atk: 110, range: 140, color1: '#ff9800', color2: '#ffe082' }
 };
 
 const ITEMS_DB = [
-    { id: 'ad_1', name: '聖劍', cost: 300, atk: 50 },
-    { id: 'ap_1', name: '魔法書', cost: 300, atk: 40 },
-    { id: 'def_1', name: '守衛鎧甲', cost: 400, hp: 500 }
+    { id: 'ad_1', name: '聖劍', cost: 300, atk: 30 },
+    { id: 'ap_1', name: '魔法書', cost: 300, atk: 25 },
+    { id: 'def_1', name: '守衛鎧甲', cost: 400, hp: 400 }
 ];
 
 let blueKills = 0, redKills = 0;
@@ -212,6 +227,7 @@ function bindClick(id, fn) {
 bindClick('btn-1v1', () => openHeroPick('1v1'));
 bindClick('btn-5v5', () => openHeroPick('5v5'));
 bindClick('btn-confirm-hero', () => confirmStartGame());
+bindClick('btn-back-lobby', () => backToLobby());
 
 joystick.addEventListener('pointerdown', e => {
     joystickTouchId = e.pointerId;
@@ -250,7 +266,7 @@ attackBtn.addEventListener('pointerdown', () => { showAttackRange = true; perfor
 attackBtn.addEventListener('pointerup', () => showAttackRange = false);
 attackBtn.addEventListener('pointercancel', () => showAttackRange = false);
 
-// 修正技能拖曳與瞄準鎖定手勢
+// 【全面優化拖曳技能與瞄準線顯示】
 document.querySelectorAll('.skill-btn').forEach(btn => {
     btn.addEventListener('pointerdown', e => {
         let skillId = parseInt(btn.dataset.skill);
@@ -261,16 +277,27 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
         e.stopPropagation();
 
         btn.setPointerCapture(e.pointerId);
-        activeSkillDrag = { skillId: skillId, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, dirX: 0, dirY: -1 };
+        let rect = btn.getBoundingClientRect();
+        activeSkillDrag = { 
+            skillId: skillId, 
+            pointerId: e.pointerId, 
+            centerX: rect.left + rect.width / 2, 
+            centerY: rect.top + rect.height / 2, 
+            dirX: 0, 
+            dirY: -1 
+        };
     }, { passive: false });
 
     btn.addEventListener('pointermove', e => {
         if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
             e.preventDefault();
-            let dx = e.clientX - activeSkillDrag.startX;
-            let dy = e.clientY - activeSkillDrag.startY;
+            let dx = e.clientX - activeSkillDrag.centerX;
+            let dy = e.clientY - activeSkillDrag.centerY;
             let len = Math.hypot(dx, dy);
-            if (len > 8) { activeSkillDrag.dirX = dx / len; activeSkillDrag.dirY = dy / len; }
+            if (len > 10) { 
+                activeSkillDrag.dirX = dx / len; 
+                activeSkillDrag.dirY = dy / len; 
+            }
         }
     }, { passive: false });
 
@@ -287,7 +314,7 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
 class Entity {
     constructor(x, y, team, radius = 22) {
         this.x = x; this.y = y; this.team = team;
-        this.radius = radius; this.hp = 3500; this.maxHp = 3500; this.alive = true;
+        this.radius = radius; this.hp = 2000; this.maxHp = 2000; this.alive = true;
     }
     takeDamage(dmg, sourceTeam) {
         if (!this.alive) return;
@@ -295,26 +322,26 @@ class Entity {
         if (this.hp <= 0) {
             this.hp = 0; this.alive = false;
             if (sourceTeam === 'blue' && player && player.alive) {
-                player.gold += 200;
+                player.gold += 150;
                 document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player.gold)}`;
             }
             if (this instanceof Hero) {
                 if (sourceTeam === 'blue') { 
                     blueKills++; 
-                    if (this === player) { deaths++; startRespawnTimer(); } 
-                    else kills++; 
+                    if (this === player) { deaths++; showGameResult(false); } 
+                    else { kills++; showGameResult(true); } 
                 } else { 
                     redKills++; 
-                    if (this === player) { deaths++; startRespawnTimer(); } 
+                    if (this === player) { deaths++; showGameResult(false); } 
                 }
                 updateTopScopeUI();
+            } else if (this instanceof NexusBase) {
+                if (this.team === 'red') showGameResult(true);
+                else showGameResult(false);
             }
         }
     }
 }
-
-let respawnTimer = 0;
-function startRespawnTimer() { respawnTimer = 3.0; }
 
 class Hero extends Entity {
     constructor(x, y, team, heroKey, isPlayer = false) {
@@ -322,25 +349,15 @@ class Hero extends Entity {
         super(x, y, team, 26);
         this.startX = x; this.startY = y;
         this.heroKey = heroKey; this.heroData = heroData; this.isPlayer = isPlayer;
-        this.gold = 3800; this.exp = 0; this.level = 1;
+        this.gold = 500; this.exp = 0; this.level = 1;
         this.atk = heroData.atk; this.range = heroData.range;
-        this.speed = 4.8;
-        this.maxHp = 4000; this.hp = 4000;
+        this.speed = 4.5;
+        this.maxHp = 2500; this.hp = 2500;
         this.hasRedBuff = false; this.hasBlueBuff = false;
         this.minionIncomeTimer = 0;
     }
     update() {
-        if (!this.alive) {
-            if (this.isPlayer && respawnTimer > 0) {
-                respawnTimer -= 1/60;
-                if (respawnTimer <= 0) {
-                    this.x = this.startX; this.y = this.startY;
-                    this.hp = this.maxHp;
-                    this.alive = true;
-                }
-            }
-            return;
-        }
+        if (!this.alive) return;
 
         if (this.isPlayer) {
             if (joystickDir.x !== 0 || joystickDir.y !== 0) {
@@ -357,8 +374,8 @@ class Hero extends Entity {
 
             entities.forEach(e => {
                 if (e instanceof Minion && e.alive && Math.hypot(e.x - this.x, e.y - this.y) < 400) {
-                    if (Math.random() < 0.01) {
-                        let bounty = Math.floor(Math.random() * (160 - 50 + 1)) + 50;
+                    if (Math.random() < 0.005) {
+                        let bounty = Math.floor(Math.random() * (100 - 50 + 1)) + 50;
                         this.gold += bounty;
                         document.getElementById('header-gold').innerText = `🪙 ${Math.floor(this.gold)}`;
                     }
@@ -368,12 +385,12 @@ class Hero extends Entity {
             this.exp += 0.08;
             if (this.exp >= this.level * 100 && this.level < 15) {
                 this.level++;
-                this.maxHp += 500;
-                this.hp = this.maxHp;
+                this.maxHp += 300;
+                this.hp = Math.min(this.maxHp, this.hp + 300);
                 updateTopScopeUI();
             }
         } else {
-            let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 400);
+            let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 350);
             if (target) {
                 let dx = target.x - this.x, dy = target.y - this.y;
                 let dist = Math.hypot(dx, dy);
@@ -381,7 +398,7 @@ class Hero extends Entity {
                     this.x += (dx / dist) * (this.speed * 0.6);
                     this.y += (dy / dist) * (this.speed * 0.6);
                 } else {
-                    target.takeDamage(this.atk * 0.4, this.team);
+                    target.takeDamage(this.atk * 0.25, this.team);
                 }
             } else {
                 let targetX = this.team === 'blue' ? MAP_SIZE - 400 : 400;
@@ -398,17 +415,7 @@ class Hero extends Entity {
         this.y = Math.max(100, Math.min(MAP_SIZE - 100, this.y));
     }
     draw(ctx) {
-        if (!this.alive) {
-            if (this.isPlayer && respawnTimer > 0) {
-                let screenX = canvas.width / 2;
-                let screenY = canvas.height / 2 - 50;
-                ctx.fillStyle = 'rgba(255, 68, 68, 0.9)';
-                ctx.font = 'bold 24px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(`陣亡 - ${Math.ceil(respawnTimer)} 秒後重生`, screenX, screenY);
-            }
-            return;
-        }
+        if (!this.alive) return;
 
         let screenX = this.x - camera.x, screenY = this.y - camera.y;
 
@@ -438,8 +445,8 @@ class Hero extends Entity {
 class Turret extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 35);
-        this.maxHp = 6000; this.hp = 6000;
-        this.range = 320; this.atk = 220; this.cooldown = 0;
+        this.maxHp = 5000; this.hp = 5000;
+        this.range = 300; this.atk = 180; this.cooldown = 0;
     }
     update() {
         if (!this.alive) return;
@@ -448,7 +455,7 @@ class Turret extends Entity {
             let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < this.range);
             if (target) {
                 target.takeDamage(this.atk, this.team);
-                this.cooldown = 1.0;
+                this.cooldown = 1.2;
             }
         }
     }
@@ -459,10 +466,6 @@ class Turret extends Entity {
         ctx.beginPath(); ctx.arc(screenX, screenY, this.range, 0, Math.PI * 2);
         ctx.strokeStyle = this.team === 'blue' ? 'rgba(0, 210, 255, 0.25)' : 'rgba(255, 68, 68, 0.25)';
         ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = this.team === 'blue' ? 'rgba(0, 210, 255, 0.03)' : 'rgba(255, 68, 68, 0.03)'; ctx.fill();
-
-        ctx.fillStyle = '#ffeb3b'; ctx.font = '11px Arial'; ctx.textAlign = 'center';
-        ctx.fillText(`攻擊範圍: ${this.range}`, screenX, screenY - 52);
 
         ctx.beginPath(); ctx.arc(screenX, screenY, 32, 0, Math.PI * 2);
         ctx.fillStyle = '#263238'; ctx.fill();
@@ -470,8 +473,6 @@ class Turret extends Entity {
 
         ctx.fillStyle = this.team === 'blue' ? '#1565c0' : '#c62828';
         ctx.fillRect(screenX - 18, screenY - 26, 36, 42);
-        ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2;
-        ctx.strokeRect(screenX - 18, screenY - 26, 36, 42);
 
         ctx.fillStyle = '#000'; ctx.fillRect(screenX - 30, screenY - 40, 60, 6);
         ctx.fillStyle = '#00e676'; ctx.fillRect(screenX - 30, screenY - 40, (this.hp / this.maxHp) * 60, 6);
@@ -481,7 +482,7 @@ class Turret extends Entity {
 class NexusBase extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 50);
-        this.maxHp = 10000; this.hp = 10000;
+        this.maxHp = 8000; this.hp = 8000;
     }
     draw(ctx) {
         if (!this.alive) return;
@@ -498,24 +499,10 @@ class NexusBase extends Entity {
     }
 }
 
-class NeutralMonster extends Entity {
-    constructor(x, y, name, color) {
-        super(x, y, 'neutral', 24);
-        this.name = name; this.color = color; this.hp = 1500; this.maxHp = 1500;
-    }
-    draw(ctx) {
-        if (!this.alive) return;
-        let screenX = this.x - camera.x, screenY = this.y - camera.y;
-        ctx.beginPath(); ctx.arc(screenX, screenY, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = this.color; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center'; ctx.fillText(this.name, screenX, screenY - 30);
-    }
-}
-
 class Minion extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 14);
-        this.hp = 600; this.maxHp = 600; this.speed = 2.0; this.atk = 30;
+        this.hp = 450; this.maxHp = 450; this.speed = 2.0; this.atk = 20;
     }
     update() {
         if (!this.alive) return;
@@ -547,16 +534,9 @@ class Minion extends Entity {
 }
 
 function spawnMinionWave() {
-    if (gameMode === '1v1') {
-        for (let i = 0; i < 3; i++) {
-            entities.push(new Minion(400 + i*30, MAP_SIZE - 400 - i*30, 'blue'));
-            entities.push(new Minion(MAP_SIZE - 400 - i*30, 400 + i*30, 'red'));
-        }
-    } else {
-        for (let i = 0; i < 3; i++) {
-            entities.push(new Minion(300 + i*25, MAP_SIZE - 300 - i*25, 'blue'));
-            entities.push(new Minion(MAP_SIZE - 300 - i*25, 300 + i*25, 'red'));
-        }
+    for (let i = 0; i < 3; i++) {
+        entities.push(new Minion(400 + i*30, MAP_SIZE - 400 - i*30, 'blue'));
+        entities.push(new Minion(MAP_SIZE - 400 - i*30, 400 + i*30, 'red'));
     }
 }
 
@@ -566,11 +546,6 @@ function performAttack() {
     if (target) {
         target.takeDamage(player.atk, player.team);
         attackEffects.push({ x: target.x, y: target.y, life: 0.3, radius: 28 });
-
-        if (!target.alive && target instanceof NeutralMonster) {
-            if (target.name === '紅Buff') player.hasRedBuff = true;
-            if (target.name === '藍Buff') player.hasBlueBuff = true;
-        }
     }
 }
 
@@ -578,19 +553,45 @@ function castSkill(skillId, dirX, dirY) {
     if (!player || !player.alive) return;
     skillCooldowns[skillId] = skillMaxCDs[skillId];
 
+    // 平衡後的傷害數值
     if (player.heroKey === 'valhein') {
-        if (skillId === 1) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 12, size: 20, color: '#ffd700', dmg: 300, team: player.team });
-        else if (skillId === 2) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 10, size: 18, color: '#00e5ff', dmg: 250, team: player.team });
+        if (skillId === 1) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 11, size: 18, color: '#ffd700', dmg: 140, team: player.team });
+        else if (skillId === 2) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 9, size: 16, color: '#00e5ff', dmg: 110, team: player.team });
         else if (skillId === 3) {
-            for (let angleOff = -0.5; angleOff <= 0.5; angleOff += 0.2) {
+            for (let angleOff = -0.4; angleOff <= 0.4; angleOff += 0.2) {
                 let cos = Math.cos(angleOff), sin = Math.sin(angleOff);
-                skillEffects.push({ x: player.x, y: player.y, dirX: dirX * cos - dirY * sin, dirY: dirX * sin + dirY * cos, life: 1.0, speed: 14, size: 22, color: '#ff3d00', dmg: 400, team: player.team });
+                skillEffects.push({ x: player.x, y: player.y, dirX: dirX * cos - dirY * sin, dirY: dirX * sin + dirY * cos, life: 1.0, speed: 12, size: 18, color: '#ff3d00', dmg: 180, team: player.team });
             }
         }
     } else {
-        if (skillId === 1) { player.x += dirX * 150; player.y += dirY * 150; }
-        else skillEffects.push({ x: player.x + dirX * 120, y: player.y + dirY * 120, dirX: 0, dirY: 0, life: 0.8, speed: 0, size: 50, color: '#e040fb', dmg: 350, team: player.team });
+        if (skillId === 1) { player.x += dirX * 120; player.y += dirY * 120; }
+        else skillEffects.push({ x: player.x + dirX * 100, y: player.y + dirY * 100, dirX: 0, dirY: 0, life: 0.8, speed: 0, size: 45, color: '#e040fb', dmg: 160, team: player.team });
     }
+}
+
+function showGameResult(win) {
+    isRunning = false;
+    let resScreen = document.getElementById('result-screen');
+    let resTitle = document.getElementById('result-title');
+    let resSub = document.getElementById('result-subtitle');
+
+    resScreen.classList.remove('hidden');
+    if (win) {
+        resTitle.className = 'result-title-win';
+        resTitle.innerText = 'VICTORY';
+        resSub.innerText = '恭喜你！成功戰勝敵方陣營！';
+    } else {
+        resTitle.className = 'result-title-lose';
+        resTitle.innerText = 'DEFEAT';
+        resSub.innerText = '勝敗乃兵家常事，再接再厲！';
+    }
+}
+
+function backToLobby() {
+    document.getElementById('result-screen').classList.add('hidden');
+    document.getElementById('hud-layer').classList.add('hidden');
+    document.getElementById('top-hud').classList.add('hidden');
+    document.getElementById('menu-screen').classList.remove('hidden');
 }
 
 function updateTopScopeUI() {
@@ -599,7 +600,7 @@ function updateTopScopeUI() {
     document.getElementById('kda-display').innerText = `KDA: ${kills} / ${deaths} / ${assists}`;
     document.getElementById('level-display').innerText = `Lv.${player ? player.level : 1}`;
     document.getElementById('gold-display').innerText = `🪙 ${Math.floor(player ? player.gold : 0)}`;
-    document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player ? player.gold : 3800)}`;
+    document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player ? player.gold : 500)}`;
 
     for (let id = 1; id <= 3; id++) {
         let reqLevel = id === 1 ? 1 : (id === 2 ? 2 : 4);
@@ -639,16 +640,6 @@ function renderFastBuy() {
                 player.hp = Math.min(player.maxHp, player.hp + (item.hp || 0));
                 document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player.gold)}`;
             });
-            div.addEventListener('touchstart', (e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                player.gold -= item.cost;
-                player.atk += item.atk || 0;
-                player.maxHp += item.hp || 0;
-                player.hp = Math.min(player.maxHp, player.hp + (item.hp || 0));
-                document.getElementById('header-gold').innerText = `🪙 ${Math.floor(player.gold)}`;
-            }, { passive: false });
-
             container.appendChild(div);
         }
     });
@@ -683,6 +674,7 @@ function confirmStartGame() {
     document.getElementById('hud-layer').classList.remove('hidden');
     document.getElementById('top-hud').classList.remove('hidden');
 
+    blueKills = 0; redKills = 0; kills = 0; deaths = 0; assists = 0;
     entities = [];
     player = new Hero(400, MAP_SIZE - 400, 'blue', selectedHeroKey, true);
     entities.push(player);
@@ -696,8 +688,6 @@ function confirmStartGame() {
         entities.push(new Turret(1200, MAP_SIZE - 1200, 'blue'));
         entities.push(new Turret(MAP_SIZE - 1200, 1200, 'red'));
     } else {
-        entities.push(new NeutralMonster(1400, 2800, '藍Buff', '#00aaff'));
-        entities.push(new NeutralMonster(2800, 1400, '紅Buff', '#ff4400'));
         entities.push(new Turret(1400, MAP_SIZE - 1400, 'blue'));
         entities.push(new Turret(MAP_SIZE - 1400, 1400, 'red'));
     }
@@ -737,19 +727,26 @@ function gameLoop() {
         let midY = MAP_SIZE / 2 - camera.y;
         ctx.fillRect(midX - 180, midY - 60, 100, 40);
         ctx.fillRect(midX + 80, midY + 20, 100, 40);
-    } else {
-        ctx.strokeStyle = '#1e2d3d'; ctx.lineWidth = 160;
-        ctx.beginPath();
-        ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
-        ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(300 - camera.x, 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
-        ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
-        ctx.stroke();
     }
 
     entities.forEach(e => { if (e.update) e.update(); e.draw(ctx); });
 
     minionSpawnTimer += 1/60;
     if (minionSpawnTimer >= 15) { spawnMinionWave(); minionSpawnTimer = 0; }
+
+    // 【即時繪製瞄準方向線】
+    if (activeSkillDrag && player && player.alive) {
+        let pX = player.x - camera.x;
+        let pY = player.y - camera.y;
+        ctx.beginPath();
+        ctx.moveTo(pX, pY);
+        ctx.lineTo(pX + activeSkillDrag.dirX * 220, pY + activeSkillDrag.dirY * 220);
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([8, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
 
     for (let i = attackEffects.length - 1; i >= 0; i--) {
         let af = attackEffects[i];
