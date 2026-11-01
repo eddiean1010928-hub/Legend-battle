@@ -13,23 +13,18 @@
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; background: #070d18; z-index: 100; pointer-events: auto; padding: 25px; }
         .hidden { display: none !important; }
 
-        /* 頂部大廳導覽列 */
         .lobby-header { display: flex; justify-content: space-between; align-items: center; width: 100%; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; padding: 12px 25px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .logo-title { font-size: 1.5rem; font-weight: 900; color: #f3c654; letter-spacing: 2px; font-style: italic; text-shadow: 0 0 10px rgba(243,198,84,0.5); }
         .sub-tag { background: #1b2a40; color: #00d2ff; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; border: 1px solid #00d2ff; }
         .coin-box { background: #121d2f; border: 1px solid #f3c654; border-radius: 20px; padding: 6px 18px; color: #f3c654; font-weight: bold; font-size: 1.05rem; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
 
-        /* 主體佈局 (左側欄 + 右側模式) */
         .lobby-body { display: flex; flex: 1; gap: 20px; overflow: hidden; width: 100%; }
         
-        /* 左側選單列 */
         .sidebar { width: 240px; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; display: flex; flex-direction: column; padding: 15px; gap: 10px; }
         .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 8px; background: rgba(255,255,255,0.03); cursor: pointer; color: #aaa; font-weight: bold; transition: 0.2s; }
         .nav-item.active { background: linear-gradient(90deg, #1d3557 0%, rgba(29,53,87,0) 100%); border-left: 4px solid #00d2ff; color: #fff; }
-        .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
 
-        /* 右側對戰模式卡片區 */
         .modes-container { flex: 1; display: flex; gap: 20px; height: 100%; }
         .mode-card { flex: 1; background: #0d1726; border: 1px solid #1f304a; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
         .mode-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #00d2ff, #f3c654); }
@@ -40,9 +35,7 @@
         
         .match-btn-1v1 { background: linear-gradient(180deg, #00a8ff 0%, #0055ff 100%); border: 2px solid #80d4ff; color: #fff; font-weight: bold; padding: 14px; font-size: 1.15rem; border-radius: 8px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(0,85,255,0.4); }
         .match-btn-5v5 { background: linear-gradient(180deg, #ff3366 0%, #cc0044 100%); border: 2px solid #ff80aa; color: #fff; font-weight: bold; padding: 14px; font-size: 1.15rem; border-radius: 8px; cursor: pointer; text-align: center; box-shadow: 0 4px 15px rgba(255,51,102,0.4); }
-        .match-btn-1v1:active, .match-btn-5v5:active { transform: scale(0.98); }
 
-        /* 遊戲內即時 HUD */
         .top-score-bar { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 15px; background: rgba(8, 14, 22, 0.88); border: 1px solid #f3c654; border-radius: 20px; padding: 6px 20px; z-index: 20; font-size: 1rem; font-weight: bold; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .score-blue { color: #00d2ff; }
         .score-red { color: #ff4444; }
@@ -71,7 +64,6 @@
         #skill-2 { bottom: 90px; right: 100px; border-color: #00e676; }
         #skill-1 { bottom: 10px; right: 115px; border-color: #ff9100; }
 
-        /* 選角彈窗 */
         .hero-pick-modal { width: 90%; max-width: 850px; height: 80%; background: rgba(10, 16, 26, 0.97); border: 2px solid #f3c654; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; pointer-events: auto; }
         .pick-header { border-bottom: 1px solid #3d526e; padding-bottom: 12px; margin-bottom: 15px; text-align: center; color: #f3c654; font-size: 1.6rem; font-weight: bold; }
         .pick-body { display: flex; flex: 1; gap: 20px; overflow: hidden; }
@@ -108,26 +100,22 @@
         </div>
 
         <div class="lobby-body">
-            <!-- 左側選單 -->
             <div class="sidebar">
                 <div class="nav-item active">⚔️ 對戰模式</div>
                 <div class="nav-item">🛡️ 英雄與皮膚</div>
                 <div class="nav-item">⚙️ 自訂英雄</div>
             </div>
 
-            <!-- 右側模式卡片 -->
             <div class="modes-container">
-                <!-- 1v1 模式 -->
                 <div class="mode-card">
                     <div>
                         <div class="mode-tag">1v1 單人對決</div>
                         <div class="mode-title">1v1 墨家機關道</div>
-                        <div class="mode-desc">單一路線對決，快速兵線與防禦塔拆除對戰。</div>
+                        <div class="mode-desc">斜向單一路線對決，含雙方主堡出兵、對線草叢與防禦塔。</div>
                     </div>
                     <button class="match-btn-1v1" id="btn-1v1">進入 1v1 配對</button>
                 </div>
 
-                <!-- 5v5 模式 -->
                 <div class="mode-card">
                     <div>
                         <div class="mode-tag">5v5 經典競技</div>
@@ -262,23 +250,30 @@ attackBtn.addEventListener('pointerdown', () => { showAttackRange = true; perfor
 attackBtn.addEventListener('pointerup', () => showAttackRange = false);
 attackBtn.addEventListener('pointercancel', () => showAttackRange = false);
 
+// 修正技能拖曳與瞄準鎖定手勢
 document.querySelectorAll('.skill-btn').forEach(btn => {
     btn.addEventListener('pointerdown', e => {
         let skillId = parseInt(btn.dataset.skill);
         let reqLevel = skillId === 1 ? 1 : (skillId === 2 ? 2 : 4);
         if (player.level < reqLevel || skillCooldowns[skillId] > 0 || !player.alive) return;
 
+        e.preventDefault();
+        e.stopPropagation();
+
         btn.setPointerCapture(e.pointerId);
         activeSkillDrag = { skillId: skillId, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, dirX: 0, dirY: -1 };
-    });
+    }, { passive: false });
+
     btn.addEventListener('pointermove', e => {
         if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
+            e.preventDefault();
             let dx = e.clientX - activeSkillDrag.startX;
             let dy = e.clientY - activeSkillDrag.startY;
             let len = Math.hypot(dx, dy);
             if (len > 8) { activeSkillDrag.dirX = dx / len; activeSkillDrag.dirY = dy / len; }
         }
-    });
+    }, { passive: false });
+
     function releaseSkill(e) {
         if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
             castSkill(activeSkillDrag.skillId, activeSkillDrag.dirX, activeSkillDrag.dirY);
@@ -483,6 +478,26 @@ class Turret extends Entity {
     }
 }
 
+class NexusBase extends Entity {
+    constructor(x, y, team) {
+        super(x, y, team, 50);
+        this.maxHp = 10000; this.hp = 10000;
+    }
+    draw(ctx) {
+        if (!this.alive) return;
+        let screenX = this.x - camera.x, screenY = this.y - camera.y;
+        ctx.beginPath(); ctx.arc(screenX, screenY, 50, 0, Math.PI * 2);
+        ctx.fillStyle = this.team === 'blue' ? '#0d47a1' : '#b71c1c'; ctx.fill();
+        ctx.lineWidth = 4; ctx.strokeStyle = '#ffd700'; ctx.stroke();
+
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Arial'; ctx.textAlign = 'center';
+        ctx.fillText(this.team === 'blue' ? '藍方主堡' : '紅方主堡', screenX, screenY + 5);
+
+        ctx.fillStyle = '#000'; ctx.fillRect(screenX - 40, screenY - 65, 80, 8);
+        ctx.fillStyle = '#00e676'; ctx.fillRect(screenX - 40, screenY - 65, (this.hp / this.maxHp) * 80, 8);
+    }
+}
+
 class NeutralMonster extends Entity {
     constructor(x, y, name, color) {
         super(x, y, 'neutral', 24);
@@ -508,8 +523,8 @@ class Minion extends Entity {
         if (enemy) {
             enemy.takeDamage(this.atk * 0.3, this.team);
         } else {
-            let targetX = this.team === 'blue' ? MAP_SIZE - 300 : 300;
-            let targetY = this.team === 'blue' ? 300 : MAP_SIZE - 300;
+            let targetX = this.team === 'blue' ? MAP_SIZE - 400 : 400;
+            let targetY = this.team === 'blue' ? 400 : MAP_SIZE - 400;
             let dx = targetX - this.x, dy = targetY - this.y;
             let dist = Math.hypot(dx, dy);
             if (dist > 20) {
@@ -532,9 +547,16 @@ class Minion extends Entity {
 }
 
 function spawnMinionWave() {
-    for (let i = 0; i < 3; i++) {
-        entities.push(new Minion(300 + i*25, MAP_SIZE - 300 - i*25, 'blue'));
-        entities.push(new Minion(MAP_SIZE - 300 - i*25, 300 + i*25, 'red'));
+    if (gameMode === '1v1') {
+        for (let i = 0; i < 3; i++) {
+            entities.push(new Minion(400 + i*30, MAP_SIZE - 400 - i*30, 'blue'));
+            entities.push(new Minion(MAP_SIZE - 400 - i*30, 400 + i*30, 'red'));
+        }
+    } else {
+        for (let i = 0; i < 3; i++) {
+            entities.push(new Minion(300 + i*25, MAP_SIZE - 300 - i*25, 'blue'));
+            entities.push(new Minion(MAP_SIZE - 300 - i*25, 300 + i*25, 'red'));
+        }
     }
 }
 
@@ -667,13 +689,17 @@ function confirmStartGame() {
 
     entities.push(new Hero(MAP_SIZE - 400, 400, 'red', 'krixi', false));
 
-    if (gameMode === '5v5') {
+    if (gameMode === '1v1') {
+        entities.push(new NexusBase(400, MAP_SIZE - 400, 'blue'));
+        entities.push(new NexusBase(MAP_SIZE - 400, 400, 'red'));
+
+        entities.push(new Turret(1200, MAP_SIZE - 1200, 'blue'));
+        entities.push(new Turret(MAP_SIZE - 1200, 1200, 'red'));
+    } else {
         entities.push(new NeutralMonster(1400, 2800, '藍Buff', '#00aaff'));
         entities.push(new NeutralMonster(2800, 1400, '紅Buff', '#ff4400'));
         entities.push(new Turret(1400, MAP_SIZE - 1400, 'blue'));
         entities.push(new Turret(MAP_SIZE - 1400, 1400, 'red'));
-    } else {
-        entities.push(new Turret(MAP_SIZE / 2, MAP_SIZE / 2, 'red'));
     }
 
     spawnMinionWave();
@@ -699,17 +725,26 @@ function gameLoop() {
     ctx.fillStyle = '#0f1923';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.strokeStyle = '#1e2d3d'; ctx.lineWidth = 160;
-    ctx.beginPath();
     if (gameMode === '1v1') {
-        ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y);
-        ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
+        ctx.strokeStyle = '#1e2d3d'; ctx.lineWidth = 200;
+        ctx.beginPath();
+        ctx.moveTo(400 - camera.x, MAP_SIZE - 400 - camera.y);
+        ctx.lineTo(MAP_SIZE - 400 - camera.x, 400 - camera.y);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(46, 125, 50, 0.4)';
+        let midX = MAP_SIZE / 2 - camera.x;
+        let midY = MAP_SIZE / 2 - camera.y;
+        ctx.fillRect(midX - 180, midY - 60, 100, 40);
+        ctx.fillRect(midX + 80, midY + 20, 100, 40);
     } else {
+        ctx.strokeStyle = '#1e2d3d'; ctx.lineWidth = 160;
+        ctx.beginPath();
         ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
         ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(300 - camera.x, 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
         ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, MAP_SIZE - 300 - camera.y); ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
+        ctx.stroke();
     }
-    ctx.stroke();
 
     entities.forEach(e => { if (e.update) e.update(); e.draw(ctx); });
 
