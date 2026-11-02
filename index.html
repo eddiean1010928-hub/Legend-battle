@@ -25,9 +25,6 @@
         .res-item { display: flex; align-items: center; gap: 5px; }
         .res-gold { color: #f3c654; }
 
-        .system-icons { display: flex; gap: 12px; font-size: 1.1rem; color: #cfd8dc; }
-        .sys-btn { background: rgba(255,255,255,0.08); width: 34px; height: 34px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; }
-
         .main-content { flex: 1; display: flex; justify-content: space-between; padding: 10px 0; position: relative; }
         .hero-heroine-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; opacity: 0.85; }
         .heroine-avatar { font-size: 9rem; text-shadow: 0 0 40px rgba(0, 210, 255, 0.6); }
@@ -414,7 +411,7 @@ class Entity {
         if (!this.alive) return;
         
         if (this instanceof Turret || this instanceof NexusBase) {
-            let enemyMinions = entities.filter(e => e instanceof Minion && e.alive && e.team === this.team && Math.hypot(e.x - this.x, e.y - this.y) < 220);
+            let enemyMinions = entities.filter(e => e instanceof Minion && e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 220);
             if (enemyMinions.length === 0) dmg *= 0.2; // 無兵線減傷 80%
         }
 
@@ -463,19 +460,14 @@ class Hero extends Entity {
         this.heroKey = heroKey; this.heroData = heroData; this.isPlayer = isPlayer;
         this.gold = currentUserData.gold; this.exp = 0; this.level = 1;
         this.atk = heroData.atk; this.range = heroData.range;
-        
-        // 降低基礎跑速，讓對戰走位更扎實
-        this.speed = 3.2; 
-        
+        this.speed = 2.6; 
         this.maxHp = isPlayer ? 5000 : 7500;
         this.hp = this.maxHp;
         this.minionIncomeTimer = 0;
         this.respawnTimer = 0;
         this.attackCooldown = 0;
-        
-        // 強化普攻狀態與霸體狀態
         this.isEnhancedAtk = false;
-        this.isSuperArmor = false; // 霸體開關
+        this.isSuperArmor = false;
         this.superArmorTimer = 0;
     }
 
@@ -491,10 +483,18 @@ class Hero extends Entity {
             return;
         }
 
-        // 霸體時間計算
         if (this.superArmorTimer > 0) {
             this.superArmorTimer -= 1/60;
             if (this.superArmorTimer <= 0) this.isSuperArmor = false;
+        }
+
+        this.exp += 0.08;
+        if (this.exp >= this.level * 100 && this.level < 15) {
+            this.level++; 
+            this.maxHp += 450; 
+            this.hp = Math.min(this.maxHp, this.hp + 450);
+            this.atk += 8;
+            if (this.isPlayer) updateTopScopeUI();
         }
 
         if (this.isPlayer) {
@@ -511,14 +511,7 @@ class Hero extends Entity {
                 this.minionIncomeTimer = 0;
                 document.getElementById('header-gold').innerText = `🪙 ${Math.floor(this.gold)}`;
             }
-
-            this.exp += 0.08;
-            if (this.exp >= this.level * 100 && this.level < 15) {
-                this.level++; this.maxHp += 450; this.hp = Math.min(this.maxHp, this.hp + 450);
-                updateTopScopeUI();
-            }
         } else {
-            // AI 敵方打擊與普攻特效
             if (this.attackCooldown > 0) this.attackCooldown -= 1/60;
             let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 350);
             if (target) {
@@ -531,7 +524,6 @@ class Hero extends Entity {
                     this.x = clamped.x; this.y = clamped.y;
                 } else if (this.attackCooldown <= 0) {
                     target.takeDamage(this.atk * 0.5, this.team);
-                    // 敵方紅色打擊特效
                     attackEffects.push({ x: target.x, y: target.y, life: 0.35, radius: 26, color: '#ff3366' });
                     this.attackCooldown = 1.0;
                 }
@@ -556,7 +548,6 @@ class Hero extends Entity {
         if (!this.alive) return;
         let screenX = this.x - camera.x, screenY = this.y - camera.y;
 
-        // 霸體護盾黃色特效繪製
         if (this.isSuperArmor) {
             ctx.beginPath(); ctx.arc(screenX, screenY, this.radius + 8, 0, Math.PI * 2);
             ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4; ctx.stroke();
@@ -571,21 +562,29 @@ class Hero extends Entity {
         ctx.lineWidth = 4; ctx.strokeStyle = this.heroData.color2; ctx.stroke();
         ctx.restore();
 
-        // **普攻範圍圈繪製**：黃色代表「強化普攻」；白色代表「一般普攻」
-        if (this.isPlayer) {
-            let activeRange = this.isEnhancedAtk ? this.range * 1.5 : this.range;
+        // 僅在有強化普攻時才顯示黃色範圍圈，平時沒有白色框
+        if (this.isPlayer && this.isEnhancedAtk) {
+            let activeRange = this.range * 1.5;
             ctx.beginPath(); ctx.arc(screenX, screenY, activeRange, 0, Math.PI * 2);
-            ctx.strokeStyle = this.isEnhancedAtk ? 'rgba(255, 215, 0, 0.95)' : 'rgba(255, 255, 255, 0.45)';
-            ctx.lineWidth = this.isEnhancedAtk ? 3.5 : 1.5;
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.95)';
+            ctx.lineWidth = 3.5;
             ctx.stroke();
-            ctx.fillStyle = this.isEnhancedAtk ? 'rgba(255, 215, 0, 0.15)' : 'rgba(255, 255, 255, 0.03)';
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.15)';
             ctx.fill();
         }
 
-        // 血條與等級
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(screenX - 30, screenY - 45, 60, 6);
         ctx.fillStyle = this.team === 'blue' ? '#00e676' : '#ff1744';
         ctx.fillRect(screenX - 30, screenY - 45, (this.hp / this.maxHp) * 60, 6);
+
+        let segmentCount = Math.floor(this.maxHp / 1000);
+        if (segmentCount > 1) {
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)'; ctx.lineWidth = 1.5;
+            for (let i = 1; i < segmentCount; i++) {
+                let segX = (screenX - 30) + (i * 1000 / this.maxHp) * 60;
+                ctx.beginPath(); ctx.moveTo(segX, screenY - 45); ctx.lineTo(segX, screenY - 39); ctx.stroke();
+            }
+        }
 
         ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center';
         ctx.fillText(`Lv.${this.level}`, screenX, screenY - 50);
@@ -595,68 +594,163 @@ class Hero extends Entity {
 class Turret extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 35);
-        this.maxHp = 4000; this.hp = 4000; this.range = 300; this.atk = 90; this.cooldown = 0;
+        this.maxHp = 12000; this.hp = 12000; 
+        this.range = 300; 
+        this.baseAtk = 360; // 防禦塔初始傷害調為 4 倍 (90 * 4 = 360)
+        this.atk = 360; 
+        this.cooldown = 0;
+        this.targetHistory = new Map();
+        this.currentTarget = null;
+        this.laserTimer = 0;
     }
+
     update() {
         if (!this.alive) return;
         if (this.cooldown > 0) this.cooldown -= 1/60;
-        if (this.cooldown <= 0) {
-            let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < this.range);
-            if (target) {
-                target.takeDamage(this.atk, this.team);
-                attackEffects.push({ x: target.x, y: target.y, life: 0.3, radius: 28, color: '#ff3366' });
+        if (this.laserTimer > 0) this.laserTimer -= 1/60;
+
+        let inRangeEnemies = entities.filter(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < this.range);
+        let minions = inRangeEnemies.filter(e => e instanceof Minion);
+        let heroes = inRangeEnemies.filter(e => e instanceof Hero);
+
+        let target = null;
+        if (this.currentTarget && this.currentTarget.alive && Math.hypot(this.currentTarget.x - this.x, this.currentTarget.y - this.y) < this.range) {
+            target = this.currentTarget;
+        } else {
+            if (minions.length > 0) target = minions[0];
+            else if (heroes.length > 0) target = heroes[0];
+        }
+
+        this.currentTarget = target;
+
+        if (target) {
+            for (let [t, data] of this.targetHistory.entries()) {
+                if (t !== target || Math.hypot(t.x - this.x, t.y - this.y) > this.range || !t.alive) {
+                    this.targetHistory.delete(t);
+                }
+            }
+
+            if (this.cooldown <= 0) {
+                let hitCount = this.targetHistory.get(target) || 0;
+                let currentDmg = this.baseAtk * (1 + hitCount * 0.25);
+                target.takeDamage(currentDmg, this.team);
+                
+                this.laserTimer = 0.25;
+                attackEffects.push({ x: target.x, y: target.y, life: 0.35, radius: 32, color: '#ff1744' });
+
+                this.targetHistory.set(target, hitCount + 1);
                 this.cooldown = 1.0;
             }
+        } else {
+            this.targetHistory.clear();
+            this.currentTarget = null;
         }
     }
+
     draw(ctx) {
         if (!this.alive) return;
         let screenX = this.x - camera.x, screenY = this.y - camera.y;
-        let enemyMinions = entities.filter(e => e instanceof Minion && e.alive && e.team === this.team && Math.hypot(e.x - this.x, e.y - this.y) < 220);
+        
+        let enemyMinions = entities.filter(e => e instanceof Minion && e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 220);
         let hasArmor = enemyMinions.length === 0;
+
+        if (this.laserTimer > 0 && this.currentTarget) {
+            let targetScreenX = this.currentTarget.x - camera.x;
+            let targetScreenY = this.currentTarget.y - camera.y;
+            ctx.save();
+            ctx.beginPath(); ctx.moveTo(screenX, screenY); ctx.lineTo(targetScreenX, targetScreenY);
+            ctx.strokeStyle = '#ff3366'; ctx.lineWidth = 5; ctx.stroke();
+            ctx.restore();
+        }
 
         ctx.beginPath(); ctx.arc(screenX, screenY, this.range, 0, Math.PI * 2);
         ctx.strokeStyle = this.team === 'blue' ? 'rgba(0, 210, 255, 0.25)' : 'rgba(255, 68, 68, 0.25)'; ctx.lineWidth = 2; ctx.stroke();
         ctx.beginPath(); ctx.arc(screenX, screenY, 32, 0, Math.PI * 2);
         ctx.fillStyle = '#263238'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = hasArmor ? '#ff3366' : '#546e7a'; ctx.stroke();
         ctx.fillStyle = this.team === 'blue' ? '#1565c0' : '#c62828'; ctx.fillRect(screenX - 18, screenY - 26, 36, 42);
-        if (hasArmor) { ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; ctx.fillText('🛡️ 減傷80%', screenX, screenY - 50); }
+        
+        if (hasArmor) { 
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 11px Arial'; ctx.textAlign = 'center'; 
+            ctx.fillText('🛡️ 減傷80%', screenX, screenY - 50); 
+        }
+        
         ctx.fillStyle = '#000'; ctx.fillRect(screenX - 30, screenY - 40, 60, 6);
         ctx.fillStyle = '#00e676'; ctx.fillRect(screenX - 30, screenY - 40, (this.hp / this.maxHp) * 60, 6);
+
+        let segmentCount = Math.floor(this.maxHp / 1000);
+        if (segmentCount > 1) {
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)'; ctx.lineWidth = 1.5;
+            for (let i = 1; i < segmentCount; i++) {
+                let segX = (screenX - 30) + (i * 1000 / this.maxHp) * 60;
+                ctx.beginPath(); ctx.moveTo(segX, screenY - 40); ctx.lineTo(segX, screenY - 34); ctx.stroke();
+            }
+        }
     }
 }
 
 class NexusBase extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 50);
-        this.maxHp = 6000; this.hp = 6000; this.range = 300; this.atk = 110; this.cooldown = 0;
+        this.maxHp = 18000; this.hp = 18000; 
+        this.range = 300; this.baseAtk = 440; this.atk = 440; this.cooldown = 0;
+        this.currentTarget = null;
+        this.laserTimer = 0;
     }
     update() {
         if (!this.alive) return;
         if (this.cooldown > 0) this.cooldown -= 1/60;
-        if (this.cooldown <= 0) {
-            let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < this.range);
-            if (target) {
-                target.takeDamage(this.atk, this.team);
-                attackEffects.push({ x: target.x, y: target.y, life: 0.3, radius: 35, color: '#ffcc00' });
-                this.cooldown = 1.0;
-            }
+        if (this.laserTimer > 0) this.laserTimer -= 1/60;
+
+        let inRangeEnemies = entities.filter(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < this.range);
+        let target = inRangeEnemies.length > 0 ? inRangeEnemies[0] : null;
+        this.currentTarget = target;
+
+        if (target && this.cooldown <= 0) {
+            target.takeDamage(this.atk, this.team);
+            this.laserTimer = 0.25;
+            attackEffects.push({ x: target.x, y: target.y, life: 0.35, radius: 35, color: '#ffcc00' });
+            this.cooldown = 1.0;
         }
     }
     draw(ctx) {
         if (!this.alive) return;
         let screenX = this.x - camera.x, screenY = this.y - camera.y;
+
+        if (this.laserTimer > 0 && this.currentTarget) {
+            let targetScreenX = this.currentTarget.x - camera.x;
+            let targetScreenY = this.currentTarget.y - camera.y;
+            ctx.save();
+            ctx.beginPath(); ctx.moveTo(screenX, screenY); ctx.lineTo(targetScreenX, targetScreenY);
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 6; ctx.stroke();
+            ctx.restore();
+        }
+
         ctx.beginPath(); ctx.arc(screenX, screenY, this.range, 0, Math.PI * 2);
         ctx.strokeStyle = this.team === 'blue' ? 'rgba(0, 210, 255, 0.2)' : 'rgba(255, 68, 68, 0.2)'; ctx.lineWidth = 2; ctx.stroke();
         ctx.beginPath(); ctx.arc(screenX, screenY, 50, 0, Math.PI * 2);
         ctx.fillStyle = this.team === 'blue' ? '#0d47a1' : '#b71c1c'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = '#ffd700'; ctx.stroke();
+        
+        let enemyTurrets = entities.filter(e => e instanceof Turret && e.alive && e.team === this.team);
+        let hasShield = enemyTurrets.length > 0;
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Arial'; ctx.textAlign = 'center';
+        ctx.fillText(hasShield ? '🛡️ 主堡(護盾中)' : '主堡解鎖!', screenX, screenY + 5);
+
         ctx.fillStyle = '#000'; ctx.fillRect(screenX - 40, screenY - 65, 80, 8);
         ctx.fillStyle = '#00e676'; ctx.fillRect(screenX - 40, screenY - 65, (this.hp / this.maxHp) * 80, 8);
+
+        let segmentCount = Math.floor(this.maxHp / 1000);
+        if (segmentCount > 1) {
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)'; ctx.lineWidth = 1.5;
+            for (let i = 1; i < segmentCount; i++) {
+                let segX = (screenX - 40) + (i * 1000 / this.maxHp) * 80;
+                ctx.beginPath(); ctx.moveTo(segX, screenY - 65); ctx.lineTo(segX, screenY - 57); ctx.stroke();
+            }
+        }
     }
 }
 
 class Minion extends Entity {
-    constructor(x, y, team) { super(x, y, team, 14); this.hp = 3000; this.maxHp = 3000; this.speed = 2.0; this.atk = 25; }
+    constructor(x, y, team) { super(x, y, team, 14); this.hp = 3000; this.maxHp = 3000; this.speed = 2.0; this.atk = 8; }
     update() {
         if (!this.alive) return;
         let enemy = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 60);
@@ -691,38 +785,52 @@ function spawnMinionWave() {
     }
 }
 
-// **我方普攻判定**：強化普攻用金黃色特效，普通普攻用白色特效
 function performAttack() {
     if (!player || !player.alive) return;
-    let activeRange = player.isEnhancedAtk ? player.range * 1.5 : player.range;
+    
+    let isEnhanced = (player.heroKey === 'nakroth' && player.isEnhancedAtk) || (player.heroKey === 'zuka' && player.isZukaEnhanced);
+    let activeRange = isEnhanced ? player.range * 1.5 : player.range;
+    
     let target = entities.find(e => e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= activeRange);
+    
     if (target) {
         let finalDmg = player.atk;
-        if (player.isEnhancedAtk) {
-            finalDmg *= 2.0; // 納克 / 祖卡放完技能傷害加倍
-            player.isEnhancedAtk = false;
-            attackEffects.push({ x: target.x, y: target.y, life: 0.4, radius: 35, color: '#ffd700' });
+        
+        if (isEnhanced) {
+            finalDmg *= 2.0; 
+            let aoeRadius = 100; 
+            
+            entities.forEach(e => {
+                if (e.alive && e.team !== player.team && Math.hypot(e.x - target.x, e.y - target.y) <= aoeRadius) {
+                    e.takeDamage(finalDmg, player.team);
+                }
+            });
+            
+            if (player.heroKey === 'nakroth') player.isEnhancedAtk = false;
+            if (player.heroKey === 'zuka') player.isZukaEnhanced = false;
+            
+            attackEffects.push({ x: target.x, y: target.y, life: 0.45, radius: aoeRadius, color: '#ffd700' });
         } else {
+            target.takeDamage(finalDmg, player.team);
             attackEffects.push({ x: target.x, y: target.y, life: 0.3, radius: 24, color: '#ffffff' });
         }
-        target.takeDamage(finalDmg, player.team);
     }
 }
 
 function castSkill(skillId, dirX, dirY, dragDist) {
     if (!player || !player.alive) return;
 
-    // 拖曳微拉與點擊優化：計算對應的距離，不強迫一定拉到最遠
-    let castDistance = Math.max(100, dragDist * 3.5);
+    let castDistance = Math.max(80, dragDist * 1.8);
 
     if (player.heroKey === 'nakroth' && skillId === 1) {
-        let dashX = player.x + dirX * castDistance;
-        let dashY = player.y + dirY * castDistance;
-        let clamped = clampPosition(dashX, dashY, player.radius);
-        player.x = clamped.x; player.y = clamped.y;
+        let targetX = player.x + dirX * castDistance;
+        let targetY = player.y + dirY * castDistance;
+        let clamped = clampPosition(targetX, targetY, player.radius);
         
-        // 擊飛與傷害
-        skillEffects.push({ x: player.x, y: player.y, dirX:0, dirY:0, life:0.5, speed:0, size:40, color:'#8e44ad', dmg:180, team:player.team });
+        player.x = clamped.x; 
+        player.y = clamped.y;
+        
+        skillEffects.push({ x: player.x, y: player.y, dirX: 0, dirY: 0, life: 0.5, speed: 0, size: 55, color: 'rgba(142, 68, 173, 0.7)', dmg: 180, team: player.team });
 
         if (nakrothS1Stage === 1) { nakrothS1Stage = 2; return; }
         else { nakrothS1Stage = 1; skillCooldowns[1] = skillMaxCDs[1]; return; }
@@ -736,18 +844,15 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             let dashY = player.y - dirY * castDistance;
             let clamped = clampPosition(dashX, dashY, player.radius);
             player.x = clamped.x; player.y = clamped.y;
-            
-            // **觸發強化普攻**：下次普攻傷害*2、範圍變大且有黃圈提示
             player.isEnhancedAtk = true; 
         }
         else if (skillId === 3) { 
-            // **霸體大招**
             player.isSuperArmor = true;
             player.superArmorTimer = 1.2;
             skillEffects.push({ x: player.x, y: player.y, dirX:0, dirY:0, life:0.8, speed:0, size:65, color:'#d7bde2', dmg:320, team:player.team }); 
         }
     } else if (player.heroKey === 'zuka') {
-        player.isEnhancedAtk = true; // 祖卡放完技能觸發強化普攻
+        player.isEnhancedAtk = true;
         let dashX = player.x + dirX * castDistance;
         let dashY = player.y + dirY * castDistance;
         let clamped = clampPosition(dashX, dashY, player.radius);
@@ -925,15 +1030,34 @@ function gameLoop() {
     minionSpawnTimer += 1/60;
     if (minionSpawnTimer >= 15) { spawnMinionWave(); minionSpawnTimer = 0; }
 
-    // 技能指示器
     if (activeSkillDrag && player && player.alive) {
         let pX = player.x - camera.x, pY = player.y - camera.y;
         let dirX = activeSkillDrag.dirX, dirY = activeSkillDrag.dirY;
-        let dist = Math.max(100, activeSkillDrag.dragDist * 3.5);
+        let dist = Math.max(80, activeSkillDrag.dragDist * 1.8);
+        let targetX = pX + dirX * dist;
+        let targetY = pY + dirY * dist;
 
         ctx.save();
-        ctx.beginPath(); ctx.moveTo(pX, pY); ctx.lineTo(pX + dirX * dist, pY + dirY * dist);
-        ctx.strokeStyle = 'rgba(0, 210, 255, 0.7)'; ctx.lineWidth = 4; ctx.stroke();
+        if (player.heroKey === 'nakroth' && activeSkillDrag.skillId === 1) {
+            ctx.beginPath(); ctx.moveTo(pX, pY); ctx.lineTo(targetX, targetY);
+            ctx.strokeStyle = 'rgba(142, 68, 173, 0.5)'; ctx.lineWidth = 3; ctx.stroke();
+            ctx.beginPath(); ctx.arc(targetX, targetY, 55, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(142, 68, 173, 0.25)'; ctx.fill();
+            ctx.strokeStyle = '#d7bde2'; ctx.lineWidth = 2; ctx.stroke();
+        } else if (player.heroKey === 'nakroth' && activeSkillDrag.skillId === 2) {
+            let backX = pX - dirX * dist;
+            let backY = pY - dirY * dist;
+            ctx.beginPath(); ctx.setLineDash([6, 6]);
+            ctx.moveTo(pX, pY); ctx.lineTo(backX, backY);
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.beginPath(); ctx.arc(backX, backY, 28, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.25)'; ctx.fill();
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
+        } else {
+            ctx.beginPath(); ctx.moveTo(pX, pY); ctx.lineTo(targetX, targetY);
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.7)'; ctx.lineWidth = 4; ctx.stroke();
+        }
         ctx.restore();
     }
 
@@ -950,7 +1074,8 @@ function gameLoop() {
         ctx.fillStyle = fx.color; ctx.fill();
         if (fx.dmg > 0) {
             entities.forEach(e => {
-                if (e.alive && e.team !== fx.team && Math.hypot(e.x - fx.x, e.y - fx.y) < fx.size + 10) {
+                let isBuilding = (e instanceof Turret || e instanceof NexusBase);
+                if (e.alive && e.team !== fx.team && !isBuilding && Math.hypot(e.x - fx.x, e.y - fx.y) < fx.size + 10) {
                     e.takeDamage(fx.dmg, fx.team);
                 }
             });
