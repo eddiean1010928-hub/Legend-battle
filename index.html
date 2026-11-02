@@ -247,10 +247,10 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 const HERO_DB = {
-    'nakroth': { name: '納克羅斯', type: '刺客 / 高機動性', atk: 120, range: 150, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2', s1: '擊飛位移', s2: '強化普攻', s3: '霸體連擊' },
-    'valhein': { name: '凡恩', type: '射手 / 物理攻擊', atk: 85, range: 240, avatar: '🎯', color1: '#c29b38', color2: '#ffe89e', s1: '獵魔星標', s2: '黃色飛鏢', s3: '水銀彈幕' },
-    'krixi': { name: '克里希', type: '法師 / 魔法攻擊', atk: 70, range: 220, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7', s1: '蝶影穿梭', s2: '落葉擊飛', s3: '月落星沉' },
-    'zuka': { name: '祖卡', type: '戰士 / 物理爆發', atk: 110, range: 140, avatar: '🐼', color1: '#ff9800', color2: '#ffe082', s1: '泰山壓頂', s2: '熊貓護盾', s3: '沉重打擊' }
+    'nakroth': { name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 5000, hpGrowth: 450, atk: 120, range: 150, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2', s1: '擊飛位移', s2: '強化普攻', s3: '霸體連擊' },
+    'valhein': { name: '凡恩', type: '射手 / 物理攻擊', baseHp: 4500, hpGrowth: 380, atk: 85, range: 240, avatar: '🎯', color1: '#c29b38', color2: '#ffe89e', s1: '獵魔星標', s2: '黃色飛鏢', s3: '水銀彈幕' },
+    'krixi': { name: '克里希', type: '法師 / 魔法攻擊', baseHp: 4200, hpGrowth: 350, atk: 70, range: 220, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7', s1: '蝶影穿梭', s2: '落葉擊飛', s3: '月落星沉' },
+    'zuka': { name: '祖卡', type: '戰士 / 物理爆發', baseHp: 6200, hpGrowth: 550, atk: 110, range: 140, avatar: '🐼', color1: '#ff9800', color2: '#ffe082', s1: '泰山壓頂', s2: '熊貓護盾', s3: '沉重打擊' }
 };
 
 const ITEMS_DB = [
@@ -461,8 +461,10 @@ class Hero extends Entity {
         this.gold = currentUserData.gold; this.exp = 0; this.level = 1;
         this.atk = heroData.atk; this.range = heroData.range;
         this.speed = 2.6; 
-        this.maxHp = isPlayer ? 5000 : 7500;
+        
+        this.maxHp = isPlayer ? heroData.baseHp : Math.floor(heroData.baseHp * 1.3);
         this.hp = this.maxHp;
+        
         this.minionIncomeTimer = 0;
         this.respawnTimer = 0;
         this.attackCooldown = 0;
@@ -491,8 +493,9 @@ class Hero extends Entity {
         this.exp += 0.08;
         if (this.exp >= this.level * 100 && this.level < 15) {
             this.level++; 
-            this.maxHp += 450; 
-            this.hp = Math.min(this.maxHp, this.hp + 450);
+            let hpGain = this.heroData.hpGrowth || 400;
+            this.maxHp += hpGain; 
+            this.hp = Math.min(this.maxHp, this.hp + hpGain);
             this.atk += 8;
             if (this.isPlayer) updateTopScopeUI();
         }
@@ -523,7 +526,7 @@ class Hero extends Entity {
                     let clamped = clampPosition(nextX, nextY, this.radius);
                     this.x = clamped.x; this.y = clamped.y;
                 } else if (this.attackCooldown <= 0) {
-                    target.takeDamage(this.atk * 0.5, this.team);
+                    target.takeDamage(this.atk * 1.5, this.team);
                     attackEffects.push({ x: target.x, y: target.y, life: 0.35, radius: 26, color: '#ff3366' });
                     this.attackCooldown = 1.0;
                 }
@@ -562,7 +565,6 @@ class Hero extends Entity {
         ctx.lineWidth = 4; ctx.strokeStyle = this.heroData.color2; ctx.stroke();
         ctx.restore();
 
-        // 僅在有強化普攻時才顯示黃色範圍圈，平時沒有白色框
         if (this.isPlayer && this.isEnhancedAtk) {
             let activeRange = this.range * 1.5;
             ctx.beginPath(); ctx.arc(screenX, screenY, activeRange, 0, Math.PI * 2);
@@ -596,7 +598,7 @@ class Turret extends Entity {
         super(x, y, team, 35);
         this.maxHp = 12000; this.hp = 12000; 
         this.range = 300; 
-        this.baseAtk = 360; // 防禦塔初始傷害調為 4 倍 (90 * 4 = 360)
+        this.baseAtk = 360; 
         this.atk = 360; 
         this.cooldown = 0;
         this.targetHistory = new Map();
@@ -794,7 +796,7 @@ function performAttack() {
     let target = entities.find(e => e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= activeRange);
     
     if (target) {
-        let finalDmg = player.atk;
+        let finalDmg = player.atk * 3.0; 
         
         if (isEnhanced) {
             finalDmg *= 2.0; 
@@ -1056,7 +1058,11 @@ function gameLoop() {
             ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
         } else {
             ctx.beginPath(); ctx.moveTo(pX, pY); ctx.lineTo(targetX, targetY);
-            ctx.strokeStyle = 'rgba(0, 210, 255, 0.7)'; ctx.lineWidth = 4; ctx.stroke();
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.7)'; ctx.lineWidth = 3; ctx.stroke();
+
+            ctx.beginPath(); ctx.arc(targetX, targetY, 40, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 210, 255, 0.2)'; ctx.fill();
+            ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 2; ctx.stroke();
         }
         ctx.restore();
     }
