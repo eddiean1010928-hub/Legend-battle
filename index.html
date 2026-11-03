@@ -161,7 +161,7 @@
 
         <div class="main-content">
             <div class="hero-heroine-bg">
-                <div class="heroine-avatar">🗡️</div>
+                <div class="heroine-avatar">⚔️</div>
             </div>
         </div>
 
@@ -304,7 +304,6 @@ let playerKillStreak = 0;
 let aiKillStreak = 0;
 let announcementTimer = null;
 
-// 草叢定義（位於中央牆壁兩側）
 let bushes = [
     { x: MAP_SIZE / 2 - 250, y: MAP_SIZE / 2, radiusX: 110, radiusY: 70 },
     { x: MAP_SIZE / 2 + 250, y: MAP_SIZE / 2, radiusX: 110, radiusY: 70 }
@@ -346,15 +345,11 @@ const HERO_DB = {
     'quillen': { name: '奎倫', type: '刺客 / 背刺必爆', baseHp: 4800, hpGrowth: 420, atk: 130, range: 140, avatar: '🥷', color1: '#b71c1c', color2: '#ff8a80', s1: '三段揮擊', s2: '標記突進', s3: '隱身回血' },
     'nakroth': { name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 5000, hpGrowth: 450, atk: 120, range: 110, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2', s1: '擊飛位移', s2: '強化普攻', s3: '刺刺刺亂舞' },
     'ryoma': { name: '龍馬', type: '戰士 / 槍尖暈眩', baseHp: 5800, hpGrowth: 500, atk: 125, range: 220, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7', s1: '反向翻滾', s2: '槍尖暈眩', s3: '多段刺吸血' },
-    'krixi': { name: '克里希', type: '法師 / 魔法爆發', baseHp: 4200, hpGrowth: 350, atk: 45, range: 220, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7', s1: '蝶影穿梭', s2: '落葉擊飛', s3: '月落星沉' },
-    'alice': { name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 4000, hpGrowth: 320, atk: 40, range: 240, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7', s1: '星芒暈眩', s2: '流星護盾', s3: '大招沈默' }
+    'valhein': { name: '凡恩', type: '射手 / 雙刀流控場', baseHp: 4300, hpGrowth: 360, atk: 135, range: 350, avatar: '🔫', color1: '#1565c0', color2: '#90caf9', s1: '紅色範圍彈射', s2: '黃色定點暈眩', s3: '獵殺多段飛劍' },
+    'telannas': { name: '特爾安娜絲', type: '射手 / 遠距持續輸出', baseHp: 4100, hpGrowth: 340, atk: 140, range: 360, avatar: '🏹', color1: '#f57f17', color2: '#fff59d', s1: '強化普攻', s2: '緩速箭雨', s3: '神速大招' },
+    'krixi': { name: '克里希', type: '法師 / 魔法爆發', baseHp: 4200, hpGrowth: 350, atk: 45, range: 260, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7', s1: '蝶影穿梭', s2: '落葉擊飛', s3: '月落星沉' },
+    'alice': { name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 4000, hpGrowth: 320, atk: 40, range: 280, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7', s1: '星芒暈眩', s2: '流星護盾', s3: '大招沈默' }
 };
-
-const ITEMS_DB = [
-    { id: 'ad_1', name: '聖劍', cost: 300, atk: 30 },
-    { id: 'ap_1', name: '魔法書', cost: 300, atk: 25 },
-    { id: 'def_1', name: '守衛鎧甲', cost: 400, hp: 400 }
-];
 
 let blueKills = 0, redKills = 0;
 let kills = 0, deaths = 0, assists = 0;
@@ -548,15 +543,18 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
             }
         }
     }, { passive: false });
+});
 
-    function releaseSkill(e) {
-        if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
-            castSkill(activeSkillDrag.skillId, activeSkillDrag.dirX, activeSkillDrag.dirY, activeSkillDrag.dragDist);
-            activeSkillDrag = null;
-        }
+window.addEventListener('pointerup', (e) => {
+    if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
+        castSkill(activeSkillDrag.skillId, activeSkillDrag.dirX, activeSkillDrag.dirY, activeSkillDrag.dragDist);
+        activeSkillDrag = null;
     }
-    btn.addEventListener('pointerup', releaseSkill);
-    btn.addEventListener('pointercancel', releaseSkill);
+});
+window.addEventListener('pointercancel', (e) => {
+    if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
+        activeSkillDrag = null;
+    }
 });
 
 function clampPosition(x, y, radius = 26) {
@@ -618,7 +616,6 @@ class Entity {
             let wasAliveBefore = this.alive;
             this.hp = 0; this.alive = false;
 
-            // 擊殺兵線或英雄經驗分配
             if (this instanceof Minion) {
                 if (sourceTeam === 'blue' && player && player.alive) {
                     player.gainExpAndGold(35, 18);
@@ -680,7 +677,6 @@ class Hero extends Entity {
         if (!this.alive) return;
 
         if (!this.isPlayer) {
-            // AI 簡單對線與殘血回溫泉邏輯
             let targetBaseX = this.team === 'blue' ? MAP_SIZE - 400 : 400;
             let targetBaseY = this.team === 'blue' ? 400 : MAP_SIZE - 400;
             if (this.hp < this.maxHp * 0.3) {
@@ -763,6 +759,7 @@ class Tower extends Entity {
         this.maxHp = 6000; this.hp = 6000; this.atk = 220; this.range = 280;
     }
     update() {
+        if (!this.alive) return;
         let enemy = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= this.range);
         if (enemy && Math.random() < 0.04) {
             enemy.takeDamage(this.atk, this.team, 'physical');
@@ -780,7 +777,6 @@ function performAttack() {
             let isCrit = false;
             let finalAtk = player.atk;
 
-            // 奎倫背刺必爆判定
             if (player.heroKey === 'quillen') {
                 let toTargetX = target.x - player.x;
                 let toTargetY = target.y - player.y;
@@ -790,7 +786,6 @@ function performAttack() {
                 if (dot > 0) isCrit = true;
             }
 
-            // 一般英雄 10% 爆擊率
             if (!isCrit && Math.random() < 0.10) isCrit = true;
             if (isCrit) finalAtk *= 2;
 
@@ -989,6 +984,57 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             }
         }
     }
+    else if (player.heroKey === 'valhein') {
+        let stats = getSkillStats(skillId, skillId === 1 ? 320 : (skillId === 2 ? 280 : 450), skillMaxCDs[skillId]);
+        if (skillId === 1) stats.cd = Math.max(3.5, 6.0 - (skillLevels[1] - 1) * 0.5);
+        if (skillId === 2) stats.cd = Math.max(5.0, 9.0 - (skillLevels[2] - 1) * 0.8);
+        if (skillId === 3) stats.cd = Math.max(10.0, 18.0 - (skillLevels[3] - 1) * 2.0);
+        skillCooldowns[skillId] = stats.cd;
+
+        if (skillId === 1) {
+            let targetX = player.x + dirX * 220;
+            let targetY = player.y + dirY * 220;
+            skillEffects.push({ x: targetX, y: targetY, dirX: dirX, dirY: dirY, life: 0.3, speed: 0, size: 60, color: 'rgba(211, 47, 47, 0.6)', dmg: stats.dmg, team: player.team, dmgType: 'magic' });
+            entities.forEach(e => {
+                if (e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) < 70) {
+                    e.takeDamage(stats.dmg, player.team, 'magic');
+                }
+            });
+        } 
+        else if (skillId === 2) {
+            let targetX = player.x + dirX * 250;
+            let targetY = player.y + dirY * 250;
+            skillEffects.push({ x: targetX, y: targetY, dirX: dirX, dirY: dirY, life: 0.3, speed: 0, size: 50, color: 'rgba(253, 216, 53, 0.7)', dmg: stats.dmg, team: player.team, dmgType: 'magic' });
+            entities.forEach(e => {
+                if (e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) < 65) {
+                    e.takeDamage(stats.dmg, player.team, 'magic');
+                    e.isStunned = true;
+                    setTimeout(() => { e.isStunned = false; }, 1000);
+                }
+            });
+        } 
+        else if (skillId === 3) {
+            let hits = 6;
+            for (let i = 0; i < hits; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    let spreadAngle = (i - 2.5) * 0.15;
+                    let cDirX = dirX * Math.cos(spreadAngle) - dirY * Math.sin(spreadAngle);
+                    let cDirY = dirX * Math.sin(spreadAngle) + dirY * Math.cos(spreadAngle);
+                    let targetX = player.x + cDirX * 200;
+                    let targetY = player.y + cDirY * 200;
+
+                    skillEffects.push({ x: targetX, y: targetY, dirX: cDirX, dirY: cDirY, life: 0.2, speed: 0, size: 40, color: 'rgba(33, 150, 243, 0.7)', dmg: stats.dmg / 2, team: player.team, dmgType: 'magic' });
+                    entities.forEach(e => {
+                        if (e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) < 50) {
+                            e.takeDamage(stats.dmg / 2, player.team, 'magic');
+                        }
+                    });
+                }, i * 60);
+            }
+            attackEffects.push({ x: player.x, y: player.y, life: 0.5, radius: 80, color: '#1565c0' });
+        }
+    }
 }
 
 function updateTopScopeUI() {
@@ -1118,7 +1164,6 @@ function gameLoop() {
     camera.x = Math.max(0, Math.min(MAP_SIZE - canvas.width, camera.x));
     camera.y = Math.max(0, Math.min(MAP_SIZE - canvas.height, camera.y));
 
-    // 繪製道路
     ctx.save();
     ctx.beginPath();
     ctx.moveTo(400 - camera.x, MAP_SIZE - 400 - camera.y);
@@ -1128,7 +1173,6 @@ function gameLoop() {
     ctx.stroke();
     ctx.restore();
 
-    // 繪製草叢
     bushes.forEach(bush => {
         let sx = bush.x - camera.x, sy = bush.y - camera.y;
         ctx.beginPath();
@@ -1142,7 +1186,6 @@ function gameLoop() {
 
     entities.forEach(e => e.update());
 
-    // 繪製實體
     entities.forEach(entity => {
         if (!entity.alive) return;
         let sx = entity.x - camera.x;
@@ -1151,37 +1194,56 @@ function gameLoop() {
         ctx.save();
         if (entity.inBush && entity !== player) ctx.globalAlpha = 0.35;
 
-        ctx.beginPath();
-        ctx.arc(sx, sy, entity.radius, 0, Math.PI * 2);
-        ctx.fillStyle = entity.team === 'blue' ? '#00d2ff' : '#ff4444';
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#fff';
-        ctx.stroke();
+        if (entity instanceof Tower) {
+            ctx.beginPath();
+            ctx.rect(sx - 35, sy - 35, 70, 70);
+            ctx.fillStyle = entity.team === 'blue' ? '#0077aa' : '#aa2222';
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
 
-        if (entity instanceof Hero) {
+            ctx.font = 'bold 20px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff';
+            ctx.fillText('🏛️', sx, sy);
+        } else if (entity instanceof Hero) {
+            ctx.beginPath();
+            ctx.arc(sx, sy, entity.radius, 0, Math.PI * 2);
+            ctx.fillStyle = entity.team === 'blue' ? '#00d2ff' : '#ff4444';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+
             ctx.font = '22px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(entity.heroData.avatar, sx, sy);
 
-            // 奎倫標記頭頂顯示
             if (entity.quillenMarked) {
                 ctx.font = 'bold 16px Arial';
                 ctx.fillStyle = '#ff1744';
                 ctx.fillText('🎯 標記', sx, sy - entity.radius - 22);
             }
+        } else {
+            ctx.beginPath();
+            ctx.arc(sx, sy, entity.radius, 0, Math.PI * 2);
+            ctx.fillStyle = entity.team === 'blue' ? '#00d2ff' : '#ff4444';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
         }
 
-        // 血條
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(sx - 24, sy - entity.radius - 12, 48, 6);
+        ctx.fillRect(sx - 28, sy - entity.radius - 16, 56, 6);
         ctx.fillStyle = entity.team === 'blue' ? '#00e676' : '#ff1744';
-        ctx.fillRect(sx - 24, sy - entity.radius - 12, 48 * (entity.hp / entity.maxHp), 6);
+        ctx.fillRect(sx - 28, sy - entity.radius - 16, 56 * (entity.hp / entity.maxHp), 6);
         ctx.restore();
     });
 
-    // 技能與特效
     skillEffects.forEach((fx, idx) => {
         fx.life -= 0.03;
         let sx = fx.x - camera.x, sy = fx.y - camera.y;
@@ -1205,7 +1267,6 @@ function gameLoop() {
         if (dt.life <= 0) damageTexts.splice(idx, 1);
     });
 
-    // 冷卻與點數按鈕狀態更新
     [1, 2, 3].forEach(id => {
         if (skillCooldowns[id] > 0) {
             skillCooldowns[id] -= 0.016;
