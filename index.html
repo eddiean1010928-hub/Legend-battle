@@ -48,6 +48,9 @@
         .kda-text { color: #ffeb3b; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 10px; }
         .level-text { color: #00e676; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 10px; }
 
+        .announcement-banner { position: absolute; top: 65px; left: 50%; transform: translateX(-50%); background: linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(13, 27, 46, 0.85) 50%, rgba(0,0,0,0) 100%); padding: 8px 40px; border-top: 1px solid #ffd700; border-bottom: 1px solid #ffd700; z-index: 100; pointer-events: none; text-align: center; transition: opacity 0.3s ease; }
+        .announcement-text { font-size: 1.4rem; font-weight: 900; font-style: italic; color: #ffd700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 69, 0, 0.6); letter-spacing: 2px; }
+
         #hud-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         #hud-layer * { pointer-events: auto; }
 
@@ -60,7 +63,7 @@
         .controls-right { position: absolute; bottom: 15px; right: 20px; width: 220px; height: 230px; pointer-events: none; }
         .attack-btn { position: absolute; bottom: 5px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto; }
         
-        .heal-spell-btn { position: absolute; bottom: 130px; right: 95px; width: 48px; height: 48px; background: radial-gradient(circle, #00e676 0%, #1b5e20 100%); border: 2px solid #b9f6ca; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.65rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; }
+        .challenger-spell-btn { position: absolute; bottom: 130px; right: 95px; width: 48px; height: 48px; background: radial-gradient(circle, #263238 0%, #0d1b2a 100%); border: 2px solid #f3c654; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; touch-action: none; }
 
         .skill-btn { position: absolute; width: 62px; height: 62px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; touch-action: none; }
         .skill-btn.locked { border-color: #555; opacity: 0.5; filter: grayscale(1); }
@@ -124,6 +127,10 @@
         <span class="score-red" id="score-red">0</span>
         <span class="gold-text" id="gold-display">🪙 300</span>
         <span class="kda-text" id="kda-display">KDA: 0 / 0 / 0</span>
+    </div>
+
+    <div id="announcement-banner" class="announcement-banner hidden">
+        <div id="announcement-text" class="announcement-text">FIRST BLOOD</div>
     </div>
 
     <div id="result-screen" class="result-overlay hidden">
@@ -193,6 +200,16 @@
             <div class="pick-right-sidebar">
                 <div class="team-slot"><span>我方 (你)</span><span style="color:#00d2ff;">準備就緒</span></div>
                 <div class="team-slot"><span id="ai-opponent-slot">電競AI對手</span><span style="color:#ff4444;">隨機配對</span></div>
+                
+                <div style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px;">
+                    <div style="font-size:0.8rem; color:#f3c654; margin-bottom:5px;">選擇挑戰者技能：</div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="ch-select-btn active" data-ch="blink" style="flex:1; padding:4px; background:#1a2a40; border:1px solid #f3c654; color:#fff; border-radius:4px; cursor:pointer; font-size:0.75rem;">✨ 順移</button>
+                        <button class="ch-select-btn" data-ch="heal" style="flex:1; padding:4px; background:#1a2a40; border:1px solid #334455; color:#fff; border-radius:4px; cursor:pointer; font-size:0.75rem;">💚 治癒</button>
+                        <button class="ch-select-btn" data-ch="execute" style="flex:1; padding:4px; background:#1a2a40; border:1px solid #334455; color:#fff; border-radius:4px; cursor:pointer; font-size:0.75rem;">⚔️ 斬殺</button>
+                    </div>
+                </div>
+
                 <button class="pick-confirm-btn" id="btn-confirm-hero">確 定</button>
             </div>
         </div>
@@ -205,10 +222,13 @@
         </div>
         <div class="controls-right">
             <div class="attack-btn" id="btn-attack">⚔️</div>
-            <div class="heal-spell-btn" id="btn-heal-spell">
-                恢復
-                <div class="skill-cd-overlay hidden" id="cd-heal"></div>
+            
+            <div class="challenger-spell-btn" id="btn-challenger-spell">
+                <span id="challenger-icon">✨</span>
+                <div class="skill-desc-label" id="lbl-challenger">順移</div>
+                <div class="skill-cd-overlay hidden" id="cd-challenger"></div>
             </div>
+
             <div class="skill-btn" id="skill-3" data-skill="3">
                 <div class="skill-upgrade-btn hidden" id="up-btn-3">+</div>
                 大招
@@ -259,6 +279,31 @@ let isRunning = false;
 let gameMode = '1v1';
 let selectedHeroKey = 'ryoma';
 let randomAiKey = 'krixi';
+let selectedChallengerKey = 'blink';
+let challengerCooldown = 0;
+const CHALLENGER_MAX_CDS = { 'blink': 60, 'heal': 90, 'execute': 75 };
+
+let hasFirstBloodOccurred = false;
+let playerKillStreak = 0;
+let aiKillStreak = 0;
+let announcementTimer = null;
+
+function triggerAnnouncement(text, color = '#ffd700') {
+    let banner = document.getElementById('announcement-banner');
+    let txtEl = document.getElementById('announcement-text');
+    
+    txtEl.innerText = text;
+    txtEl.style.color = color;
+    banner.classList.remove('hidden');
+    banner.style.opacity = '1';
+
+    if (announcementTimer) clearTimeout(announcementTimer);
+    
+    announcementTimer = setTimeout(() => {
+        banner.style.opacity = '0';
+        setTimeout(() => { banner.classList.add('hidden'); }, 300);
+    }, 3500);
+}
 
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
 window.addEventListener('resize', resizeCanvas);
@@ -293,7 +338,6 @@ let isAttackingPressed = false;
 let skillCooldowns = { 1: 0, 2: 0, 3: 0 };
 let skillLevels = { 1: 0, 2: 0, 3: 0 };
 let unallocatedPoints = 0;
-let healCooldown = 0;
 const skillMaxCDs = { 1: 3.0, 2: 5.0, 3: 10.0 };
 
 let nakrothS1Stage = 1;
@@ -315,7 +359,71 @@ bindClick('btn-start-match', () => openHeroPick('1v1'));
 bindClick('btn-confirm-hero', () => confirmStartGame());
 bindClick('btn-pick-back', () => backToMenuFromPick());
 bindClick('btn-back-lobby', () => backToLobby());
-bindClick('btn-heal-spell', () => useHealSpell());
+
+document.querySelectorAll('.ch-select-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.ch-select-btn').forEach(b => b.style.borderColor = '#334455');
+        btn.style.borderColor = '#f3c654';
+        selectedChallengerKey = btn.dataset.ch;
+        
+        let names = { 'blink': '順移', 'heal': '治癒', 'execute': '斬殺' };
+        let icons = { 'blink': '✨', 'heal': '💚', 'execute': '⚔️' };
+        document.getElementById('lbl-challenger').innerText = names[selectedChallengerKey];
+        document.getElementById('challenger-icon').innerText = icons[selectedChallengerKey];
+    });
+});
+
+const challengerBtn = document.getElementById('btn-challenger-spell');
+challengerBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (challengerCooldown > 0 || !player || !player.alive) return;
+    castChallengerSpell();
+});
+
+function castChallengerSpell() {
+    challengerCooldown = CHALLENGER_MAX_CDS[selectedChallengerKey];
+
+    if (selectedChallengerKey === 'blink') {
+        let dX = joystickDir.x !== 0 ? joystickDir.x : 1;
+        let dY = joystickDir.y !== 0 ? joystickDir.y : 0;
+        let len = Math.hypot(dX, dY);
+        if (len > 0) { dX /= len; dY /= len; } else { dX = 1; dY = 0; }
+
+        let targetX = player.x + dX * 180;
+        let targetY = player.y + dY * 180;
+        player.startDash(targetX, targetY, 40);
+        attackEffects.push({ x: player.x, y: player.y, life: 0.4, radius: 35, color: '#00d2ff' });
+    } 
+    else if (selectedChallengerKey === 'heal') {
+        let healAmt = player.maxHp * 0.35;
+        player.hp = Math.min(player.maxHp, player.hp + healAmt);
+        attackEffects.push({ x: player.x, y: player.y, life: 0.6, radius: 55, color: '#00e676' });
+    } 
+    else if (selectedChallengerKey === 'execute') {
+        let executedAny = false;
+        entities.forEach(e => {
+            if (e.alive && e.team !== player.team && e instanceof Hero && Math.hypot(e.x - player.x, e.y - player.y) <= 180) {
+                let missingHp = e.maxHp - e.hp;
+                let executeDmg = 400 + missingHp * 0.4;
+                
+                let wasAliveBefore = e.alive;
+                e.takeDamage(executeDmg, player.team, 'physical');
+                
+                attackEffects.push({ x: e.x, y: e.y, life: 0.6, radius: 65, color: '#ff1744' });
+                skillEffects.push({ x: e.x, y: e.y, dirX: 0, dirY: 0, life: 0.4, speed: 0, size: 85, color: 'rgba(255, 23, 68, 0.4)', dmg: 0, team: player.team });
+
+                if (wasAliveBefore && !e.alive) {
+                    executedAny = true;
+                }
+            }
+        });
+
+        if (executedAny) {
+            challengerCooldown *= 0.1;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: 'CHALLENGER EXECUTE!', color: '#ffd700', life: 1.5 });
+        }
+    }
+}
 
 [1, 2, 3].forEach(id => {
     bindClick(`up-btn-${id}`, () => upgradeSkill(id));
@@ -487,6 +595,7 @@ class Entity {
             if (enemyTurrets.length > 0) return;
         }
 
+        let wasAliveBefore = this.alive;
         this.hp -= dmg;
 
         let isFromMinion = (sourceEntity instanceof Minion);
@@ -501,11 +610,42 @@ class Entity {
             });
         }
 
-        if (this.hp <= 0) {
+        if (this.hp <= 0 && wasAliveBefore) {
             this.hp = 0; this.alive = false;
             if (this instanceof Hero) {
-                if (sourceTeam === 'blue') { blueKills++; if (!this.isPlayer) { kills++; player.gold += 150; currentUserData.gold += 150; saveUserData(); } }
-                else { redKills++; if (this.isPlayer) deaths++; }
+                let killerTeam = sourceTeam;
+                
+                if (!hasFirstBloodOccurred) {
+                    hasFirstBloodOccurred = true;
+                    let fbText = (killerTeam === 'blue') ? '我方完成 FIRST BLOOD（首殺）！' : '敵方完成 FIRST BLOOD（首殺）！';
+                    triggerAnnouncement(fbText, '#ff3366');
+                }
+
+                if (killerTeam === 'blue') {
+                    blueKills++; 
+                    if (!this.isPlayer) {
+                        kills++; 
+                        playerKillStreak++;
+                        if (aiKillStreak >= 3) {
+                            triggerAnnouncement(`玩家終結了 ${this.heroData.name} 的連殺！`, '#00e676');
+                        } else {
+                            triggerAnnouncement(`我方擊殺了 ${this.heroData.name}`, '#00d2ff');
+                        }
+                        aiKillStreak = 0;
+                        player.gold += 150; currentUserData.gold += 150; saveUserData();
+                    }
+                } else {
+                    redKills++; 
+                    if (this.isPlayer) {
+                        deaths++;
+                        playerKillStreak = 0;
+                        aiKillStreak++;
+                    } else {
+                        aiKillStreak++;
+                    }
+                    triggerAnnouncement(`敵方擊殺了 ${this.heroData.name}`, '#ff3366');
+                }
+
                 updateTopScopeUI();
                 this.respawnTimer = 5.0;
             } else if (this instanceof NexusBase) {
@@ -548,6 +688,7 @@ class Hero extends Entity {
         this.minionIncomeTimer = 0;
         this.respawnTimer = 0;
         this.attackCooldown = 0;
+        this.attackStopTimer = 0;
         this.aiSkillCooldowns = { 1: 0, 2: 0, 3: 0 };
         this.isEnhancedAtk = false;
         this.isSuperArmor = false;
@@ -627,10 +768,6 @@ class Hero extends Entity {
             if (this.superArmorTimer <= 0) this.isSuperArmor = false;
         }
 
-        for (let sKey in this.aiSkillCooldowns) {
-            if (this.aiSkillCooldowns[sKey] > 0) this.aiSkillCooldowns[sKey] -= 1/60;
-        }
-
         this.exp += 0.08;
         if (this.exp >= this.level * 100 && this.level < 15) {
             this.level++; 
@@ -644,10 +781,14 @@ class Hero extends Entity {
 
         if (this.stunTimer > 0) return;
 
+        if (this.attackCooldown > 0) this.attackCooldown -= 1/60;
+        if (this.attackStopTimer > 0) this.attackStopTimer -= 1/60;
+
         if (this.isPlayer) {
             if (joystickDir.x !== 0 || joystickDir.y !== 0) {
-                let nextX = this.x + joystickDir.x * this.speed;
-                let nextY = this.y + joystickDir.y * this.speed;
+                let currentSpeed = (this.attackStopTimer > 0) ? 0 : this.speed;
+                let nextX = this.x + joystickDir.x * currentSpeed;
+                let nextY = this.y + joystickDir.y * currentSpeed;
                 let clamped = clampPosition(nextX, nextY, this.radius);
                 this.x = clamped.x; this.y = clamped.y;
             }
@@ -659,9 +800,26 @@ class Hero extends Entity {
                 document.getElementById('header-gold').innerText = `🪙 ${Math.floor(this.gold)}`;
             }
         } else {
-            if (this.attackCooldown > 0) this.attackCooldown -= 1/60;
+            for (let sKey in this.aiSkillCooldowns) {
+                if (this.aiSkillCooldowns[sKey] > 0) this.aiSkillCooldowns[sKey] -= 1/60;
+            }
+
+            let hpPercent = this.hp / this.maxHp;
+            let fountainX = (this.team === 'blue') ? 400 : MAP_SIZE - 400;
+            let fountainY = (this.team === 'blue') ? MAP_SIZE - 400 : 400;
+            let distToFountain = Math.hypot(fountainX - this.x, fountainY - this.y);
+
+            if (hpPercent < 0.3 && distToFountain > 80) {
+                let dx = fountainX - this.x, dy = fountainY - this.y;
+                let dirX = dx / distToFountain, dirY = dy / distToFountain;
+                let nextX = this.x + dirX * (this.speed * 1.1);
+                let nextY = this.y + dirY * (this.speed * 1.1);
+                let clamped = clampPosition(nextX, nextY, this.radius);
+                this.x = clamped.x; this.y = clamped.y;
+                return;
+            }
+
             let target = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 350);
-            
             let lineCenter = MAP_SIZE / 2;
             let distToCenter = Math.hypot(lineCenter - this.x, lineCenter - this.y);
 
@@ -682,9 +840,19 @@ class Hero extends Entity {
                     let clamped = clampPosition(nextX, nextY, this.radius);
                     this.x = clamped.x; this.y = clamped.y;
                 } else if (this.attackCooldown <= 0) {
-                    target.takeDamage(this.atk * 1.5, this.team, 'physical');
+                    let atkDmg = this.atk * 1.5;
+                    target.takeDamage(atkDmg, this.team, 'physical');
+                    
+                    damageTexts.push({
+                        x: target.x + (Math.random() * 20 - 10),
+                        y: target.y - target.radius - 10,
+                        value: atkDmg,
+                        color: '#ff3366',
+                        life: 2.0
+                    });
+
                     attackEffects.push({ x: target.x, y: target.y, life: 0.35, radius: 26, color: '#ff3366' });
-                    this.attackCooldown = 1.0;
+                    this.attackCooldown = 0.5;
                 }
             } else if (distToCenter > 350) {
                 let dx = lineCenter - this.x, dy = lineCenter - this.y;
@@ -788,6 +956,18 @@ class Turret extends Entity {
         this.laserTimer = 0;
     }
 
+    takeDamage(dmg, sourceTeam, dmgType = 'physical', sourceEntity = null) {
+        let wasAlive = this.alive;
+        super.takeDamage(dmg, sourceTeam, dmgType, sourceEntity);
+        if (wasAlive && !this.alive) {
+            if (this.team === 'red') {
+                triggerAnnouncement('我方已擊破敵方外塔！', '#00e676');
+            } else {
+                triggerAnnouncement('敵方已擊破我方外塔！', '#ff3366');
+            }
+        }
+    }
+
     update() {
         if (!this.alive) return;
         if (this.cooldown > 0) this.cooldown -= 1/60;
@@ -807,24 +987,24 @@ class Turret extends Entity {
 
         this.currentTarget = target;
 
-        if (target) {
-            for (let [t, data] of this.targetHistory.entries()) {
-                if (t !== target || Math.hypot(t.x - this.x, t.y - this.y) > this.range || !t.alive) {
-                    this.targetHistory.delete(t);
-                }
-            }
+        if (target && this.cooldown <= 0) {
+            let hitCount = this.targetHistory.get(target) || 0;
+            let currentDmg = this.baseAtk * (1 + hitCount * 0.25);
+            target.takeDamage(currentDmg, this.team, 'physical');
+            
+            damageTexts.push({
+                x: target.x + (Math.random() * 20 - 10),
+                y: target.y - target.radius - 10,
+                value: currentDmg,
+                color: (target instanceof Hero) ? '#ff5722' : '#ff9800',
+                life: 2.0
+            });
 
-            if (this.cooldown <= 0) {
-                let hitCount = this.targetHistory.get(target) || 0;
-                let currentDmg = this.baseAtk * (1 + hitCount * 0.25);
-                target.takeDamage(currentDmg, this.team, 'physical');
-                
-                this.laserTimer = 0.25;
-                attackEffects.push({ x: target.x, y: target.y, life: 0.35, radius: 32, color: '#ff1744' });
+            this.laserTimer = 0.25;
+            attackEffects.push({ x: target.x, y: target.y, life: 0.35, radius: 32, color: '#ff1744' });
 
-                this.targetHistory.set(target, hitCount + 1);
-                this.cooldown = 1.0;
-            }
+            this.targetHistory.set(target, hitCount + 1);
+            this.cooldown = 1.0;
         } else {
             this.targetHistory.clear();
             this.currentTarget = null;
@@ -886,11 +1066,30 @@ class NexusBase extends Entity {
         if (this.laserTimer > 0) this.laserTimer -= 1/60;
 
         let inRangeEnemies = entities.filter(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < this.range);
-        let target = inRangeEnemies.length > 0 ? inRangeEnemies[0] : null;
+        let minions = inRangeEnemies.filter(e => e instanceof Minion);
+        let heroes = inRangeEnemies.filter(e => e instanceof Hero);
+
+        let target = null;
+        if (this.currentTarget && this.currentTarget.alive && Math.hypot(this.currentTarget.x - this.x, this.currentTarget.y - this.y) < this.range) {
+            target = this.currentTarget;
+        } else {
+            if (minions.length > 0) target = minions[0];
+            else if (heroes.length > 0) target = heroes[0];
+        }
+
         this.currentTarget = target;
 
         if (target && this.cooldown <= 0) {
             target.takeDamage(this.atk, this.team, 'physical');
+            
+            damageTexts.push({
+                x: target.x + (Math.random() * 20 - 10),
+                y: target.y - target.radius - 10,
+                value: this.atk,
+                color: '#ffd700',
+                life: 2.0
+            });
+
             this.laserTimer = 0.25;
             attackEffects.push({ x: target.x, y: target.y, life: 0.35, radius: 35, color: '#ffcc00' });
             this.cooldown = 1.0;
@@ -989,6 +1188,8 @@ function spawnMinionWave() {
 function performAttack() {
     if (!player || !player.alive) return;
     
+    if (player.attackCooldown > 0) return;
+
     let isEnhanced = (player.heroKey === 'nakroth' && player.isEnhancedAtk) || (player.heroKey === 'zuka' && player.isZukaEnhanced);
     let activeRange = isEnhanced ? player.range * 1.5 : player.range;
     
@@ -1015,6 +1216,9 @@ function performAttack() {
             target.takeDamage(finalDmg, player.team, 'physical');
             attackEffects.push({ x: target.x, y: target.y, life: 0.3, radius: 24, color: '#ffffff' });
         }
+
+        player.attackCooldown = 0.5;
+        player.attackStopTimer = 0.5;
     }
 }
 
@@ -1113,7 +1317,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             }
         }
     } else if (player.heroKey === 'krixi') {
-        let stats = getSkillStats(skillId, skillId === 1 ? 450 : (skillId === 2 ? 180 : 280), skillMaxCDs[skillId]);
+        let stats = getSkillStats(skillId, skillId === 1 ? 450 : (skillId === 2 ? 90 : 280), skillMaxCDs[skillId]);
         skillCooldowns[skillId] = stats.cd;
 
         if (skillId === 1) {
@@ -1124,8 +1328,9 @@ function castSkill(skillId, dirX, dirY, dragDist) {
                 maxDist: 320, traveled: 0, team: player.team, hitEntities: new Set() 
             });
         } else if (skillId === 2) {
-            let targetX = player.x + dirX * castDistance;
-            let targetY = player.y + dirY * castDistance;
+            let maxCastDist = Math.max(120, dragDist * 5.5);
+            let targetX = player.x + dirX * maxCastDist;
+            let targetY = player.y + dirY * maxCastDist;
             let clamped = clampPosition(targetX, targetY, player.radius);
             skillEffects.push({ 
                 x: clamped.x, y: clamped.y, dirX: 0, dirY: 0, life: 0.5, speed: 0, size: 60, 
@@ -1147,8 +1352,9 @@ function castSkill(skillId, dirX, dirY, dragDist) {
         skillCooldowns[skillId] = stats.cd;
 
         if (skillId === 1) {
-            let targetX = player.x + dirX * castDistance;
-            let targetY = player.y + dirY * castDistance;
+            let maxCastDist = Math.max(140, dragDist * 6.0);
+            let targetX = player.x + dirX * maxCastDist;
+            let targetY = player.y + dirY * maxCastDist;
             let clamped = clampPosition(targetX, targetY, player.radius);
             skillEffects.push({ 
                 x: clamped.x, y: clamped.y, dirX: 0, dirY: 0, life: 0.5, speed: 0, size: 55, 
@@ -1158,8 +1364,9 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             player.hp = Math.min(player.maxHp, player.hp + 400); 
             skillEffects.push({ x: player.x, y: player.y, dirX: 0, dirY: 0, life: 1.0, speed: 0, size: 50, color: 'rgba(225, 190, 231, 0.7)', dmg: 0, team: player.team });
         } else if (skillId === 3) {
-            let targetX = player.x + dirX * castDistance;
-            let targetY = player.y + dirY * castDistance;
+            let maxCastDist = Math.max(160, dragDist * 6.5);
+            let targetX = player.x + dirX * maxCastDist;
+            let targetY = player.y + dirY * maxCastDist;
             let clamped = clampPosition(targetX, targetY, player.radius);
             skillEffects.push({ 
                 x: clamped.x, y: clamped.y, dirX: 0, dirY: 0, life: 1.5, speed: 0, size: 110, 
@@ -1208,9 +1415,13 @@ function updateTopScopeUI() {
     document.getElementById('level-display').innerText = `Lv.${player ? player.level : 1}`;
     document.getElementById('gold-display').innerText = `🪙 ${Math.floor(player ? player.gold : currentUserData.gold)}`;
 
-    let healOverlay = document.getElementById('cd-heal');
-    if (healCooldown > 0) { healOverlay.classList.remove('hidden'); healOverlay.innerText = Math.ceil(healCooldown); }
-    else { healOverlay.classList.add('hidden'); }
+    let chOverlay = document.getElementById('cd-challenger');
+    if (challengerCooldown > 0) { 
+        chOverlay.classList.remove('hidden'); 
+        chOverlay.innerText = Math.ceil(challengerCooldown); 
+    } else { 
+        chOverlay.classList.add('hidden'); 
+    }
 
     for (let id = 1; id <= 3; id++) {
         let btn = document.getElementById(`skill-${id}`);
@@ -1308,7 +1519,8 @@ function confirmStartGame() {
     document.getElementById('top-hud').classList.remove('hidden');
 
     blueKills = 0; redKills = 0; kills = 0; deaths = 0; assists = 0;
-    nakrothS1Stage = 1; ryomaS1Stage = 1; ryomaS1Timer = 0; healCooldown = 0; 
+    hasFirstBloodOccurred = false; playerKillStreak = 0; aiKillStreak = 0;
+    nakrothS1Stage = 1; ryomaS1Stage = 1; ryomaS1Timer = 0; challengerCooldown = 0; 
     skillLevels = { 1: 0, 2: 0, 3: 0 }; unallocatedPoints = 1;
     entities = []; damageTexts = [];
     
@@ -1357,7 +1569,7 @@ function gameLoop() {
     for (let id in skillCooldowns) {
         if (skillCooldowns[id] > 0) { skillCooldowns[id] -= 1/60; if (skillCooldowns[id] < 0) skillCooldowns[id] = 0; }
     }
-    if (healCooldown > 0) { healCooldown -= 1/60; if (healCooldown < 0) healCooldown = 0; }
+    if (challengerCooldown > 0) { challengerCooldown -= 1/60; if (challengerCooldown < 0) challengerCooldown = 0; }
     updateTopScopeUI();
 
     if (player) {
@@ -1381,7 +1593,13 @@ function gameLoop() {
     if (activeSkillDrag && player && player.alive) {
         let pX = player.x - camera.x, pY = player.y - camera.y;
         let dirX = activeSkillDrag.dirX, dirY = activeSkillDrag.dirY;
-        let dist = Math.max(80, activeSkillDrag.dragDist * 1.8);
+
+        let distMult = 1.8;
+        if (player.heroKey === 'krixi' && activeSkillDrag.skillId === 2) distMult = 5.5;
+        if (player.heroKey === 'alice' && activeSkillDrag.skillId === 1) distMult = 6.0;
+        if (player.heroKey === 'alice' && activeSkillDrag.skillId === 3) distMult = 6.5;
+
+        let dist = Math.max(80, activeSkillDrag.dragDist * distMult);
         let targetX = pX + dirX * dist;
         let targetY = pY + dirY * dist;
 
@@ -1439,7 +1657,7 @@ function gameLoop() {
         } else {
             ctx.beginPath(); ctx.moveTo(pX, pY); ctx.lineTo(targetX, targetY);
             ctx.strokeStyle = 'rgba(0, 210, 255, 0.7)'; ctx.lineWidth = 3; ctx.stroke();
-            ctx.beginPath(); ctx.arc(targetX, targetY, 40, 0, Math.PI * 2);
+            ctx.beginPath(); ctx.arc(targetX, targetY, 45, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(0, 210, 255, 0.2)'; ctx.fill();
             ctx.strokeStyle = '#00e5ff'; ctx.lineWidth = 2; ctx.stroke();
         }
@@ -1506,15 +1724,24 @@ function gameLoop() {
                     fx.traveled += fx.speed;
                     if (fx.traveled >= fx.maxDist) {
                         fx.isReturning = true;
-                        fx.dirX *= -1;
-                        fx.dirY *= -1;
                         fx.hitEntities.clear();
                     }
                 } else {
-                    fx.x += fx.dirX * fx.speed;
-                    fx.y += fx.dirY * fx.speed;
-                    fx.traveled -= fx.speed;
-                    if (fx.traveled <= 0) fx.life = 0;
+                    if (player && player.alive) {
+                        let dx = player.x - fx.x;
+                        let dy = player.y - fx.y;
+                        let dist = Math.hypot(dx, dy);
+                        if (dist > 15) {
+                            fx.dirX = dx / dist;
+                            fx.dirY = dy / dist;
+                            fx.x += fx.dirX * fx.speed;
+                            fx.y += fx.dirY * fx.speed;
+                        } else {
+                            fx.life = 0;
+                        }
+                    } else {
+                        fx.life = 0;
+                    }
                 }
             } else {
                 fx.x += fx.dirX * fx.speed;
@@ -1569,8 +1796,10 @@ function gameLoop() {
         ctx.globalAlpha = alpha;
         ctx.lineWidth = 3;
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.strokeText(`-${Math.round(dt.value)}`, dt.x - camera.x, dt.y - camera.y);
-        ctx.fillText(`-${Math.round(dt.value)}`, dt.x - camera.x, dt.y - camera.y);
+        
+        let displayStr = typeof dt.value === 'number' ? `-${Math.round(dt.value)}` : dt.value;
+        ctx.strokeText(displayStr, dt.x - camera.x, dt.y - camera.y);
+        ctx.fillText(displayStr, dt.x - camera.x, dt.y - camera.y);
         ctx.restore();
 
         if (dt.life <= 0) damageTexts.splice(i, 1);
