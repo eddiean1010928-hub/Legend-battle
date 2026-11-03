@@ -348,7 +348,7 @@ let isAttackingPressed = false;
 
 let skillCooldowns = { 1: 0, 2: 0, 3: 0 };
 let skillLevels = { 1: 0, 2: 0, 3: 0 };
-let unallocatedPoints = 0;
+let unallocatedPoints = 1; // **1等時預設擁有 1 點技能點，可自由點 1 或 2 技**
 const skillMaxCDs = { 1: 3.0, 2: 5.0, 3: 12.0 };
 
 let nakrothS1Stage = 1;
@@ -767,7 +767,7 @@ function initGameWorld() {
     gameTimeSeconds = 0; hasFirstBloodOccurred = false;
     skillCooldowns = { 1: 0, 2: 0, 3: 0 };
     skillLevels = { 1: 0, 2: 0, 3: 0 };
-    unallocatedPoints = 0;
+    unallocatedPoints = 1; // **1等時給予 1 點可分配技能點**
     nakrothS1Stage = 1; ryomaS1Stage = 1;
 
     player = new Hero(400, MAP_SIZE - 400, 'blue', selectedHeroKey, true);
@@ -782,6 +782,10 @@ function initGameWorld() {
     entities.push(new Tower(MAP_SIZE - 800, 900, 'red'));
     entities.push(new Base(400, MAP_SIZE - 400, 'blue'));
     entities.push(new Base(MAP_SIZE - 400, 400, 'red'));
+
+    // **強制初始化相機鏡頭對準玩家，解決畫面黑色問題**
+    camera.x = player.x - canvas.width / 2;
+    camera.y = player.y - canvas.height / 2;
 
     updateFastBuyUI();
     updateTopScopeUI();
