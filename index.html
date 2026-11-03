@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>傳說對決 Arena of Valor Canvas Edition</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
         body, html { width: 100%; height: 100%; overflow: hidden; background: #050a12; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; }
@@ -65,8 +64,21 @@
 
         .skill-btn { position: absolute; width: 62px; height: 62px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; touch-action: none; }
         .skill-btn.locked { border-color: #555; opacity: 0.5; filter: grayscale(1); }
-        .skill-desc-label { position: absolute; bottom: -18px; width: 70px; text-align: center; font-size: 0.65rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
-        .skill-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.9rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
+        .skill-desc-label { position: absolute; bottom: -18px; width: 90px; text-align: center; font-size: 0.6rem; color: #ffeb3b; font-weight: bold; pointer-events: none; white-space: nowrap; }
+        .skill-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.85rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
+
+        .skill-upgrade-btn {
+            position: absolute; top: -8px; right: -8px; width: 28px; height: 28px;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8f00 100%);
+            border: 2px solid #fff; border-radius: 50%; color: #000;
+            font-size: 1.1rem; font-weight: 900; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; box-shadow: 0 0 12px rgba(255, 215, 0, 0.9); z-index: 60;
+            animation: pulse-upgrade 0.8s infinite alternate;
+        }
+        @keyframes pulse-upgrade {
+            0% { transform: scale(0.95); box-shadow: 0 0 6px rgba(255, 215, 0, 0.6); }
+            100% { transform: scale(1.15); box-shadow: 0 0 16px rgba(255, 215, 0, 1); }
+        }
 
         #skill-3 { bottom: 130px; right: 20px; border-color: #e040fb; }
         #skill-2 { bottom: 90px; right: 100px; border-color: #00e676; }
@@ -79,7 +91,10 @@
         .pick-cancel-btn { background: none; border: none; color: #aaa; font-size: 1rem; cursor: pointer; }
         
         .pick-content-layout { display: flex; flex: 1; margin-top: 15px; gap: 20px; overflow: hidden; }
-        .pick-hero-sidebar { width: 180px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; overflow-y: auto; }
+        .pick-hero-sidebar { width: 190px; height: 100%; max-height: 380px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; overflow-y: auto; padding-right: 5px; scrollbar-width: thin; scrollbar-color: #f3c654 rgba(0,0,0,0.3); }
+        .pick-hero-sidebar::-webkit-scrollbar { width: 6px; }
+        .pick-hero-sidebar::-webkit-scrollbar-thumb { background-color: #f3c654; border-radius: 3px; }
+
         .pick-hero-thumb { width: 75px; height: 75px; background: #1a2a40; border: 2px solid #334455; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 2rem; cursor: pointer; }
         .pick-hero-thumb.active { border-color: #f3c654; box-shadow: 0 0 10px rgba(243, 198, 84, 0.6); }
 
@@ -195,18 +210,21 @@
                 <div class="skill-cd-overlay hidden" id="cd-heal"></div>
             </div>
             <div class="skill-btn" id="skill-3" data-skill="3">
+                <div class="skill-upgrade-btn hidden" id="up-btn-3">+</div>
                 大招
                 <div class="skill-desc-label" id="lbl-skill-3">霸體傷害</div>
                 <div class="skill-cd-overlay hidden" id="cd-3"></div>
             </div>
             <div class="skill-btn" id="skill-2" data-skill="2">
+                <div class="skill-upgrade-btn hidden" id="up-btn-2">+</div>
                 二技
-                <div class="skill-desc-label" id="lbl-skill-2">強化位移</div>
+                <div class="skill-desc-label" id="lbl-skill-2">槍尖暈眩</div>
                 <div class="skill-cd-overlay hidden" id="cd-2"></div>
             </div>
             <div class="skill-btn" id="skill-1" data-skill="1">
+                <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
                 一技
-                <div class="skill-desc-label" id="lbl-skill-1">位移擊飛</div>
+                <div class="skill-desc-label" id="lbl-skill-1">反向翻滾</div>
                 <div class="skill-cd-overlay hidden" id="cd-1"></div>
             </div>
         </div>
@@ -235,11 +253,11 @@ window.addEventListener('DOMContentLoaded', () => { initUserData(); });
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let MAP_SIZE = 3000; // 地圖長度調短
+let MAP_SIZE = 3000;
 let ROAD_WIDTH = 320; 
 let isRunning = false;
 let gameMode = '1v1';
-let selectedHeroKey = 'nakroth';
+let selectedHeroKey = 'ryoma';
 let randomAiKey = 'krixi';
 
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
@@ -251,7 +269,8 @@ const HERO_DB = {
     'valhein': { name: '凡恩', type: '射手 / 物理攻擊', baseHp: 4500, hpGrowth: 380, atk: 85, range: 240, avatar: '🎯', color1: '#c29b38', color2: '#ffe89e', s1: '獵魔星標', s2: '黃色飛鏢', s3: '水銀彈幕' },
     'krixi': { name: '克里希', type: '法師 / 魔法爆發', baseHp: 4200, hpGrowth: 350, atk: 45, range: 220, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7', s1: '蝶影穿梭', s2: '落葉擊飛', s3: '月落星沉' },
     'zuka': { name: '祖卡', type: '戰士 / 物理爆發', baseHp: 6200, hpGrowth: 550, atk: 110, range: 140, avatar: '🐼', color1: '#ff9800', color2: '#ffe082', s1: '泰山壓頂', s2: '熊貓護盾', s3: '沉重打擊' },
-    'ryoma': { name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 5800, hpGrowth: 500, atk: 125, range: 220, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7', s1: '反向翻滾', s2: '槍尖暈眩', s3: '連續多段刺' }
+    'ryoma': { name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 5800, hpGrowth: 500, atk: 125, range: 220, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7', s1: '反向翻滾', s2: '槍尖暈眩', s3: '連續多段刺' },
+    'alice': { name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 4000, hpGrowth: 320, atk: 40, range: 240, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7', s1: '星芒暈眩', s2: '流星護盾', s3: '大招沈默' }
 };
 
 const ITEMS_DB = [
@@ -269,11 +288,17 @@ let joystickDir = { x: 0, y: 0 };
 let joystickTouchId = null;
 let joystickCenter = { x: 0, y: 0 };
 let activeSkillDrag = null;
+let isAttackingPressed = false;
 
 let skillCooldowns = { 1: 0, 2: 0, 3: 0 };
+let skillLevels = { 1: 0, 2: 0, 3: 0 };
+let unallocatedPoints = 0;
 let healCooldown = 0;
 const skillMaxCDs = { 1: 3.0, 2: 5.0, 3: 10.0 };
+
 let nakrothS1Stage = 1;
+let ryomaS1Stage = 1;
+let ryomaS1Timer = 0;
 
 const joystick = document.getElementById('joystick');
 const knob = document.getElementById('joystick-knob');
@@ -291,6 +316,10 @@ bindClick('btn-confirm-hero', () => confirmStartGame());
 bindClick('btn-pick-back', () => backToMenuFromPick());
 bindClick('btn-back-lobby', () => backToLobby());
 bindClick('btn-heal-spell', () => useHealSpell());
+
+[1, 2, 3].forEach(id => {
+    bindClick(`up-btn-${id}`, () => upgradeSkill(id));
+});
 
 joystick.addEventListener('pointerdown', e => {
     joystickTouchId = e.pointerId;
@@ -325,22 +354,23 @@ function updateJoystick(clientX, clientY) {
 }
 
 const attackBtn = document.getElementById('btn-attack');
-attackBtn.addEventListener('pointerdown', () => performAttack());
-
-function useHealSpell() {
-    if (!player || !player.alive || healCooldown > 0) return;
-    player.hp = Math.min(player.maxHp, player.hp + 2000);
-    healCooldown = 30.0;
-    skillEffects.push({ x: player.x, y: player.y, dirX: 0, dirY: 0, life: 0.8, speed: 0, size: 50, color: '#00e676', dmg: -2000, team: player.team });
-}
+attackBtn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    isAttackingPressed = true;
+    performAttack();
+});
+window.addEventListener('pointerup', () => { isAttackingPressed = false; });
+window.addEventListener('pointercancel', () => { isAttackingPressed = false; });
 
 document.querySelectorAll('.skill-btn').forEach(btn => {
     btn.addEventListener('pointerdown', e => {
         let skillId = parseInt(btn.dataset.skill);
-        let reqLevel = skillId === 1 ? 1 : (skillId === 2 ? 2 : 4);
-        
+        let sLv = skillLevels[skillId];
+
         let isNakrothS2nd = (player && player.heroKey === 'nakroth' && skillId === 1 && nakrothS1Stage === 2);
-        if (!isNakrothS2nd && (skillCooldowns[skillId] > 0 || !player || player.level < reqLevel || !player.alive)) return;
+        let isRyomaS2nd = (player && player.heroKey === 'ryoma' && skillId === 1 && ryomaS1Stage === 2);
+
+        if (!isNakrothS2nd && !isRyomaS2nd && (sLv === 0 || skillCooldowns[skillId] > 0 || !player || !player.alive)) return;
 
         e.preventDefault();
         e.stopPropagation();
@@ -403,12 +433,48 @@ function clampPosition(x, y, radius = 26) {
     return { x, y };
 }
 
+function checkCanUpgrade(skillId) {
+    if (unallocatedPoints <= 0 || !player) return false;
+    let heroLv = player.level;
+    let currentSkillLv = skillLevels[skillId];
+
+    if (skillId === 1 || skillId === 2) {
+        if (currentSkillLv >= 6) return false;
+        if (heroLv === 2 && skillLevels[1] === 0 && skillId !== 1) return true;
+        if (heroLv === 2 && skillLevels[2] === 0 && skillId !== 2) return true;
+        if (heroLv === 2 && skillLevels[1] > 0 && skillLevels[2] > 0) return false;
+        return true;
+    } else if (skillId === 3) {
+        if (currentSkillLv >= 3) return false;
+        if (heroLv < 4) return false;
+        if (currentSkillLv === 1 && heroLv < 8) return false;
+        if (currentSkillLv === 2 && heroLv < 12) return false;
+        return true;
+    }
+    return false;
+}
+
+function upgradeSkill(skillId) {
+    if (checkCanUpgrade(skillId)) {
+        skillLevels[skillId]++;
+        unallocatedPoints--;
+        updateTopScopeUI();
+    }
+}
+
+function getSkillStats(skillId, baseDmg, baseCD) {
+    let sLv = skillLevels[skillId] || 1;
+    let dmg = Math.round(baseDmg * (1 + (sLv - 1) * 0.25));
+    let cd = Math.max(1.0, baseCD * (1 - (sLv - 1) * 0.08));
+    return { dmg, cd };
+}
+
 class Entity {
     constructor(x, y, team, radius = 22) {
         this.x = x; this.y = y; this.team = team;
         this.radius = radius; this.hp = 5000; this.maxHp = 5000; this.alive = true;
     }
-    takeDamage(dmg, sourceTeam, dmgType = 'physical') {
+    takeDamage(dmg, sourceTeam, dmgType = 'physical', sourceEntity = null) {
         if (!this.alive) return;
         
         if (this instanceof Turret || this instanceof NexusBase) {
@@ -423,14 +489,17 @@ class Entity {
 
         this.hp -= dmg;
 
-        let color = (dmgType === 'magic') ? '#ab47bc' : '#ff3366';
-        damageTexts.push({
-            x: this.x + (Math.random() * 20 - 10),
-            y: this.y - this.radius - 10,
-            value: dmg,
-            color: color,
-            life: 2.0
-        });
+        let isFromMinion = (sourceEntity instanceof Minion);
+        if (!isFromMinion) {
+            let color = (dmgType === 'magic') ? '#ab47bc' : '#ff3366';
+            damageTexts.push({
+                x: this.x + (Math.random() * 20 - 10),
+                y: this.y - this.radius - 10,
+                value: dmg,
+                color: color,
+                life: 2.0
+            });
+        }
 
         if (this.hp <= 0) {
             this.hp = 0; this.alive = false;
@@ -565,6 +634,7 @@ class Hero extends Entity {
         this.exp += 0.08;
         if (this.exp >= this.level * 100 && this.level < 15) {
             this.level++; 
+            unallocatedPoints++;
             let hpGain = this.heroData.hpGrowth || 400;
             this.maxHp += hpGain; 
             this.hp = Math.min(this.maxHp, this.hp + hpGain);
@@ -651,6 +721,23 @@ class Hero extends Entity {
             ctx.restore();
         });
 
+        if (this.isPlayer && isAttackingPressed) {
+            let currentRange = (this.isEnhancedAtk || this.isZukaEnhanced) ? this.range * 1.5 : this.range;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, currentRange, 0, Math.PI * 2);
+            if (this.isEnhancedAtk || this.isZukaEnhanced) {
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.95)';
+                ctx.lineWidth = 3;
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.12)';
+            } else {
+                ctx.strokeStyle = 'rgba(0, 210, 255, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.fillStyle = 'rgba(0, 210, 255, 0.08)';
+            }
+            ctx.fill();
+            ctx.stroke();
+        }
+
         if (this.isSuperArmor) {
             let progress = this.superArmorTimer / 1.2;
             ctx.fillStyle = '#ffd700'; ctx.font = 'bold 12px Arial'; ctx.textAlign = 'center';
@@ -671,13 +758,6 @@ class Hero extends Entity {
         ctx.fillStyle = this.heroData.color1; ctx.fill();
         ctx.lineWidth = 4; ctx.strokeStyle = this.heroData.color2; ctx.stroke();
         ctx.restore();
-
-        if (this.isPlayer && this.isEnhancedAtk) {
-            let activeRange = this.range * 1.5;
-            ctx.beginPath(); ctx.arc(screenX, screenY, activeRange, 0, Math.PI * 2);
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.95)'; ctx.lineWidth = 3.5; ctx.stroke();
-            ctx.fillStyle = 'rgba(255, 215, 0, 0.15)'; ctx.fill();
-        }
 
         ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(screenX - 30, screenY - 45, 60, 6);
         ctx.fillStyle = this.team === 'blue' ? '#00e676' : '#ff1744';
@@ -701,7 +781,7 @@ class Turret extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 35);
         this.maxHp = 12000; this.hp = 12000; 
-        this.range = 360; // 範圍與主堡重疊
+        this.range = 360; 
         this.baseAtk = 360; this.atk = 360; this.cooldown = 0;
         this.targetHistory = new Map();
         this.currentTarget = null;
@@ -854,11 +934,28 @@ class NexusBase extends Entity {
 }
 
 class Minion extends Entity {
-    constructor(x, y, team) { super(x, y, team, 14); this.hp = 3000; this.maxHp = 3000; this.speed = 2.0; this.atk = 8; }
+    constructor(x, y, team) { 
+        super(x, y, team, 14); 
+        this.hp = 3000; 
+        this.maxHp = 3000; 
+        this.speed = 2.0; 
+        this.atk = 8;
+        this.attackCooldown = 0;
+    }
+    
     update() {
         if (!this.alive) return;
+
+        if (this.attackCooldown > 0) this.attackCooldown -= 1/60;
+
         let enemy = entities.find(e => e.alive && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) < 60);
-        if (enemy) { enemy.takeDamage(this.atk * 0.3, this.team, 'physical'); }
+        
+        if (enemy) { 
+            if (this.attackCooldown <= 0) {
+                enemy.takeDamage(this.atk * 2.0, this.team, 'physical', this); 
+                this.attackCooldown = 1.2; 
+            }
+        }
         else {
             let targetX = this.team === 'blue' ? MAP_SIZE - 400 : 400;
             let targetY = this.team === 'blue' ? 400 : MAP_SIZE - 400;
@@ -938,9 +1035,9 @@ function castSkill(skillId, dirX, dirY, dragDist) {
         else { nakrothS1Stage = 1; skillCooldowns[1] = skillMaxCDs[1]; return; }
     }
 
-    skillCooldowns[skillId] = skillMaxCDs[skillId];
-
     if (player.heroKey === 'nakroth') {
+        let stats = getSkillStats(skillId, skillId === 2 ? 180 : 320, skillMaxCDs[skillId]);
+        skillCooldowns[skillId] = stats.cd;
         if (skillId === 2) { 
             let dashX = player.x - dirX * castDistance;
             let dashY = player.y - dirY * castDistance;
@@ -950,41 +1047,80 @@ function castSkill(skillId, dirX, dirY, dragDist) {
         else if (skillId === 3) { 
             player.isSuperArmor = true;
             player.superArmorTimer = 1.2;
-            skillEffects.push({ x: player.x, y: player.y, dirX:0, dirY:0, life:0.8, speed:0, size:65, color:'#d7bde2', dmg:320, team:player.team }); 
+            skillEffects.push({ x: player.x, y: player.y, dirX:0, dirY:0, life:0.8, speed:0, size:65, color:'#d7bde2', dmg:stats.dmg, team:player.team }); 
         }
     } else if (player.heroKey === 'zuka') {
+        let stats = getSkillStats(skillId, 180, skillMaxCDs[skillId]);
+        skillCooldowns[skillId] = stats.cd;
         player.isEnhancedAtk = true;
         let dashX = player.x + dirX * castDistance;
         let dashY = player.y + dirY * castDistance;
         player.startDash(dashX, dashY, 18);
-        skillEffects.push({ x: dashX, y: dashY, dirX:0, dirY:0, life:0.5, speed:0, size:45, color:'#ff9800', dmg:180, team:player.team }); 
+        skillEffects.push({ x: dashX, y: dashY, dirX:0, dirY:0, life:0.5, speed:0, size:45, color:'#ff9800', dmg:stats.dmg, team:player.team }); 
     } else if (player.heroKey === 'ryoma') {
+        let stats = getSkillStats(skillId, skillId === 1 ? 220 : (skillId === 2 ? 350 : 150), skillMaxCDs[skillId]);
+        
         if (skillId === 1) {
-            let forwardX = player.x + dirX * 160;
-            let forwardY = player.y + dirY * 160;
-            skillEffects.push({ x: forwardX, y: forwardY, dirX: 0, dirY: 0, life: 0.4, speed: 0, size: 75, color: 'rgba(129, 199, 132, 0.7)', dmg: 220, team: player.team });
-            
-            let backDashX = player.x - dirX * castDistance;
-            let backDashY = player.y - dirY * castDistance;
-            player.startDash(backDashX, backDashY, 22);
+            if (ryomaS1Stage === 1) {
+                let forwardX = player.x + dirX * 160;
+                let forwardY = player.y + dirY * 160;
+                skillEffects.push({ x: forwardX, y: forwardY, dirX: 0, dirY: 0, life: 0.4, speed: 0, size: 75, color: 'rgba(129, 199, 132, 0.7)', dmg: stats.dmg, team: player.team });
+                
+                let backDashX = player.x - dirX * castDistance;
+                let backDashY = player.y - dirY * castDistance;
+                player.startDash(backDashX, backDashY, 22);
+
+                ryomaS1Stage = 2;
+                ryomaS1Timer = 4.0;
+                return;
+            } else {
+                let dashX = player.x + dirX * (castDistance * 1.5);
+                let dashY = player.y + dirY * (castDistance * 1.5);
+                player.startDash(dashX, dashY, 26);
+                
+                skillEffects.push({ 
+                    x: dashX, y: dashY, dirX: 0, dirY: 0, life: 0.5, speed: 0, size: 85, 
+                    color: 'rgba(46, 125, 50, 0.8)', dmg: stats.dmg * 1.2, team: player.team 
+                });
+
+                ryomaS1Stage = 1;
+                ryomaS1Timer = 0;
+                skillCooldowns[1] = stats.cd;
+                return;
+            }
         } else if (skillId === 2) {
-            skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 0.5, speed: 20, size: 30, color: '#2e7d32', dmg: 420, isStun: true, stunDuration: 1.2, stunLabel: '💫 暈眩', team: player.team });
+            skillEffects.push({ 
+                x: player.x, y: player.y, 
+                dirX: dirX, dirY: dirY, 
+                length: 320, width: 60, 
+                tipStart: 180,
+                life: 0.25, speed: 0, 
+                color: 'rgba(46, 125, 50, 0.75)', 
+                dmg: stats.dmg, tipDmgBonus: 250, 
+                isRyomaS2: true, 
+                team: player.team 
+            });
+            skillCooldowns[2] = stats.cd;
         } else if (skillId === 3) {
+            skillCooldowns[3] = stats.cd;
             for (let i = 0; i < 4; i++) {
                 setTimeout(() => {
                     if (player && player.alive) {
-                        skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 0.4, speed: 18, size: 26, color: '#a5d6a7', dmg: 150, isRyomaS3: true, team: player.team });
+                        skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 0.4, speed: 18, size: 26, color: '#a5d6a7', dmg: stats.dmg, isRyomaS3: true, team: player.team });
                         player.hp = Math.min(player.maxHp, player.hp + 140);
                     }
                 }, i * 140);
             }
         }
     } else if (player.heroKey === 'krixi') {
+        let stats = getSkillStats(skillId, skillId === 1 ? 450 : (skillId === 2 ? 180 : 280), skillMaxCDs[skillId]);
+        skillCooldowns[skillId] = stats.cd;
+
         if (skillId === 1) {
             skillEffects.push({ 
                 x: player.x, y: player.y, startX: player.x, startY: player.y,
                 dirX: dirX, dirY: dirY, life: 1.6, speed: 9, size: 26, 
-                color: '#a5d6a7', dmg: 380, isKrixiS1: true, isReturning: false, 
+                color: '#a5d6a7', dmg: stats.dmg, isKrixiS1: true, isReturning: false, 
                 maxDist: 320, traveled: 0, team: player.team, hitEntities: new Set() 
             });
         } else if (skillId === 2) {
@@ -993,7 +1129,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             let clamped = clampPosition(targetX, targetY, player.radius);
             skillEffects.push({ 
                 x: clamped.x, y: clamped.y, dirX: 0, dirY: 0, life: 0.5, speed: 0, size: 60, 
-                color: 'rgba(67, 160, 71, 0.4)', dmg: 420, isStun: true, stunDuration: 0.75, stunLabel: '🌪️ 擊飛', team: player.team 
+                color: 'rgba(67, 160, 71, 0.4)', dmg: stats.dmg, isStun: true, stunDuration: 0.75, stunLabel: '🌪️ 擊飛', team: player.team 
             });
         } else if (skillId === 3) {
             for (let i = 0; i < 5; i++) {
@@ -1001,18 +1137,44 @@ function castSkill(skillId, dirX, dirY, dragDist) {
                     if (player && player.alive) {
                         let angle = Math.random() * Math.PI * 2;
                         let r = Math.random() * 200;
-                        skillEffects.push({ x: player.x + Math.cos(angle) * r, y: player.y + Math.sin(angle) * r, dirX: 0, dirY: 0, life: 0.4, speed: 0, size: 45, color: '#81c784', dmg: 280, team: player.team });
+                        skillEffects.push({ x: player.x + Math.cos(angle) * r, y: player.y + Math.sin(angle) * r, dirX: 0, dirY: 0, life: 0.4, speed: 0, size: 45, color: '#81c784', dmg: stats.dmg, team: player.team });
                     }
                 }, i * 200);
             }
         }
+    } else if (player.heroKey === 'alice') {
+        let stats = getSkillStats(skillId, skillId === 1 ? 320 : (skillId === 2 ? 0 : 380), skillMaxCDs[skillId]);
+        skillCooldowns[skillId] = stats.cd;
+
+        if (skillId === 1) {
+            let targetX = player.x + dirX * castDistance;
+            let targetY = player.y + dirY * castDistance;
+            let clamped = clampPosition(targetX, targetY, player.radius);
+            skillEffects.push({ 
+                x: clamped.x, y: clamped.y, dirX: 0, dirY: 0, life: 0.5, speed: 0, size: 55, 
+                color: 'rgba(171, 71, 188, 0.5)', dmg: stats.dmg, isStun: true, stunDuration: 1.2, stunLabel: '💫 暈眩', team: player.team, dmgType: 'magic' 
+            });
+        } else if (skillId === 2) {
+            player.hp = Math.min(player.maxHp, player.hp + 400); 
+            skillEffects.push({ x: player.x, y: player.y, dirX: 0, dirY: 0, life: 1.0, speed: 0, size: 50, color: 'rgba(225, 190, 231, 0.7)', dmg: 0, team: player.team });
+        } else if (skillId === 3) {
+            let targetX = player.x + dirX * castDistance;
+            let targetY = player.y + dirY * castDistance;
+            let clamped = clampPosition(targetX, targetY, player.radius);
+            skillEffects.push({ 
+                x: clamped.x, y: clamped.y, dirX: 0, dirY: 0, life: 1.5, speed: 0, size: 110, 
+                color: 'rgba(142, 68, 173, 0.35)', dmg: stats.dmg, isStun: true, stunDuration: 1.5, stunLabel: '🔇 沈默', team: player.team, dmgType: 'magic' 
+            });
+        }
     } else {
-        if (skillId === 1) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 11, size: 18, color: '#ffd700', dmg: 140, team: player.team });
-        else if (skillId === 2) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 9, size: 16, color: '#00e5ff', dmg: 110, team: player.team });
+        let stats = getSkillStats(skillId, 150, skillMaxCDs[skillId]);
+        skillCooldowns[skillId] = stats.cd;
+        if (skillId === 1) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 11, size: 18, color: '#ffd700', dmg: stats.dmg, team: player.team });
+        else if (skillId === 2) skillEffects.push({ x: player.x, y: player.y, dirX, dirY, life: 1.0, speed: 9, size: 16, color: '#00e5ff', dmg: stats.dmg, team: player.team });
         else if (skillId === 3) {
             for (let angleOff = -0.4; angleOff <= 0.4; angleOff += 0.2) {
                 let cos = Math.cos(angleOff), sin = Math.sin(angleOff);
-                skillEffects.push({ x: player.x, y: player.y, dirX: dirX * cos - dirY * sin, dirY: dirX * sin + dirY * cos, life: 1.0, speed: 12, size: 18, color: '#ff3d00', dmg: 180, team: player.team });
+                skillEffects.push({ x: player.x, y: player.y, dirX: dirX * cos - dirY * sin, dirY: dirX * sin + dirY * cos, life: 1.0, speed: 12, size: 18, color: '#ff3d00', dmg: stats.dmg, team: player.team });
             }
         }
     }
@@ -1051,18 +1213,45 @@ function updateTopScopeUI() {
     else { healOverlay.classList.add('hidden'); }
 
     for (let id = 1; id <= 3; id++) {
-        let reqLevel = id === 1 ? 1 : (id === 2 ? 2 : 4);
         let btn = document.getElementById(`skill-${id}`);
+        let upBtn = document.getElementById(`up-btn-${id}`);
         let cdOverlay = document.getElementById(`cd-${id}`);
-        let isNakrothS2nd = (player && player.heroKey === 'nakroth' && id === 1 && nakrothS1Stage === 2);
+        let sLv = skillLevels[id];
 
-        if (player && player.level < reqLevel) {
-            btn.classList.add('locked'); cdOverlay.classList.remove('hidden'); cdOverlay.innerText = `Lv.${reqLevel}`;
+        if (checkCanUpgrade(id)) {
+            upBtn.classList.remove('hidden');
+        } else {
+            upBtn.classList.add('hidden');
+        }
+
+        let isNakrothS2nd = (player && player.heroKey === 'nakroth' && id === 1 && nakrothS1Stage === 2);
+        let isRyomaS2nd = (player && player.heroKey === 'ryoma' && id === 1 && ryomaS1Stage === 2);
+
+        if (sLv === 0 && !isNakrothS2nd && !isRyomaS2nd) {
+            btn.classList.add('locked');
+            cdOverlay.classList.remove('hidden');
+            cdOverlay.innerText = '未解鎖';
         } else {
             btn.classList.remove('locked');
-            if (isNakrothS2nd) { cdOverlay.classList.remove('hidden'); cdOverlay.innerText = '2段'; }
-            else if (skillCooldowns[id] > 0) { cdOverlay.classList.remove('hidden'); cdOverlay.innerText = skillCooldowns[id].toFixed(1); }
-            else { cdOverlay.classList.add('hidden'); }
+            if (isNakrothS2nd || isRyomaS2nd) { 
+                cdOverlay.classList.remove('hidden'); 
+                cdOverlay.innerText = '2段'; 
+            }
+            else if (skillCooldowns[id] > 0) { 
+                cdOverlay.classList.remove('hidden'); 
+                cdOverlay.innerText = skillCooldowns[id].toFixed(1); 
+            }
+            else { 
+                cdOverlay.classList.add('hidden'); 
+            }
+        }
+
+        let maxCap = (id === 3) ? 3 : 6;
+        let descLabel = document.getElementById(`lbl-skill-${id}`);
+        if (descLabel && selectedHeroKey) {
+            let heroInfo = HERO_DB[selectedHeroKey];
+            let baseName = id === 1 ? heroInfo.s1 : (id === 2 ? heroInfo.s2 : heroInfo.s3);
+            descLabel.innerText = `${baseName} Lv.${sLv}/${maxCap}`;
         }
     }
 }
@@ -1119,7 +1308,9 @@ function confirmStartGame() {
     document.getElementById('top-hud').classList.remove('hidden');
 
     blueKills = 0; redKills = 0; kills = 0; deaths = 0; assists = 0;
-    nakrothS1Stage = 1; healCooldown = 0; entities = []; damageTexts = [];
+    nakrothS1Stage = 1; ryomaS1Stage = 1; ryomaS1Timer = 0; healCooldown = 0; 
+    skillLevels = { 1: 0, 2: 0, 3: 0 }; unallocatedPoints = 1;
+    entities = []; damageTexts = [];
     
     let blueSpawn = { x: 400, y: MAP_SIZE - 400 };
     let redSpawn = { x: MAP_SIZE - 400, y: 400 };
@@ -1136,8 +1327,8 @@ function confirmStartGame() {
     entities.push(new NexusBase(600, MAP_SIZE - 600, 'blue'));
     entities.push(new NexusBase(MAP_SIZE - 600, 600, 'red'));
 
-    let bTurret = clampPosition(1200, MAP_SIZE - 1200, 35);
-    let rTurret = clampPosition(MAP_SIZE - 1200, 1200, 35);
+    let bTurret = clampPosition(1050, MAP_SIZE - 1050, 35);
+    let rTurret = clampPosition(MAP_SIZE - 1050, 1050, 35);
     entities.push(new Turret(bTurret.x, bTurret.y, 'blue'));
     entities.push(new Turret(rTurret.x, rTurret.y, 'red'));
 
@@ -1153,6 +1344,15 @@ function confirmStartGame() {
 
 function gameLoop() {
     if (!isRunning) return;
+
+    if (player && player.heroKey === 'ryoma' && ryomaS1Stage === 2) {
+        ryomaS1Timer -= 1/60;
+        if (ryomaS1Timer <= 0) {
+            ryomaS1Stage = 1;
+            let stats = getSkillStats(1, 220, skillMaxCDs[1]);
+            skillCooldowns[1] = stats.cd;
+        }
+    }
 
     for (let id in skillCooldowns) {
         if (skillCooldowns[id] > 0) { skillCooldowns[id] -= 1/60; if (skillCooldowns[id] < 0) skillCooldowns[id] = 0; }
@@ -1206,15 +1406,36 @@ function gameLoop() {
             ctx.fillStyle = 'rgba(255, 215, 0, 0.25)'; ctx.fill();
             ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.stroke();
         } else if (player.heroKey === 'ryoma' && activeSkillDrag.skillId === 1) {
-            let backX = pX - dirX * dist;
-            let backY = pY - dirY * dist;
-            ctx.beginPath(); ctx.setLineDash([6, 6]);
-            ctx.moveTo(pX, pY); ctx.lineTo(backX, backY);
-            ctx.strokeStyle = '#81c784'; ctx.lineWidth = 3; ctx.stroke();
-            ctx.setLineDash([]);
-            ctx.beginPath(); ctx.arc(backX, backY, 30, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(129, 199, 132, 0.25)'; ctx.fill();
-            ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 2; ctx.stroke();
+            if (ryomaS1Stage === 1) {
+                let backX = pX - dirX * dist;
+                let backY = pY - dirY * dist;
+                ctx.beginPath(); ctx.setLineDash([6, 6]);
+                ctx.moveTo(pX, pY); ctx.lineTo(backX, backY);
+                ctx.strokeStyle = '#81c784'; ctx.lineWidth = 3; ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.beginPath(); ctx.arc(backX, backY, 30, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(129, 199, 132, 0.25)'; ctx.fill();
+                ctx.strokeStyle = '#2e7d32'; ctx.lineWidth = 2; ctx.stroke();
+            } else {
+                let forwardX = pX + dirX * (dist * 1.5);
+                let forwardY = pY + dirY * (dist * 1.5);
+                ctx.beginPath(); ctx.moveTo(pX, pY); ctx.lineTo(forwardX, forwardY);
+                ctx.strokeStyle = '#00e676'; ctx.lineWidth = 4; ctx.stroke();
+                ctx.beginPath(); ctx.arc(forwardX, forwardY, 40, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 230, 118, 0.3)'; ctx.fill();
+                ctx.strokeStyle = '#b9f6ca'; ctx.lineWidth = 2; ctx.stroke();
+            }
+        } else if (player.heroKey === 'ryoma' && activeSkillDrag.skillId === 2) {
+            let angle = Math.atan2(dirY, dirX);
+            ctx.translate(pX, pY);
+            ctx.rotate(angle);
+            ctx.fillStyle = 'rgba(46, 125, 50, 0.25)';
+            ctx.fillRect(0, -30, 320, 60);
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.35)';
+            ctx.fillRect(180, -30, 140, 60);
+            ctx.strokeStyle = '#a5d6a7';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, -30, 320, 60);
         } else {
             ctx.beginPath(); ctx.moveTo(pX, pY); ctx.lineTo(targetX, targetY);
             ctx.strokeStyle = 'rgba(0, 210, 255, 0.7)'; ctx.lineWidth = 3; ctx.stroke();
@@ -1235,62 +1456,106 @@ function gameLoop() {
     for (let i = skillEffects.length - 1; i >= 0; i--) {
         let fx = skillEffects[i];
         
-        if (fx.isKrixiS1) {
-            if (!fx.isReturning) {
-                fx.x += fx.dirX * fx.speed;
-                fx.y += fx.dirY * fx.speed;
-                fx.traveled += fx.speed;
-                if (fx.traveled >= fx.maxDist) {
-                    fx.isReturning = true;
-                    fx.dirX *= -1;
-                    fx.dirY *= -1;
-                    fx.hitEntities.clear();
+        if (fx.isRyomaS2) {
+            let angle = Math.atan2(fx.dirY, fx.dirX);
+            ctx.save();
+            ctx.translate(fx.x - camera.x, fx.y - camera.y);
+            ctx.rotate(angle);
+            
+            ctx.fillStyle = fx.color;
+            ctx.fillRect(0, -fx.width / 2, fx.length, fx.width);
+            
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.45)';
+            ctx.fillRect(fx.tipStart, -fx.width / 2, fx.length - fx.tipStart, fx.width);
+
+            ctx.strokeStyle = '#a5d6a7';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, -fx.width / 2, fx.length, fx.width);
+            ctx.restore();
+
+            if (fx.dmg > 0) {
+                entities.forEach(e => {
+                    let isBuilding = (e instanceof Turret || e instanceof NexusBase);
+                    if (e.alive && e.team !== fx.team && !isBuilding) {
+                        let dx = e.x - fx.x;
+                        let dy = e.y - fx.y;
+                        let localX = dx * fx.dirX + dy * fx.dirY;
+                        let localY = -dx * fx.dirY + dy * fx.dirX;
+
+                        if (localX >= 0 && localX <= fx.length && Math.abs(localY) <= fx.width / 2 + e.radius) {
+                            let isTip = (localX >= fx.tipStart); 
+                            let finalDmg = fx.dmg + (isTip ? fx.tipDmgBonus : 0);
+                            
+                            let isMagic = (player && player.heroKey === 'krixi');
+                            let dmgType = isMagic ? 'magic' : 'physical';
+                            e.takeDamage(finalDmg, fx.team, dmgType);
+                            
+                            if (isTip && e instanceof Hero) {
+                                e.applyStun(1.2, '💫 槍尖暈眩');
+                            }
+                        }
+                    }
+                });
+                fx.dmg = 0; 
+            }
+        } else {
+            if (fx.isKrixiS1) {
+                if (!fx.isReturning) {
+                    fx.x += fx.dirX * fx.speed;
+                    fx.y += fx.dirY * fx.speed;
+                    fx.traveled += fx.speed;
+                    if (fx.traveled >= fx.maxDist) {
+                        fx.isReturning = true;
+                        fx.dirX *= -1;
+                        fx.dirY *= -1;
+                        fx.hitEntities.clear();
+                    }
+                } else {
+                    fx.x += fx.dirX * fx.speed;
+                    fx.y += fx.dirY * fx.speed;
+                    fx.traveled -= fx.speed;
+                    if (fx.traveled <= 0) fx.life = 0;
                 }
             } else {
                 fx.x += fx.dirX * fx.speed;
                 fx.y += fx.dirY * fx.speed;
-                fx.traveled -= fx.speed;
-                if (fx.traveled <= 0) fx.life = 0;
             }
-        } else {
-            fx.x += fx.dirX * fx.speed;
-            fx.y += fx.dirY * fx.speed;
-        }
 
-        fx.life -= 0.025;
-        ctx.beginPath(); ctx.arc(fx.x - camera.x, fx.y - camera.y, fx.size, 0, Math.PI * 2);
-        ctx.fillStyle = fx.color; ctx.fill();
+            ctx.beginPath(); ctx.arc(fx.x - camera.x, fx.y - camera.y, fx.size, 0, Math.PI * 2);
+            ctx.fillStyle = fx.color; ctx.fill();
 
-        if (fx.dmg > 0) {
-            entities.forEach(e => {
-                let isBuilding = (e instanceof Turret || e instanceof NexusBase);
-                if (e.alive && e.team !== fx.team && !isBuilding && Math.hypot(e.x - fx.x, e.y - fx.y) < fx.size + 10) {
-                    let isMagic = (player && player.heroKey === 'krixi');
-                    let dmgType = isMagic ? 'magic' : 'physical';
+            if (fx.dmg > 0) {
+                entities.forEach(e => {
+                    let isBuilding = (e instanceof Turret || e instanceof NexusBase);
+                    if (e.alive && e.team !== fx.team && !isBuilding && Math.hypot(e.x - fx.x, e.y - fx.y) < fx.size + 10) {
+                        let isMagic = (player && (player.heroKey === 'krixi' || player.heroKey === 'alice' || fx.dmgType === 'magic'));
+                        let dmgType = isMagic ? 'magic' : 'physical';
 
-                    if (fx.isKrixiS1) {
-                        if (!fx.hitEntities.has(e)) {
+                        if (fx.isKrixiS1) {
+                            if (!fx.hitEntities.has(e)) {
+                                e.takeDamage(fx.dmg, fx.team, dmgType);
+                                fx.hitEntities.add(e);
+                            }
+                        } else {
                             e.takeDamage(fx.dmg, fx.team, dmgType);
-                            fx.hitEntities.add(e);
-                        }
-                    } else {
-                        e.takeDamage(fx.dmg, fx.team, dmgType);
-                        if (fx.isStun && e instanceof Hero) {
-                            e.applyStun(fx.stunDuration, fx.stunLabel || '💫 暈眩');
-                        }
-                        if (fx.isRyomaS3 && fx.team === player.team) {
-                            if (skillCooldowns[2] > 0) {
-                                skillCooldowns[2] = Math.max(0, skillCooldowns[2] - 1.0);
+                            if (fx.isStun && e instanceof Hero) {
+                                e.applyStun(fx.stunDuration, fx.stunLabel || '💫 暈眩');
+                            }
+                            if (fx.isRyomaS3 && fx.team === player.team) {
+                                if (skillCooldowns[2] > 0) {
+                                    skillCooldowns[2] = Math.max(0, skillCooldowns[2] - 1.0);
+                                }
                             }
                         }
                     }
-                }
-            });
+                });
+            }
         }
+
+        fx.life -= 0.025;
         if (fx.life <= 0) skillEffects.splice(i, 1);
     }
 
-    // 漂浮漸隱傷害數字繪製
     for (let i = damageTexts.length - 1; i >= 0; i--) {
         let dt = damageTexts[i];
         dt.y -= 0.6;
