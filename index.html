@@ -216,7 +216,6 @@
         </div>
     </div>
 
-    <!-- 戰場實戰 HUD 介面 -->
     <div id="hud-layer" class="hidden">
         <div class="joystick-container" id="joystick">
             <div class="joystick-knob" id="joystick-knob"></div>
@@ -240,21 +239,18 @@
                 </div>
             </div>
 
-            <!-- 技能 3 (大招) 與升級按鈕 -->
             <div class="skill-btn" id="skill-3" data-skill="3">
                 <div class="skill-upgrade-btn hidden" id="up-btn-3">+</div>
                 大招
                 <div class="skill-desc-label" id="lbl-skill-3">絕技</div>
                 <div class="skill-cd-overlay hidden" id="cd-3"></div>
             </div>
-            <!-- 技能 2 與升級按鈕 -->
             <div class="skill-btn" id="skill-2" data-skill="2">
                 <div class="skill-upgrade-btn hidden" id="up-btn-2">+</div>
                 二技
                 <div class="skill-desc-label" id="lbl-skill-2">核心技</div>
                 <div class="skill-cd-overlay hidden" id="cd-2"></div>
             </div>
-            <!-- 技能 1 與升級按鈕 -->
             <div class="skill-btn" id="skill-1" data-skill="1">
                 <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
                 一技
@@ -331,7 +327,6 @@ const HERO_DB = {
     'zuka': { name: '祖卡', type: '戰士 / 物理爆發', baseHp: 6200, hpGrowth: 550, atk: 110, range: 140, avatar: '🐼', color1: '#ff9800', color2: '#ffe082', s1: '泰山壓頂', s2: '熊貓護盾', s3: '沉重打擊' }
 };
 
-// 地圖草叢定義（中路牆壁兩側）
 let bushes = [
     { x: MAP_SIZE / 2 - 200, y: MAP_SIZE / 2, radiusX: 110, radiusY: 70 },
     { x: MAP_SIZE / 2 + 200, y: MAP_SIZE / 2, radiusX: 110, radiusY: 70 }
