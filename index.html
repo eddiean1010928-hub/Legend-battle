@@ -192,7 +192,7 @@
 
             <div class="pick-center-stage">
                 <div class="stage-hero-avatar" id="stage-hero-avatar">🗡️</div>
-                <div class="stage-hero-info">
+                <div class="pick-hero-info">
                     <h2 id="selected-hero-name" style="color:#f3c654; font-size: 1.8rem;">納克羅斯</h2>
                     <p id="selected-hero-type" style="color:#aaa; font-size: 0.95rem;">刺客 / 高機動性</p>
                 </div>
@@ -283,7 +283,7 @@ window.addEventListener('DOMContentLoaded', () => { initUserData(); buildHeroSel
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let MAP_SIZE = 3000;
+let MAP_SIZE = 3500;
 let isRunning = false;
 let gameMode = '1v1';
 let selectedHeroKey = 'nakroth';
@@ -318,7 +318,7 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 const HERO_DB = {
-    'nakroth': { name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 5000, hpGrowth: 450, atk: 120, range: 110, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2', s1: '擊飛位移', s2: '反向位移', s3: '連續刺刺刺' },
+    'nakroth': { name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 5000, hpGrowth: 450, atk: 120, range: 110, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2', s1: '兩段擊飛位移', s2: '反向位移', s3: '連續刺刺刺' },
     'ryoma': { name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 5800, hpGrowth: 500, atk: 125, range: 220, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7', s1: '反向翻滾', s2: '槍尖暈眩', s3: '殘血吸血連刺' },
     'quillen': { name: '奎倫', type: '刺客 / 背刺爆擊', baseHp: 4800, hpGrowth: 420, atk: 130, range: 140, avatar: '🥷', color1: '#b71c1c', color2: '#ff8a80', s1: '三段揮擊', s2: '標記突進', s3: '隱身回血刷新' },
     'alice': { name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 4000, hpGrowth: 320, atk: 40, range: 240, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7', s1: '星芒暈眩', s2: '流星護盾', s3: '大招沈默' },
@@ -328,8 +328,8 @@ const HERO_DB = {
 };
 
 let bushes = [
-    { x: MAP_SIZE / 2 - 200, y: MAP_SIZE / 2, radiusX: 110, radiusY: 70 },
-    { x: MAP_SIZE / 2 + 200, y: MAP_SIZE / 2, radiusX: 110, radiusY: 70 }
+    { x: MAP_SIZE / 2 - 250, y: MAP_SIZE / 2 - 100, radiusX: 110, radiusY: 70 },
+    { x: MAP_SIZE / 2 + 250, y: MAP_SIZE / 2 + 100, radiusX: 110, radiusY: 70 }
 ];
 
 function isInBush(x, y) {
@@ -457,7 +457,7 @@ bindClick('btn-recall', () => {
     damageTexts.push({ x: player.x, y: player.y - 40, value: '🏠 回城中...', color: '#00d2ff', life: 1.2 });
     setTimeout(() => {
         if (player && player.alive) {
-            player.x = 400; player.y = MAP_SIZE - 400;
+            player.x = 500; player.y = MAP_SIZE - 500;
             player.hp = player.maxHp;
             attackEffects.push({ x: player.x, y: player.y, life: 0.8, radius: 70, color: '#00d2ff' });
         }
@@ -597,25 +597,6 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
     btn.addEventListener('pointercancel', releaseSkill);
 });
 
-function clampPosition(x, y, radius = 26) {
-    let startX = 400, startY = MAP_SIZE - 400;
-    let endX = MAP_SIZE - 400, endY = 400;
-    let lineLen = Math.hypot(endX - startX, endY - startY);
-    let uX = (endX - startX) / lineLen, uY = (endY - startY) / lineLen;
-    let vX = x - startX, vY = y - startY;
-    let proj = vX * uX + vY * uY;
-    proj = Math.max(0, Math.min(lineLen, proj));
-    let nearestX = startX + uX * proj;
-    let nearestY = startY + uY * proj;
-    let dist = Math.hypot(x - nearestX, y - nearestY);
-    let roadWidth = 320;
-    if (dist > roadWidth / 2) {
-        x = nearestX + (x - nearestX) * (roadWidth / 2 / dist);
-        y = nearestY + (y - nearestY) * (roadWidth / 2 / dist);
-    }
-    return { x: Math.max(radius, Math.min(MAP_SIZE - radius, x)), y: Math.max(radius, Math.min(MAP_SIZE - radius, y)) };
-}
-
 class Entity {
     constructor(x, y, team, maxHp, atk, range, radius) {
         this.x = x; this.y = y; this.team = team;
@@ -638,6 +619,36 @@ class Entity {
     onDeath(dealerTeam) {}
 }
 
+class BaseBuilding extends Entity {
+    constructor(x, y, team) {
+        super(x, y, team, 8000, 60, 250, 45);
+    }
+    update() {
+        if (!this.alive) return;
+        entities.forEach(e => {
+            if (e.alive && e.team !== this.team) {
+                let dist = Math.hypot(e.x - this.x, e.y - this.y);
+                if (dist <= this.range && Math.random() < 0.1) {
+                    e.takeDamage(this.atk, this.team, 'physical');
+                }
+            }
+        });
+    }
+    onDeath(dealerTeam) {
+        isRunning = false;
+        let resultScreen = document.getElementById('result-screen');
+        let titleEl = document.getElementById('result-title');
+        if (dealerTeam === 'blue') {
+            titleEl.innerText = 'VICTORY';
+            titleEl.className = 'result-title-win';
+        } else {
+            titleEl.innerText = 'DEFEAT';
+            titleEl.className = 'result-title-lose';
+        }
+        resultScreen.classList.remove('hidden');
+    }
+}
+
 class Hero extends Entity {
     constructor(x, y, team, heroKey) {
         let db = HERO_DB[heroKey];
@@ -649,6 +660,7 @@ class Hero extends Entity {
         this.isAI = (team === 'red');
         this.dashTarget = null;
         this.dashSpeed = 0;
+        this.aiSkillTimer = 0;
     }
     startDash(targetX, targetY, speed) {
         this.dashTarget = { x: targetX, y: targetY };
@@ -668,8 +680,8 @@ class Hero extends Entity {
                 this.x += (dx / dist) * this.dashSpeed;
                 this.y += (dy / dist) * this.dashSpeed;
             }
-            let clamped = clampPosition(this.x, this.y, this.radius);
-            this.x = clamped.x; this.y = clamped.y;
+            this.x = Math.max(30, Math.min(MAP_SIZE - 30, this.x));
+            this.y = Math.max(30, Math.min(MAP_SIZE - 30, this.y));
             return;
         }
 
@@ -692,6 +704,18 @@ class Hero extends Entity {
                     this.y += Math.sin(this.rotation) * 1.8;
                 } else if (Math.random() < 0.03) {
                     target.takeDamage(this.atk, this.team, 'physical');
+                }
+                
+                this.aiSkillTimer += 0.016;
+                if (this.aiSkillTimer > 3.5 && minDist < 250) {
+                    this.aiSkillTimer = 0;
+                    let angle = Math.atan2(target.y - this.y, target.x - this.x);
+                    let dX = Math.cos(angle), dY = Math.sin(angle);
+                    if (this.heroKey === 'ryoma') {
+                        let targetX = this.x + dX * 180;
+                        let targetY = this.y + dY * 180;
+                        skillEffects.push({ x: targetX, y: targetY, dirX: dX, dirY: dY, life: 0.3, speed: 0, size: 45, color: 'rgba(46, 125, 50, 0.6)', dmg: 350, isStun: true, stunDuration: 0.75, team: this.team, dmgType: 'physical' });
+                    }
                 }
             }
         }
@@ -744,7 +768,7 @@ class Hero extends Entity {
             deaths++;
             setTimeout(() => {
                 this.hp = this.maxHp;
-                this.x = 400; this.y = MAP_SIZE - 400;
+                this.x = 500; this.y = MAP_SIZE - 500;
                 this.alive = true;
             }, 4000);
         }
@@ -753,14 +777,19 @@ class Hero extends Entity {
 }
 
 class Minion extends Entity {
-    constructor(x, y, team) {
+    constructor(x, y, team, lane) {
         super(x, y, team, 1200, 45, 180, 18);
         this.speed = 1.2;
+        this.lane = lane;
     }
     update() {
         if (!this.alive) return;
         let targetX = (this.team === 'blue') ? MAP_SIZE - 400 : 400;
         let targetY = (this.team === 'blue') ? 400 : MAP_SIZE - 400;
+        
+        if (this.lane === 'top') targetX = (this.team === 'blue') ? MAP_SIZE - 400 : 400;
+        if (this.lane === 'bot') targetY = (this.team === 'blue') ? 400 : MAP_SIZE - 400;
+
         let dx = targetX - this.x;
         let dy = targetY - this.y;
         let dist = Math.hypot(dx, dy);
@@ -796,10 +825,13 @@ function startGame() {
     unallocatedPoints = 0;
     updateSkillUpgradeButtons();
 
-    player = new Hero(400, MAP_SIZE - 400, 'blue', selectedHeroKey);
+    entities.push(new BaseBuilding(400, MAP_SIZE - 400, 'blue'));
+    entities.push(new BaseBuilding(MAP_SIZE - 400, 400, 'red'));
+
+    player = new Hero(500, MAP_SIZE - 500, 'blue', selectedHeroKey);
     entities.push(player);
 
-    let aiHero = new Hero(MAP_SIZE - 400, 400, 'red', randomAiKey);
+    let aiHero = new Hero(MAP_SIZE - 500, 500, 'red', randomAiKey);
     entities.push(aiHero);
 
     isRunning = true;
@@ -882,8 +914,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             if (nakrothS1Stage === 1) {
                 let targetX = player.x + dirX * 160;
                 let targetY = player.y + dirY * 160;
-                let clamped = clampPosition(targetX, targetY, player.radius);
-                player.startDash(clamped.x, clamped.y, 45);
+                player.startDash(targetX, targetY, 45);
                 nakrothS1Stage = 2;
                 setTimeout(() => {
                     entities.forEach(e => {
@@ -898,16 +929,14 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             } else {
                 let targetX = player.x + dirX * 160;
                 let targetY = player.y + dirY * 160;
-                let clamped = clampPosition(targetX, targetY, player.radius);
-                player.startDash(clamped.x, clamped.y, 45);
+                player.startDash(targetX, targetY, 45);
                 nakrothS1Stage = 1;
             }
         } 
         else if (skillId === 2) {
             let targetX = player.x - dirX * 140;
             let targetY = player.y - dirY * 140;
-            let clamped = clampPosition(targetX, targetY, player.radius);
-            player.startDash(clamped.x, clamped.y, 40);
+            player.startDash(targetX, targetY, 40);
         } 
         else if (skillId === 3) {
             let rangeDist = 140;
@@ -936,15 +965,13 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             if (ryomaS1Stage === 1) {
                 let targetX = player.x - dirX * 130;
                 let targetY = player.y - dirY * 130;
-                let clamped = clampPosition(targetX, targetY, player.radius);
-                player.startDash(clamped.x, clamped.y, 35);
+                player.startDash(targetX, targetY, 35);
                 ryomaS1Stage = 2;
                 ryomaS1Timer = setTimeout(() => { ryomaS1Stage = 1; }, 4000);
             } else {
                 let targetX = player.x + dirX * 140;
                 let targetY = player.y + dirY * 140;
-                let clamped = clampPosition(targetX, targetY, player.radius);
-                player.startDash(clamped.x, clamped.y, 40);
+                player.startDash(targetX, targetY, 40);
                 ryomaS1Stage = 1;
                 if (ryomaS1Timer) clearTimeout(ryomaS1Timer);
             }
@@ -990,8 +1017,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
         else if (skillId === 2) {
             let targetX = player.x + dirX * 140;
             let targetY = player.y + dirY * 140;
-            let clamped = clampPosition(targetX, targetY, player.radius);
-            player.startDash(clamped.x, clamped.y, 35);
+            player.startDash(targetX, targetY, 35);
             setTimeout(() => {
                 entities.forEach(e => {
                     if (e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) < 70) {
@@ -1006,8 +1032,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
         else if (skillId === 3) {
             let targetX = player.x + dirX * 160;
             let targetY = player.y + dirY * 160;
-            let clamped = clampPosition(targetX, targetY, player.radius);
-            player.startDash(clamped.x, clamped.y, 40);
+            player.startDash(targetX, targetY, 40);
             player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.3);
             player.isStealth = true;
             setTimeout(() => { player.isStealth = false; }, 5000);
@@ -1062,8 +1087,14 @@ function gameLoop(timestamp) {
     minionSpawnTimer += dt;
     if (minionSpawnTimer >= 15) {
         minionSpawnTimer = 0;
-        entities.push(new Minion(400, MAP_SIZE - 400, 'blue'));
-        entities.push(new Minion(MAP_SIZE - 400, 400, 'red'));
+        ['top', 'mid', 'bot'].forEach(lane => {
+            entities.push(new Minion(400, MAP_SIZE - 400, 'blue', lane));
+            entities.push(new Minion(MAP_SIZE - 400, 400, 'red', lane));
+            entities.push(new Minion(400, MAP_SIZE - 400, 'blue', lane)); // 每路 3 隻兵
+            entities.push(new Minion(MAP_SIZE - 400, 400, 'red', lane));
+            entities.push(new Minion(400, MAP_SIZE - 400, 'blue', lane));
+            entities.push(new Minion(MAP_SIZE - 400, 400, 'red', lane));
+        });
     }
 
     [1, 2, 3].forEach(id => {
@@ -1092,8 +1123,8 @@ function gameLoop(timestamp) {
             player.x += joystickDir.x * moveSpeed;
             player.y += joystickDir.y * moveSpeed;
             player.rotation = Math.atan2(joystickDir.y, joystickDir.x);
-            let clamped = clampPosition(player.x, player.y, player.radius);
-            player.x = clamped.x; player.y = clamped.y;
+            player.x = Math.max(30, Math.min(MAP_SIZE - 30, player.x));
+            player.y = Math.max(30, Math.min(MAP_SIZE - 30, player.y));
         }
     }
 
@@ -1134,13 +1165,16 @@ function drawGame() {
         ctx.stroke();
     });
 
-    ctx.beginPath();
-    ctx.moveTo(400, MAP_SIZE - 400);
-    ctx.lineTo(MAP_SIZE - 400, 400);
     ctx.strokeStyle = '#1e3a5f';
-    ctx.lineWidth = 320;
+    ctx.lineWidth = 180;
     ctx.lineCap = 'round';
-    ctx.stroke();
+    
+    // 中路
+    ctx.beginPath(); ctx.moveTo(400, MAP_SIZE - 400); ctx.lineTo(MAP_SIZE - 400, 400); ctx.stroke();
+    // 上路
+    ctx.beginPath(); ctx.moveTo(400, MAP_SIZE - 400); ctx.lineTo(400, 400); ctx.lineTo(MAP_SIZE - 400, 400); ctx.stroke();
+    // 下路
+    ctx.beginPath(); ctx.moveTo(400, MAP_SIZE - 400); ctx.lineTo(MAP_SIZE - 400, MAP_SIZE - 400); ctx.lineTo(MAP_SIZE - 400, 400); ctx.stroke();
 
     entities.forEach(e => {
         if (!e.alive) return;
@@ -1150,19 +1184,33 @@ function drawGame() {
         if (inBush && e !== player) ctx.globalAlpha = 0.35;
         if (e.isStealth) ctx.globalAlpha = 0.25;
 
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-        ctx.fillStyle = (e.team === 'blue') ? '#00d2ff' : '#ff4444';
-        ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#fff';
-        ctx.stroke();
+        if (e instanceof BaseBuilding) {
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+            ctx.fillStyle = (e.team === 'blue') ? '#0288d1' : '#d32f2f';
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#ffeb3b';
+            ctx.stroke();
+            ctx.font = 'bold 16px Arial';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText('主堡', e.x, e.y);
+        } else {
+            ctx.beginPath();
+            ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+            ctx.fillStyle = (e.team === 'blue') ? '#00d2ff' : '#ff4444';
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
 
-        ctx.font = '20px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        let avatar = (e instanceof Hero) ? e.db.avatar : '🤖';
-        ctx.fillText(avatar, e.x, e.y);
+            ctx.font = '20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            let avatar = (e instanceof Hero) ? e.db.avatar : '🤖';
+            ctx.fillText(avatar, e.x, e.y);
+        }
 
         if (e.quillenMarked) {
             ctx.font = 'bold 18px Arial';
@@ -1178,6 +1226,16 @@ function drawGame() {
 
         ctx.restore();
     });
+
+    if (player && player.alive && activeSkillDrag) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.range + 40, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0, 210, 255, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+    }
 
     skillEffects.forEach(fx => {
         ctx.save();
