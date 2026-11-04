@@ -94,12 +94,27 @@
         .pick-cancel-btn { background: none; border: none; color: #aaa; font-size: 1rem; cursor: pointer; }
         
         .pick-content-layout { display: flex; flex: 1; margin-top: 15px; gap: 20px; overflow: hidden; }
-        .pick-hero-sidebar { width: 210px; height: 100%; max-height: 400px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; overflow-y: auto; padding-right: 5px; scrollbar-width: thin; scrollbar-color: #f3c654 rgba(0,0,0,0.3); }
+        
+        /* 讓左側英雄列表可以正常上下滑動、點擊與觸控 */
+        .pick-hero-sidebar { 
+            width: 230px; 
+            height: 100%; 
+            max-height: 420px; 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 10px; 
+            overflow-y: auto; 
+            padding-right: 5px; 
+            scrollbar-width: thin; 
+            scrollbar-color: #f3c654 rgba(0,0,0,0.3); 
+            touch-action: pan-y;
+            pointer-events: auto;
+        }
         .pick-hero-sidebar::-webkit-scrollbar { width: 6px; }
         .pick-hero-sidebar::-webkit-scrollbar-thumb { background-color: #f3c654; border-radius: 3px; }
 
-        .pick-hero-thumb { width: 85px; height: 85px; background: #1a2a40; border: 2px solid #334455; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1.8rem; cursor: pointer; }
-        .pick-hero-thumb span { font-size: 0.65rem; color: #ccc; margin-top: 4px; }
+        .pick-hero-thumb { width: 95px; height: 95px; background: #1a2a40; border: 2px solid #334455; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 1.6rem; cursor: pointer; pointer-events: auto; }
+        .pick-hero-thumb span { font-size: 0.75rem; color: #fff; font-weight: bold; margin-top: 4px; }
         .pick-hero-thumb.active { border-color: #f3c654; box-shadow: 0 0 10px rgba(243, 198, 84, 0.6); }
 
         .pick-center-stage { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, rgba(30,50,80,0.3) 0%, rgba(5,10,18,0.8) 100%); border-radius: 12px; }
@@ -315,8 +330,8 @@ const HERO_DB = {
         skillRanges: { 1: 180, 2: 150, 3: 200 }
     },
     'quillen': { 
-        name: '奎倫', type: '刺客 / 背刺必爆', baseHp: 4800, hpGrowth: 420, atk: 130, range: 130, avatar: '🥷', color1: '#b71c1c', color2: '#ff8a80',
-        skillRanges: { 1: 120, 2: 150, 3: 220 }
+        name: '奎倫', type: '刺客 / 背擊必爆', baseHp: 4800, hpGrowth: 420, atk: 70, range: 90, avatar: '🥷', color1: '#b71c1c', color2: '#ff8a80',
+        skillRanges: { 1: 90, 2: 150, 3: 200 }
     },
     'valhein': { 
         name: '凡恩', type: '射手 / 遠距輸出', baseHp: 4500, hpGrowth: 380, atk: 85, range: 240, avatar: '🎯', color1: '#c29b38', color2: '#ffe89e',
@@ -331,8 +346,8 @@ const HERO_DB = {
         skillRanges: { 1: 150, 2: 130, 3: 200 }
     },
     'ryoma': { 
-        name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 5800, hpGrowth: 500, atk: 125, range: 200, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7',
-        skillRanges: { 1: 140, 2: 220, 3: 250 }
+        name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 5800, hpGrowth: 500, atk: 125, range: 110, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7',
+        skillRanges: { 1: 180, 2: 240, 3: 260 }
     },
     'alice': { 
         name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 4000, hpGrowth: 320, atk: 40, range: 240, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7',
@@ -402,7 +417,7 @@ bindClick('btn-recall', () => castRecall());
 
 function castChallengerSpell() {
     if (challengerCooldown > 0 || !player || !player.alive) return;
-    challengerCooldown = 60;
+    challengerCooldown = 90; // 順移 90 秒
     let dX = joystickDir.x !== 0 ? joystickDir.x : 1;
     let dY = joystickDir.y !== 0 ? joystickDir.y : 0;
     player.startDash(player.x + dX * 180, player.y + dY * 180, 40);
@@ -758,6 +773,9 @@ class Hero extends Entity {
         this.isStealth = false;
         this.isSuperArmor = false;
         
+        this.ryomaPassiveTimer = 0;
+        this.hasRyomaEnhancedAtk = (heroKey === 'ryoma');
+
         this.isDashing = false; this.dashTargetX = x; this.dashTargetY = y; this.dashSpeed = 30;
         this.rotation = team === 'blue' ? -Math.PI / 4 : Math.PI * 3 / 4;
     }
@@ -770,6 +788,17 @@ class Hero extends Entity {
         if (!this.alive) return;
         if (this.atkCooldown > 0) this.atkCooldown--;
         if (this.attackLockTimer > 0) this.attackLockTimer--;
+
+        if (this.heroKey === 'ryoma' && !this.hasRyomaEnhancedAtk) {
+            this.ryomaPassiveTimer++;
+            if (this.ryomaPassiveTimer >= 300) {
+                this.ryomaPassiveTimer = 0;
+                this.hasRyomaEnhancedAtk = true;
+                if (this.isPlayer) {
+                    damageTexts.push({ x: this.x, y: this.y - 50, value: '🗡️ 龍馬強普就緒', color: '#00e676', life: 1.0 });
+                }
+            }
+        }
 
         let baseHomeX = this.team === 'blue' ? 350 : MAP_SIZE - 350;
         let baseHomeY = this.team === 'blue' ? MAP_SIZE - 350 : 350;
@@ -809,7 +838,7 @@ class Hero extends Entity {
                     this.rotation = Math.atan2(joystickDir.y, joystickDir.x);
                 }
             }
-            if (isAttackingPressed && this.atkCooldown <= 0) {
+            if (isAttackingPressed) {
                 performAttack();
             }
         } else {
@@ -837,10 +866,10 @@ class Hero extends Entity {
 
                         if (minDist <= this.range + nearestEnemy.radius) {
                             if (this.atkCooldown <= 0) {
-                                this.atkCooldown = 15;
+                                this.atkCooldown = 30;
                                 this.attackLockTimer = 15;
-                                nearestEnemy.takeDamage(this.atk, this.team, 'physical');
-                                damageTexts.push({ x: nearestEnemy.x, y: nearestEnemy.y - 30, value: `${Math.floor(this.atk)}`, color: '#ff4444', life: 0.6 });
+                                nearestEnemy.takeDamage(this.atk * 1.5, this.team, 'physical');
+                                damageTexts.push({ x: nearestEnemy.x, y: nearestEnemy.y - 30, value: `${Math.floor(this.atk * 1.5)}`, color: '#ff4444', life: 0.6 });
                             }
                         }
                     }
@@ -957,13 +986,26 @@ class Hero extends Entity {
 }
 
 function performAttack() {
-    if (!player || !player.alive || player.atkCooldown > 0) return;
+    if (!player || !player.alive) return;
 
-    player.atkCooldown = 15;     
+    let isRyomaEnhanced = (player.heroKey === 'ryoma' && player.hasRyomaEnhancedAtk);
+    let isEnhancedAtk = player.hasEnhancedAttack || isRyomaEnhanced;
+    let attackRange = isRyomaEnhanced ? 220 : (isEnhancedAtk ? player.range + 70 : player.range);
+
+    let hasTargetInRange = false;
+    entities.forEach(target => {
+        if (!target.alive || target.team === player.team) return;
+        let dist = Math.hypot(target.x - player.x, target.y - player.y);
+        if (dist <= attackRange + target.radius) {
+            hasTargetInRange = true;
+        }
+    });
+
+    if (!hasTargetInRange) return;
+    if (player.atkCooldown > 0) return;
+    
+    player.atkCooldown = 30;     
     player.attackLockTimer = 15; 
-
-    let isEnhancedAtk = player.hasEnhancedAttack || false;
-    let attackRange = isEnhancedAtk ? player.range + 70 : player.range;
 
     entities.forEach(target => {
         if (!target.alive || target.team === player.team) return;
@@ -971,7 +1013,7 @@ function performAttack() {
 
         if (dist <= attackRange + target.radius) {
             let isCrit = false;
-            let finalAtk = player.atk;
+            let finalAtk = player.atk * 1.5;
 
             if (isEnhancedAtk) finalAtk *= 1.5;
 
@@ -980,29 +1022,34 @@ function performAttack() {
                 let toTargetY = target.y - player.y;
                 let targetFacingX = Math.cos(target.rotation || 0);
                 let targetFacingY = Math.sin(target.rotation || 0);
-                let dot = toTargetX * targetFacingX + toTargetY * targetFacingY;
-                if (dot > 0) isCrit = true;
+                if (toTargetX * targetFacingX + toTargetY * targetFacingY > 0) isCrit = true;
+            } else if (!isCrit && Math.random() < 0.10) {
+                isCrit = true;
             }
-
-            if (!isCrit && Math.random() < 0.10) isCrit = true;
             if (isCrit) finalAtk *= 2;
 
             target.takeDamage(finalAtk, player.team, 'physical');
+
+            if (isRyomaEnhanced) {
+                target.isSlowed = true;
+                target.slowFactor = 0.4;
+                setTimeout(() => { target.isSlowed = false; }, 2000);
+                damageTexts.push({ x: target.x, y: target.y - 50, value: '❄️ 減速 60%', color: '#00d2ff', life: 1.0 });
+                player.hasRyomaEnhancedAtk = false;
+            }
+
             let dmgStr = isCrit ? `⭕ ${Math.floor(finalAtk)}` : `${Math.floor(finalAtk)}`;
-            let dmgColor = isCrit ? '#ff1744' : (isEnhancedAtk ? '#ffeb3b' : '#fff');
+            damageTexts.push({ x: target.x, y: target.y - 30, value: dmgStr, color: isCrit ? '#ff1744' : '#fff', life: 0.8 });
             
-            damageTexts.push({ x: target.x, y: target.y - 30, value: dmgStr, color: dmgColor, life: 0.8 });
             attackEffects.push({ 
-                x: target.x, 
-                y: target.y, 
-                life: 0.3, 
-                radius: isEnhancedAtk ? 40 : 25, 
-                color: isEnhancedAtk ? '#ff9100' : '#f3c654' 
+                x: target.x, y: target.y, 
+                life: 0.3, radius: isRyomaEnhanced ? 45 : 25, 
+                color: isRyomaEnhanced ? '#00e676' : '#f3c654' 
             });
         }
     });
 
-    if (isEnhancedAtk) {
+    if (player.hasEnhancedAttack && player.heroKey !== 'ryoma') {
         player.hasEnhancedAttack = false;
     }
 }
@@ -1023,7 +1070,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
     if (player.heroKey === 'nakroth') {
         if (skillId === 1) {
             stats.cd = Math.max(2.5, 5.0 - (sLv - 1) * 0.3);
-            stats.dmg = 200 + sLv * 50;
+            stats.dmg = (200 + sLv * 50) * 0.75;
             skillCooldowns[1] = stats.cd;
 
             let targetX = player.x + dirX * 180;
@@ -1047,7 +1094,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
                         let dist = Math.hypot(e.x - player.x, e.y - player.y);
                         if (dist <= 65 + e.radius) {
                             e.takeDamage(stats.dmg, player.team, 'physical');
-                            damageTexts.push({ x: e.x, y: e.y - 35, value: `🌪️ 擊飛 ${stats.dmg}`, color: '#ab47bc', life: 0.8 });
+                            damageTexts.push({ x: e.x, y: e.y - 35, value: `🌪️ 擊飛 ${Math.floor(stats.dmg)}`, color: '#ab47bc', life: 0.8 });
                         }
                     }
                 });
@@ -1099,6 +1146,193 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             setTimeout(() => {
                 if (player) player.isSuperArmor = false;
             }, 700);
+        }
+    } else if (player.heroKey === 'quillen') {
+        if (skillId === 1) {
+            stats.cd = Math.max(3.5, 5.0 - (sLv - 1) * 0.3);
+            stats.dmg = (120 + sLv * 40);
+            skillCooldowns[1] = stats.cd;
+
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    let targetX = player.x + dirX * (50 + i * 35);
+                    let targetY = player.y + dirY * (50 + i * 35);
+                    
+                    skillEffects.push({ 
+                        x: targetX, y: targetY, 
+                        life: 0.2, size: 50, 
+                        color: 'rgba(183, 28, 28, 0.6)', 
+                        dmg: stats.dmg, team: player.team 
+                    });
+
+                    entities.forEach(e => {
+                        if (e instanceof Building) return;
+                        if (e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) < 55) {
+                            e.takeDamage(stats.dmg, player.team, 'physical');
+                            damageTexts.push({ x: e.x, y: e.y - 30, value: `⚔️ ${Math.floor(stats.dmg)}`, color: '#ff5252', life: 0.6 });
+
+                            if (e.quillenMarked) {
+                                skillCooldowns[2] = Math.max(0, skillCooldowns[2] - 1.0);
+                                skillCooldowns[3] = Math.max(0, skillCooldowns[3] - 1.0);
+                                damageTexts.push({ x: e.x, y: e.y - 55, value: '-1s CD', color: '#ffd700', life: 0.8 });
+                            }
+                        }
+                    });
+                }, i * 140);
+            }
+        } else if (skillId === 2) {
+            stats.cd = Math.max(4.0, 7.0 - (sLv - 1) * 0.8);
+            stats.dmg = 180 + sLv * 45;
+            skillCooldowns[2] = stats.cd;
+
+            let targetX = player.x + dirX * 150;
+            let targetY = player.y + dirY * 150;
+            let clamped = clampPosition(targetX, targetY, player.radius);
+            player.startDash(clamped.x, clamped.y, 40);
+
+            setTimeout(() => {
+                entities.forEach(e => {
+                    if (e instanceof Building) return;
+                    if (e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) < 70) {
+                        e.quillenMarked = true;
+                        setTimeout(() => { e.quillenMarked = false; }, 4000);
+                        e.takeDamage(stats.dmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 35, value: `🎯 標記`, color: '#ff1744', life: 1.0 });
+                    }
+                });
+            }, 100);
+        } else if (skillId === 3) {
+            stats.cd = Math.max(10.0, 25.0 - (sLv - 1) * 5.0);
+            skillCooldowns[3] = stats.cd;
+
+            let targetX = player.x + dirX * 150;
+            let targetY = player.y + dirY * 150;
+            let clamped = clampPosition(targetX, targetY, player.radius);
+            player.startDash(clamped.x, clamped.y, 42);
+
+            player.isStealth = true;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '👻 隱形啟動', color: '#ab47bc', life: 1.2 });
+
+            let missingHp = player.maxHp - player.hp;
+            let healTotal = missingHp * 0.4;
+            let healPerTick = healTotal / 10;
+            let healTicks = 0;
+
+            let healInterval = setInterval(() => {
+                if (!player.alive || !player.isStealth) {
+                    clearInterval(healInterval);
+                    return;
+                }
+                player.hp = Math.min(player.maxHp, player.hp + healPerTick);
+                damageTexts.push({ x: player.x, y: player.y - 35, value: `+${Math.floor(healPerTick)}`, color: '#00e676', life: 0.5 });
+                healTicks++;
+                if (healTicks >= 10) clearInterval(healInterval);
+            }, 500);
+
+            setTimeout(() => {
+                if (player) player.isStealth = false;
+            }, 5000);
+        }
+    } else if (player.heroKey === 'ryoma') {
+        if (skillId === 1) {
+            stats.cd = 5.0;
+            stats.dmg = 200 + sLv * 55;
+            skillCooldowns[1] = stats.cd;
+
+            let backX = player.x - dirX * 140;
+            let backY = player.y - dirY * 140;
+            let clampedBack = clampPosition(backX, backY, player.radius);
+            player.startDash(clampedBack.x, clampedBack.y, 40);
+
+            setTimeout(() => {
+                if (!player.alive) return;
+                let forwardX = player.x + dirX * 180;
+                let forwardY = player.y + dirY * 180;
+                
+                skillEffects.push({ 
+                    x: forwardX, y: forwardY, 
+                    life: 0.25, size: 60, 
+                    color: 'rgba(46, 125, 50, 0.7)', 
+                    dmg: stats.dmg, team: player.team 
+                });
+
+                entities.forEach(e => {
+                    if (e instanceof Building) return;
+                    if (e.alive && e.team !== player.team && Math.hypot(e.x - forwardX, e.y - forwardY) < 65) {
+                        e.takeDamage(stats.dmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 35, value: `⚔️ ${Math.floor(stats.dmg)}`, color: '#66bb6a', life: 0.8 });
+                    }
+                });
+            }, 250);
+        } else if (skillId === 2) {
+            stats.cd = Math.max(5.5, 8.0 - (sLv - 1) * 0.5);
+            stats.dmg = 250 + sLv * 65;
+            skillCooldowns[2] = stats.cd;
+
+            let tipX = player.x + dirX * 240;
+            let tipY = player.y + dirY * 240;
+
+            skillEffects.push({ 
+                x: tipX, y: tipY, 
+                life: 0.3, size: 70, 
+                color: 'rgba(56, 142, 60, 0.8)', 
+                dmg: stats.dmg, team: player.team 
+            });
+
+            entities.forEach(e => {
+                if (e instanceof Building) return;
+                if (e.alive && e.team !== player.team) {
+                    let distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+                    let isTip = (distToPlayer >= 120 && distToPlayer <= 260);
+                    let finalDmg = isTip ? stats.dmg * 1.5 : stats.dmg;
+
+                    if (distToPlayer <= 260) {
+                        e.takeDamage(finalDmg, player.team, 'physical');
+                        
+                        if (isTip) {
+                            e.isStunned = true;
+                            setTimeout(() => { e.isStunned = false; }, 1000);
+                            damageTexts.push({ x: e.x, y: e.y - 40, value: `🌟 暈眩 ${Math.floor(finalDmg)}`, color: '#ffd700', life: 1.0 });
+                        } else {
+                            damageTexts.push({ x: e.x, y: e.y - 35, value: `${Math.floor(finalDmg)}`, color: '#81c784', life: 0.8 });
+                        }
+                    }
+                }
+            });
+        } else if (skillId === 3) {
+            stats.cd = Math.max(4.0, 10.0 - (sLv - 1) * 1.5);
+            stats.dmg = 140 + sLv * 35;
+            skillCooldowns[3] = stats.cd;
+
+            for (let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    let strikeX = player.x + dirX * (100 + i * 40);
+                    let strikeY = player.y + dirY * (100 + i * 40);
+
+                    skillEffects.push({ 
+                        x: strikeX, y: strikeY, 
+                        life: 0.2, size: 55, 
+                        color: 'rgba(76, 175, 80, 0.7)', 
+                        dmg: stats.dmg, team: player.team 
+                    });
+
+                    entities.forEach(e => {
+                        if (e instanceof Building) return;
+                        if (e.alive && e.team !== player.team && Math.hypot(e.x - strikeX, e.y - strikeY) < 65) {
+                            e.takeDamage(stats.dmg, player.team, 'physical');
+                            damageTexts.push({ x: e.x, y: e.y - 30, value: `🔪 ${Math.floor(stats.dmg)}`, color: '#a5d6a7', life: 0.6 });
+
+                            skillCooldowns[2] = Math.max(0, skillCooldowns[2] - 1.0);
+                            let missingHp = player.maxHp - player.hp;
+                            let healAmt = missingHp * 0.10;
+                            player.hp = Math.min(player.maxHp, player.hp + healAmt);
+                            damageTexts.push({ x: player.x, y: player.y - 45, value: `+${Math.floor(healAmt)} (-1s 2技)`, color: '#00e676', life: 0.8 });
+                        }
+                    });
+                }, i * 150);
+            }
         }
     } else {
         let targetX = player.x + dirX * 180;
@@ -1352,13 +1586,13 @@ function gameLoop() {
     });
 
     if (player && player.alive) {
-        let isEnhanced = player.hasEnhancedAttack || false;
+        let isEnhanced = player.hasEnhancedAttack || (player.heroKey === 'ryoma' && player.hasRyomaEnhancedAtk);
         if (isEnhanced || isAttackingPressed) {
             ctx.save();
             ctx.beginPath();
             let startX = player.x - camera.x;
             let startY = player.y - camera.y;
-            let rangeRadius = isEnhanced ? player.range + 70 : player.range;
+            let rangeRadius = (player.heroKey === 'ryoma' && player.hasRyomaEnhancedAtk) ? 220 : (isEnhanced ? player.range + 70 : player.range);
 
             ctx.arc(startX, startY, rangeRadius, 0, Math.PI * 2);
             if (isEnhanced) {
