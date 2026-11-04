@@ -62,8 +62,9 @@
         .attack-btn { position: absolute; bottom: 10px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto; touch-action: none; }
         
         .bottom-actions-bar { position: absolute; bottom: 15px; right: 195px; display: flex; gap: 10px; pointer-events: auto; z-index: 60; }
-        .action-mini-btn { width: 46px; height: 46px; background: radial-gradient(circle, #263238 0%, #0d1b2a 100%); border: 2px solid #f3c654; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; position: relative; pointer-events: auto; touch-action: none; }
-        .action-mini-btn .label { position: absolute; bottom: -16px; font-size: 0.55rem; color: #ffeb3b; font-weight: bold; white-space: nowrap; }
+        .action-mini-btn { width: 46px; height: 46px; background: radial-gradient(circle, #263238 0%, #0d1b2a 100%); border: 2px solid #f3c654; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; position: relative; pointer-events: auto; touch-action: none; overflow: hidden; }
+        .action-mini-btn .label { position: absolute; bottom: -16px; font-size: 0.55rem; color: #ffeb3b; font-weight: bold; white-space: nowrap; pointer-events: none; }
+        .spell-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
 
         .skill-btn { position: absolute; width: 62px; height: 62px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto; touch-action: none; }
         .skill-btn.locked { border-color: #555; opacity: 0.5; filter: grayscale(1); }
@@ -95,7 +96,6 @@
         
         .pick-content-layout { display: flex; flex: 1; margin-top: 15px; gap: 20px; overflow: hidden; }
         
-        /* 讓左側英雄列表可以正常上下滑動、點擊與觸控 */
         .pick-hero-sidebar { 
             width: 230px; 
             height: 100%; 
@@ -238,10 +238,12 @@
                 <div class="action-mini-btn" id="btn-heal-spell">
                     <span>💚</span>
                     <div class="label">恢復</div>
+                    <div class="spell-cd-overlay hidden" id="cd-heal"></div>
                 </div>
                 <div class="action-mini-btn" id="btn-challenger-spell">
                     <span id="challenger-icon">✨</span>
                     <div class="label" id="lbl-challenger">順移</div>
+                    <div class="spell-cd-overlay hidden" id="cd-challenger"></div>
                 </div>
             </div>
 
@@ -260,7 +262,7 @@
             <div class="skill-btn" id="skill-1" data-skill="1">
                 <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
                 一技
-                <div class="skill-desc-label" id="lbl-skill-1">Lv.0 位移/擊飛</div>
+                <div class="skill-desc-label" id="lbl-skill-1">Lv.0 兩段位移</div>
                 <div class="skill-cd-overlay hidden" id="cd-1"></div>
             </div>
         </div>
@@ -268,7 +270,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v8';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v10';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 function initUserData() {
@@ -289,13 +291,13 @@ window.addEventListener('DOMContentLoaded', () => { initUserData(); buildHeroSel
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let MAP_SIZE = 2000;
+let MAP_SIZE = 2600; 
 let ROAD_WIDTH = 280; 
 let isRunning = false;
-let gameMode = '1v1';
 let selectedHeroKey = 'nakroth';
 let randomAiKey = 'krixi';
 let challengerCooldown = 0;
+let healSpellCooldown = 0;
 
 let gameTimeSeconds = 0;
 let hasFirstBloodOccurred = false;
@@ -370,6 +372,11 @@ let skillCooldowns = { 1: 0, 2: 0, 3: 0 };
 let skillLevels = { 1: 0, 2: 0, 3: 0 };
 let unallocatedPoints = 0;
 
+let heroSkillStage = {
+    'nakroth': { 1: 1 },
+    'ryoma': { 1: 1 }
+};
+
 const joystick = document.getElementById('joystick');
 const knob = document.getElementById('joystick-knob');
 
@@ -417,7 +424,7 @@ bindClick('btn-recall', () => castRecall());
 
 function castChallengerSpell() {
     if (challengerCooldown > 0 || !player || !player.alive) return;
-    challengerCooldown = 90; // 順移 90 秒
+    challengerCooldown = 90;
     let dX = joystickDir.x !== 0 ? joystickDir.x : 1;
     let dY = joystickDir.y !== 0 ? joystickDir.y : 0;
     player.startDash(player.x + dX * 180, player.y + dY * 180, 40);
@@ -425,16 +432,14 @@ function castChallengerSpell() {
 }
 
 function castHealSpell() {
-    if (!player || !player.alive) return;
+    if (healSpellCooldown > 0 || !player || !player.alive) return;
+    healSpellCooldown = 30;
     player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.35);
     attackEffects.push({ x: player.x, y: player.y, life: 0.6, radius: 55, color: '#00e676' });
 }
 
 function castRecall() {
-    if (!player || !player.alive) return;
-    player.x = 350; player.y = MAP_SIZE - 350;
-    player.hp = player.maxHp;
-    attackEffects.push({ x: player.x, y: player.y, life: 0.8, radius: 50, color: '#00d2ff' });
+    triggerAnnouncement('⚠️ 單挑模式無法使用回城！', '#ff4444');
 }
 
 function openHeroPick() {
@@ -465,28 +470,32 @@ function confirmStartGame() {
     gameTimeSeconds = 0; hasFirstBloodOccurred = false;
     skillCooldowns = { 1: 0, 2: 0, 3: 0 };
     skillLevels = { 1: 0, 2: 0, 3: 0 };
+    challengerCooldown = 0; healSpellCooldown = 0;
     unallocatedPoints = 1;
+
+    heroSkillStage = { 'nakroth': { 1: 1 }, 'ryoma': { 1: 1 } };
 
     entities = []; skillEffects = []; attackEffects = []; damageTexts = [];
 
     let keys = Object.keys(HERO_DB).filter(k => k !== selectedHeroKey);
     randomAiKey = keys[Math.floor(Math.random() * keys.length)];
 
-    let blueCore = new Building(350, MAP_SIZE - 350, 'blue', 'core');
-    let redCore = new Building(MAP_SIZE - 350, 350, 'red', 'core');
-    let blueTower = new Building(650, MAP_SIZE - 700, 'blue', 'tower');
-    let redTower = new Building(MAP_SIZE - 650, 700, 'red', 'tower');
+    let blueCore = new Building(450, MAP_SIZE - 450, 'blue', 'core');
+    let redCore = new Building(MAP_SIZE - 450, 450, 'red', 'core');
 
-    player = new Hero(420, MAP_SIZE - 420, 'blue', selectedHeroKey, true);
-    let aiHero = new Hero(MAP_SIZE - 420, 420, 'red', randomAiKey, false);
+    let blueTower = new Building(850, MAP_SIZE - 850, 'blue', 'tower');
+    let redTower = new Building(MAP_SIZE - 850, 850, 'red', 'tower');
+
+    player = new Hero(250, MAP_SIZE - 250, 'blue', selectedHeroKey, true);
+    let aiHero = new Hero(MAP_SIZE - 250, 250, 'red', randomAiKey, false);
 
     entities.push(blueCore, redCore, blueTower, redTower, player, aiHero);
     
     for (let i = 0; i < 3; i++) {
         setTimeout(() => {
             if (!isRunning) return;
-            entities.push(new Minion(350 - i * 15, MAP_SIZE - 350 + i * 15, 'blue'));
-            entities.push(new Minion(MAP_SIZE - 350 + i * 15, 350 - i * 15, 'red'));
+            entities.push(new Minion(450 - i * 15, MAP_SIZE - 450 + i * 15, 'blue'));
+            entities.push(new Minion(MAP_SIZE - 450 + i * 15, 450 - i * 15, 'red'));
         }, i * 300);
     }
     minionSpawnTimer = 0;
@@ -614,8 +623,8 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
 });
 
 function clampPosition(x, y, radius = 26) {
-    let startX = 350, startY = MAP_SIZE - 350;
-    let endX = MAP_SIZE - 350, endY = 350;
+    let startX = 450, startY = MAP_SIZE - 450;
+    let endX = MAP_SIZE - 450, endY = 450;
     let lineLen = Math.hypot(endX - startX, endY - startY);
     let uX = (endX - startX) / lineLen, uY = (endY - startY) / lineLen;
     let pX = x - startX, pY = y - startY;
@@ -715,8 +724,8 @@ class Minion extends Entity {
         super(x, y, team, 18);
         this.maxHp = 1200; this.hp = 1200;
         this.atk = 45; this.range = 100;
-        this.targetX = team === 'blue' ? MAP_SIZE - 350 : 350;
-        this.targetY = team === 'blue' ? 350 : MAP_SIZE - 350;
+        this.targetX = team === 'blue' ? MAP_SIZE - 450 : 450;
+        this.targetY = team === 'blue' ? 450 : MAP_SIZE - 450;
         this.moveSpeed = 1.6;
         this.atkCooldown = 0;
     }
@@ -800,11 +809,11 @@ class Hero extends Entity {
             }
         }
 
-        let baseHomeX = this.team === 'blue' ? 350 : MAP_SIZE - 350;
-        let baseHomeY = this.team === 'blue' ? MAP_SIZE - 350 : 350;
+        let baseHomeX = this.team === 'blue' ? 250 : MAP_SIZE - 250;
+        let baseHomeY = this.team === 'blue' ? MAP_SIZE - 250 : 250;
         let distToBase = Math.hypot(this.x - baseHomeX, this.y - baseHomeY);
         
-        if (distToBase <= 90) {
+        if (distToBase <= 110) {
             if (this.hp < this.maxHp) {
                 this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.13);
                 if (Math.random() < 0.2) {
@@ -929,7 +938,7 @@ class Hero extends Entity {
 
             setTimeout(() => {
                 this.hp = this.maxHp;
-                this.x = 350; this.y = MAP_SIZE - 350;
+                this.x = 250; this.y = MAP_SIZE - 250;
                 this.alive = true;
                 triggerAnnouncement('⚔️ 你已重返戰場！', '#00e676');
             }, respawnTime * 1000);
@@ -977,7 +986,7 @@ class Hero extends Entity {
 
             setTimeout(() => {
                 this.hp = this.maxHp;
-                this.x = MAP_SIZE - 350; this.y = 350;
+                this.x = MAP_SIZE - 250; this.y = 250;
                 this.alive = true;
             }, respawnTime * 1000);
         }
@@ -1069,9 +1078,8 @@ function castSkill(skillId, dirX, dirY, dragDist) {
 
     if (player.heroKey === 'nakroth') {
         if (skillId === 1) {
-            stats.cd = Math.max(2.5, 5.0 - (sLv - 1) * 0.3);
+            let currentStage = heroSkillStage['nakroth'][1] || 1;
             stats.dmg = (200 + sLv * 50) * 0.75;
-            skillCooldowns[1] = stats.cd;
 
             let targetX = player.x + dirX * 180;
             let targetY = player.y + dirY * 180;
@@ -1090,15 +1098,26 @@ function castSkill(skillId, dirX, dirY, dragDist) {
 
                 entities.forEach(e => {
                     if (e instanceof Building) return;
-                    if (e.alive && e.team !== player.team) {
-                        let dist = Math.hypot(e.x - player.x, e.y - player.y);
-                        if (dist <= 65 + e.radius) {
-                            e.takeDamage(stats.dmg, player.team, 'physical');
-                            damageTexts.push({ x: e.x, y: e.y - 35, value: `🌪️ 擊飛 ${Math.floor(stats.dmg)}`, color: '#ab47bc', life: 0.8 });
-                        }
+                    if (e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 65 + e.radius) {
+                        e.takeDamage(stats.dmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 35, value: `🌪️ 擊飛 ${Math.floor(stats.dmg)}`, color: '#ab47bc', life: 0.8 });
                     }
                 });
             }, 150);
+
+            if (currentStage === 1) {
+                heroSkillStage['nakroth'][1] = 2;
+                skillCooldowns[1] = 0.5;
+                setTimeout(() => {
+                    if (heroSkillStage['nakroth'][1] === 2) {
+                        heroSkillStage['nakroth'][1] = 1;
+                        skillCooldowns[1] = Math.max(2.5, 5.0 - (sLv - 1) * 0.3);
+                    }
+                }, 5000);
+            } else {
+                heroSkillStage['nakroth'][1] = 1;
+                skillCooldowns[1] = Math.max(2.5, 5.0 - (sLv - 1) * 0.3);
+            }
 
         } else if (skillId === 2) {
             stats.cd = Math.max(4.0, 7.0 - (sLv - 1) * 1.0);
@@ -1236,35 +1255,46 @@ function castSkill(skillId, dirX, dirY, dragDist) {
         }
     } else if (player.heroKey === 'ryoma') {
         if (skillId === 1) {
-            stats.cd = 5.0;
+            let currentStage = heroSkillStage['ryoma'][1] || 1;
             stats.dmg = 200 + sLv * 55;
-            skillCooldowns[1] = stats.cd;
 
             let backX = player.x - dirX * 140;
             let backY = player.y - dirY * 140;
             let clampedBack = clampPosition(backX, backY, player.radius);
             player.startDash(clampedBack.x, clampedBack.y, 40);
 
-            setTimeout(() => {
-                if (!player.alive) return;
-                let forwardX = player.x + dirX * 180;
-                let forwardY = player.y + dirY * 180;
-                
-                skillEffects.push({ 
-                    x: forwardX, y: forwardY, 
-                    life: 0.25, size: 60, 
-                    color: 'rgba(46, 125, 50, 0.7)', 
-                    dmg: stats.dmg, team: player.team 
-                });
+            let forwardX = player.x + dirX * 180;
+            let forwardY = player.y + dirY * 180;
+            
+            skillEffects.push({ 
+                x: forwardX, y: forwardY, 
+                life: 0.25, size: 60, 
+                color: 'rgba(46, 125, 50, 0.7)', 
+                dmg: stats.dmg, team: player.team 
+            });
 
-                entities.forEach(e => {
-                    if (e instanceof Building) return;
-                    if (e.alive && e.team !== player.team && Math.hypot(e.x - forwardX, e.y - forwardY) < 65) {
-                        e.takeDamage(stats.dmg, player.team, 'physical');
-                        damageTexts.push({ x: e.x, y: e.y - 35, value: `⚔️ ${Math.floor(stats.dmg)}`, color: '#66bb6a', life: 0.8 });
+            entities.forEach(e => {
+                if (e instanceof Building) return;
+                if (e.alive && e.team !== player.team && Math.hypot(e.x - forwardX, e.y - forwardY) < 65) {
+                    e.takeDamage(stats.dmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 35, value: `⚔️ ${Math.floor(stats.dmg)}`, color: '#66bb6a', life: 0.8 });
+                }
+            });
+
+            if (currentStage === 1) {
+                heroSkillStage['ryoma'][1] = 2;
+                skillCooldowns[1] = 0.5;
+                setTimeout(() => {
+                    if (heroSkillStage['ryoma'][1] === 2) {
+                        heroSkillStage['ryoma'][1] = 1;
+                        skillCooldowns[1] = 5.0;
                     }
-                });
-            }, 250);
+                }, 5000);
+            } else {
+                heroSkillStage['ryoma'][1] = 1;
+                skillCooldowns[1] = 5.0;
+            }
+
         } else if (skillId === 2) {
             stats.cd = Math.max(5.5, 8.0 - (sLv - 1) * 0.5);
             stats.dmg = 250 + sLv * 65;
@@ -1354,7 +1384,7 @@ function updateTopScopeUI() {
 
 function updateSkillUI() {
     const nakrothSkillNames = {
-        1: { name: '位移/擊飛', type: '位移' },
+        1: { name: '兩段位移', type: '位移' },
         2: { name: '位移/強普', type: '位移' },
         3: { name: '傷害/霸體', type: '大招' }
     };
@@ -1369,6 +1399,8 @@ function updateSkillUI() {
         if (player && player.heroKey === 'nakroth') {
             let info = nakrothSkillNames[id];
             descLbl.innerText = `Lv.${sLv} ${info.name}`;
+        } else if (player && player.heroKey === 'ryoma' && id === 1) {
+            descLbl.innerText = `Lv.${sLv} 兩段後撤`;
         } else {
             descLbl.innerText = `Lv.${sLv} 技能${id}`;
         }
@@ -1396,6 +1428,22 @@ function updateSkillUI() {
             cdEl.classList.add('hidden');
         }
     });
+
+    let cdChallengerEl = document.getElementById('cd-challenger');
+    if (challengerCooldown > 0) {
+        cdChallengerEl.classList.remove('hidden');
+        cdChallengerEl.innerText = Math.ceil(challengerCooldown);
+    } else {
+        cdChallengerEl.classList.add('hidden');
+    }
+
+    let cdHealEl = document.getElementById('cd-heal');
+    if (healSpellCooldown > 0) {
+        cdHealEl.classList.remove('hidden');
+        cdHealEl.innerText = Math.ceil(healSpellCooldown);
+    } else {
+        cdHealEl.classList.add('hidden');
+    }
 }
 
 function gameLoop() {
@@ -1412,6 +1460,7 @@ function gameLoop() {
         }
     });
     if (challengerCooldown > 0) challengerCooldown = Math.max(0, challengerCooldown - 1 / 60);
+    if (healSpellCooldown > 0) healSpellCooldown = Math.max(0, healSpellCooldown - 1 / 60);
 
     minionSpawnTimer++;
     if (minionSpawnTimer >= 900) {
@@ -1419,8 +1468,8 @@ function gameLoop() {
         for (let i = 0; i < 3; i++) {
             setTimeout(() => {
                 if (!isRunning) return;
-                entities.push(new Minion(350 - i * 15, MAP_SIZE - 350 + i * 15, 'blue'));
-                entities.push(new Minion(MAP_SIZE - 350 + i * 15, 350 - i * 15, 'red'));
+                entities.push(new Minion(450 - i * 15, MAP_SIZE - 450 + i * 15, 'blue'));
+                entities.push(new Minion(MAP_SIZE - 450 + i * 15, 450 - i * 15, 'red'));
             }, i * 300);
         }
     }
@@ -1436,8 +1485,8 @@ function gameLoop() {
     
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(350 - camera.x, MAP_SIZE - 350 - camera.y);
-    ctx.lineTo(MAP_SIZE - 350 - camera.x, 350 - camera.y);
+    ctx.moveTo(450 - camera.x, MAP_SIZE - 450 - camera.y);
+    ctx.lineTo(MAP_SIZE - 450 - camera.x, 450 - camera.y);
     ctx.strokeStyle = '#1e3a5f';
     ctx.lineWidth = ROAD_WIDTH;
     ctx.lineCap = 'round';
@@ -1446,13 +1495,13 @@ function gameLoop() {
 
     ctx.save();
     ['blue', 'red'].forEach(team => {
-        let hX = team === 'blue' ? 350 : MAP_SIZE - 350;
-        let hY = team === 'blue' ? MAP_SIZE - 350 : 350;
-        let sx = hX - camera.x;
-        let sy = hY - camera.y;
+        let fountainX = team === 'blue' ? 250 : MAP_SIZE - 250;
+        let fountainY = team === 'blue' ? MAP_SIZE - 250 : 250;
+        let sx = fountainX - camera.x;
+        let sy = fountainY - camera.y;
 
         ctx.beginPath();
-        ctx.arc(sx, sy, 90, 0, Math.PI * 2);
+        ctx.arc(sx, sy, 110, 0, Math.PI * 2);
         ctx.fillStyle = team === 'blue' ? 'rgba(0, 210, 255, 0.15)' : 'rgba(255, 68, 68, 0.15)';
         ctx.fill();
         ctx.lineWidth = 2;
@@ -1612,29 +1661,54 @@ function gameLoop() {
 
     if (activeSkillDrag && player && player.alive) {
         ctx.save();
-        ctx.beginPath();
         let startX = player.x - camera.x;
         let startY = player.y - camera.y;
-        let currentDist = Math.min(activeSkillDrag.dragDist, activeSkillDrag.maxRange);
-        let endX = startX + activeSkillDrag.dirX * currentDist;
-        let endY = startY + activeSkillDrag.dirY * currentDist;
 
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.strokeStyle = 'rgba(0, 210, 255, 0.8)';
-        ctx.lineWidth = 4;
-        ctx.setLineDash([8, 6]);
-        ctx.stroke();
+        if (player.heroKey === 'ryoma' && (activeSkillDrag.skillId === 2 || activeSkillDrag.skillId === 3)) {
+            let width = activeSkillDrag.skillId === 3 ? 90 : 60;
+            let length = 240;
+            let angle = Math.atan2(activeSkillDrag.dirY, activeSkillDrag.dirX);
 
-        ctx.beginPath();
-        ctx.arc(endX, endY, 25, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 210, 255, 0.25)';
-        ctx.fill();
-        ctx.strokeStyle = '#00d2ff';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([]);
-        ctx.stroke();
-        
+            ctx.save();
+            ctx.translate(startX, startY);
+            ctx.rotate(angle);
+
+            ctx.fillStyle = 'rgba(46, 125, 50, 0.2)';
+            ctx.strokeStyle = '#00e676';
+            ctx.lineWidth = 2;
+            ctx.fillRect(0, -width / 2, length, width);
+            ctx.strokeRect(0, -width / 2, length, width);
+
+            if (activeSkillDrag.skillId === 2) {
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.35)';
+                ctx.fillRect(120, -width / 2, 120, width);
+                ctx.strokeStyle = '#ffd700';
+                ctx.strokeRect(120, -width / 2, 120, width);
+            }
+
+            ctx.restore();
+        } else {
+            ctx.beginPath();
+            let currentDist = Math.min(activeSkillDrag.dragDist, activeSkillDrag.maxRange);
+            let endX = startX + activeSkillDrag.dirX * currentDist;
+            let endY = startY + activeSkillDrag.dirY * currentDist;
+
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.strokeStyle = 'rgba(0, 210, 255, 0.8)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([8, 6]);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(endX, endY, 25, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 210, 255, 0.25)';
+            ctx.fill();
+            ctx.strokeStyle = '#00d2ff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([]);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 
