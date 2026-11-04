@@ -252,7 +252,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v7';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v8';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 function initUserData() {
@@ -273,13 +273,12 @@ window.addEventListener('DOMContentLoaded', () => { initUserData(); buildHeroSel
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-let MAP_SIZE = 3000;
-let ROAD_WIDTH = 320; 
+let MAP_SIZE = 2000;  // 縮短地圖長度
+let ROAD_WIDTH = 280; 
 let isRunning = false;
 let gameMode = '1v1';
 let selectedHeroKey = 'nakroth';
 let randomAiKey = 'krixi';
-let selectedChallengerKey = 'blink';
 let challengerCooldown = 0;
 
 let gameTimeSeconds = 0;
@@ -310,13 +309,34 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 const HERO_DB = {
-    'nakroth': { name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 5000, hpGrowth: 450, atk: 120, range: 110, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2' },
-    'quillen': { name: '奎倫', type: '刺客 / 背刺必爆', baseHp: 4800, hpGrowth: 420, atk: 130, range: 130, avatar: '🥷', color1: '#b71c1c', color2: '#ff8a80' },
-    'valhein': { name: '凡恩', type: '射手 / 遠距輸出', baseHp: 4500, hpGrowth: 380, atk: 85, range: 240, avatar: '🎯', color1: '#c29b38', color2: '#ffe89e' },
-    'krixi': { name: '克里希', type: '法師 / 魔法爆發', baseHp: 4200, hpGrowth: 350, atk: 45, range: 220, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7' },
-    'zuka': { name: '祖卡', type: '戰士 / 物理爆發', baseHp: 6200, hpGrowth: 550, atk: 110, range: 140, avatar: '🐼', color1: '#ff9800', color2: '#ffe082' },
-    'ryoma': { name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 5800, hpGrowth: 500, atk: 125, range: 200, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7' },
-    'alice': { name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 4000, hpGrowth: 320, atk: 40, range: 240, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7' }
+    'nakroth': { 
+        name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 5000, hpGrowth: 450, atk: 120, range: 110, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2',
+        skillRanges: { 1: 160, 2: 140, 3: 200 }
+    },
+    'quillen': { 
+        name: '奎倫', type: '刺客 / 背刺必爆', baseHp: 4800, hpGrowth: 420, atk: 130, range: 130, avatar: '🥷', color1: '#b71c1c', color2: '#ff8a80',
+        skillRanges: { 1: 120, 2: 150, 3: 220 }
+    },
+    'valhein': { 
+        name: '凡恩', type: '射手 / 遠距輸出', baseHp: 4500, hpGrowth: 380, atk: 85, range: 240, avatar: '🎯', color1: '#c29b38', color2: '#ffe89e',
+        skillRanges: { 1: 220, 2: 240, 3: 260 }
+    },
+    'krixi': { 
+        name: '克里希', type: '法師 / 魔法爆發', baseHp: 4200, hpGrowth: 350, atk: 45, range: 220, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7',
+        skillRanges: { 1: 250, 2: 220, 3: 300 }
+    },
+    'zuka': { 
+        name: '祖卡', type: '戰士 / 物理爆發', baseHp: 6200, hpGrowth: 550, atk: 110, range: 140, avatar: '🐼', color1: '#ff9800', color2: '#ffe082',
+        skillRanges: { 1: 150, 2: 130, 3: 200 }
+    },
+    'ryoma': { 
+        name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 5800, hpGrowth: 500, atk: 125, range: 200, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7',
+        skillRanges: { 1: 140, 2: 220, 3: 250 }
+    },
+    'alice': { 
+        name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 4000, hpGrowth: 320, atk: 40, range: 240, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7',
+        skillRanges: { 1: 240, 2: 200, 3: 300 }
+    }
 };
 
 let blueKills = 0, redKills = 0;
@@ -397,7 +417,7 @@ function castHealSpell() {
 
 function castRecall() {
     if (!player || !player.alive) return;
-    player.x = 400; player.y = MAP_SIZE - 400;
+    player.x = 300; player.y = MAP_SIZE - 300;
     player.hp = player.maxHp;
     attackEffects.push({ x: player.x, y: player.y, life: 0.8, radius: 50, color: '#00d2ff' });
 }
@@ -430,22 +450,33 @@ function confirmStartGame() {
     gameTimeSeconds = 0; hasFirstBloodOccurred = false;
     skillCooldowns = { 1: 0, 2: 0, 3: 0 };
     skillLevels = { 1: 0, 2: 0, 3: 0 };
-    unallocatedPoints = 0;
+    unallocatedPoints = 1; // 1 等直接給予 1 點技能點
+
     entities = []; skillEffects = []; attackEffects = []; damageTexts = [];
 
     let keys = Object.keys(HERO_DB).filter(k => k !== selectedHeroKey);
     randomAiKey = keys[Math.floor(Math.random() * keys.length)];
 
-    let blueCore = new Building(400, MAP_SIZE - 400, 'blue', 'core');
-    let redCore = new Building(MAP_SIZE - 400, 400, 'red', 'core');
-    let blueTower = new Building(750, MAP_SIZE - 850, 'blue', 'tower');
-    let redTower = new Building(MAP_SIZE - 750, 850, 'red', 'tower');
+    let blueCore = new Building(300, MAP_SIZE - 300, 'blue', 'core');
+    let redCore = new Building(MAP_SIZE - 300, 300, 'red', 'core');
+    let blueTower = new Building(600, MAP_SIZE - 650, 'blue', 'tower');
+    let redTower = new Building(MAP_SIZE - 600, 650, 'red', 'tower');
 
-    player = new Hero(500, MAP_SIZE - 500, 'blue', selectedHeroKey, true);
-    let aiHero = new Hero(MAP_SIZE - 500, 500, 'red', randomAiKey, false);
+    player = new Hero(380, MAP_SIZE - 380, 'blue', selectedHeroKey, true);
+    let aiHero = new Hero(MAP_SIZE - 380, 380, 'red', randomAiKey, false);
 
     entities.push(blueCore, redCore, blueTower, redTower, player, aiHero);
     
+    // 開局即生成第一波 3 隻小兵
+    for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+            if (!isRunning) return;
+            entities.push(new Minion(350 - i * 15, MAP_SIZE - 350 + i * 15, 'blue'));
+            entities.push(new Minion(MAP_SIZE - 350 + i * 15, 350 - i * 15, 'red'));
+        }, i * 300);
+    }
+    minionSpawnTimer = 0;
+
     updateTopScopeUI();
     updateSkillUI();
     isRunning = true;
@@ -528,6 +559,10 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
 
         btn.setPointerCapture(e.pointerId);
         let rect = btn.getBoundingClientRect();
+        
+        let heroData = HERO_DB[player.heroKey];
+        let maxRange = (heroData.skillRanges && heroData.skillRanges[skillId]) ? heroData.skillRanges[skillId] : 180;
+
         activeSkillDrag = { 
             skillId: skillId, 
             pointerId: e.pointerId, 
@@ -535,7 +570,8 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
             centerY: rect.top + rect.height / 2, 
             dirX: 0, 
             dirY: -1,
-            dragDist: 0
+            dragDist: 0,
+            maxRange: maxRange
         };
     }, { passive: false });
 
@@ -545,7 +581,7 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
             let dx = e.clientX - activeSkillDrag.centerX;
             let dy = e.clientY - activeSkillDrag.centerY;
             let len = Math.hypot(dx, dy);
-            activeSkillDrag.dragDist = Math.min(len, 60);
+            activeSkillDrag.dragDist = Math.min(len, activeSkillDrag.maxRange);
             if (len > 5) { 
                 activeSkillDrag.dirX = dx / len; 
                 activeSkillDrag.dirY = dy / len; 
@@ -564,8 +600,8 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
 });
 
 function clampPosition(x, y, radius = 26) {
-    let startX = 400, startY = MAP_SIZE - 400;
-    let endX = MAP_SIZE - 400, endY = 400;
+    let startX = 300, startY = MAP_SIZE - 300;
+    let endX = MAP_SIZE - 300, endY = 300;
     let lineLen = Math.hypot(endX - startX, endY - startY);
     let uX = (endX - startX) / lineLen, uY = (endY - startY) / lineLen;
     let pX = x - startX, pY = y - startY;
@@ -643,8 +679,8 @@ class Minion extends Entity {
         super(x, y, team, 18);
         this.maxHp = 1200; this.hp = 1200;
         this.atk = 45; this.range = 100;
-        this.targetX = team === 'blue' ? MAP_SIZE - 400 : 400;
-        this.targetY = team === 'blue' ? 400 : MAP_SIZE - 400;
+        this.targetX = team === 'blue' ? MAP_SIZE - 300 : 300;
+        this.targetY = team === 'blue' ? 300 : MAP_SIZE - 300;
         this.moveSpeed = 1.6;
         this.atkCooldown = 0;
     }
@@ -698,6 +734,7 @@ class Hero extends Entity {
         this.atkCooldown = 0;       // 普攻冷卻 (0.5秒 = 30幀)
         this.attackLockTimer = 0;   // 0.25秒攻擊硬直鎖定
         this.hasEnhancedAttack = false;
+        this.isStealth = false;
         
         this.isDashing = false; this.dashTargetX = x; this.dashTargetY = y; this.dashSpeed = 30;
         this.rotation = team === 'blue' ? -Math.PI / 4 : Math.PI * 3 / 4;
@@ -793,7 +830,7 @@ class Hero extends Entity {
             triggerAnnouncement('YOU HAVE BEEN SLAIN', '#ff3366');
             setTimeout(() => {
                 this.hp = this.maxHp;
-                this.x = 400; this.y = MAP_SIZE - 400;
+                this.x = 300; this.y = MAP_SIZE - 300;
                 this.alive = true;
             }, 4000);
         } else {
@@ -822,7 +859,7 @@ class Hero extends Entity {
 
             setTimeout(() => {
                 this.hp = this.maxHp;
-                this.x = MAP_SIZE - 400; this.y = 400;
+                this.x = MAP_SIZE - 300; this.y = 300;
                 this.alive = true;
             }, 5000);
         }
@@ -833,8 +870,8 @@ class Hero extends Entity {
 function performAttack() {
     if (!player || !player.alive || player.atkCooldown > 0) return;
 
-    player.atkCooldown = 30;     // 0.5秒 CD
-    player.attackLockTimer = 15; // 0.25秒硬直
+    player.atkCooldown = 30;     
+    player.attackLockTimer = 15; 
 
     let isEnhancedAtk = player.hasEnhancedAttack || false;
     let attackRange = isEnhancedAtk ? player.range + 70 : player.range;
@@ -917,7 +954,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             let targetY = player.y - dirY * 140;
             let clamped = clampPosition(targetX, targetY, player.radius);
             player.startDash(clamped.x, clamped.y, 40);
-            player.hasEnhancedAttack = true; // 獲得強普狀態
+            player.hasEnhancedAttack = true; 
         } else if (skillId === 3) {
             for (let i = 0; i < 4; i++) {
                 setTimeout(() => {
@@ -925,11 +962,6 @@ function castSkill(skillId, dirX, dirY, dragDist) {
                     let targetX = player.x + dirX * 140;
                     let targetY = player.y + dirY * 140;
                     skillEffects.push({ x: targetX, y: targetY, dirX: dirX, dirY: dirY, life: 0.2, speed: 0, size: 55, color: 'rgba(142, 68, 173, 0.7)', dmg: stats.dmg, team: player.team });
-                    entities.forEach(e => {
-                        if (e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) < 60) {
-                            e.takeDamage(stats.dmg, player.team, 'physical');
-                        }
-                    });
                 }, i * 120);
             }
         }
@@ -963,28 +995,6 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.3);
             player.isStealth = true;
             setTimeout(() => { player.isStealth = false; }, 5000);
-        }
-    } else if (player.heroKey === 'ryoma') {
-        if (skillId === 1) {
-            let targetX = player.x - dirX * 130;
-            let targetY = player.y - dirY * 130;
-            let clamped = clampPosition(targetX, targetY, player.radius);
-            player.startDash(clamped.x, clamped.y, 35);
-        } else if (skillId === 2) {
-            let targetX = player.x + dirX * 180;
-            let targetY = player.y + dirY * 180;
-            skillEffects.push({ x: targetX, y: targetY, dirX: dirX, dirY: dirY, life: 0.3, speed: 0, size: 45, color: 'rgba(46, 125, 50, 0.6)', dmg: stats.dmg, team: player.team });
-        } else if (skillId === 3) {
-            for (let i = 0; i < 4; i++) {
-                setTimeout(() => {
-                    if (!player.alive) return;
-                    let targetX = player.x + dirX * 180;
-                    let targetY = player.y + dirY * 180;
-                    skillEffects.push({ x: targetX, y: targetY, dirX: dirX, dirY: dirY, life: 0.2, speed: 0, size: 50, color: 'rgba(255, 152, 0, 0.7)', dmg: stats.dmg, team: player.team });
-                    let missingHp = player.maxHp - player.hp;
-                    player.hp = Math.min(player.maxHp, player.hp + missingHp * 0.10);
-                }, i * 150);
-            }
         }
     } else {
         let targetX = player.x + dirX * 180;
@@ -1051,16 +1061,15 @@ function gameLoop() {
     });
     if (challengerCooldown > 0) challengerCooldown = Math.max(0, challengerCooldown - 1 / 60);
 
-    // 每 15 秒生成一波小兵（每波 3 隻）
     minionSpawnTimer++;
     if (minionSpawnTimer >= 900) {
         minionSpawnTimer = 0;
         for (let i = 0; i < 3; i++) {
             setTimeout(() => {
                 if (!isRunning) return;
-                entities.push(new Minion(450 - i * 15, MAP_SIZE - 450 + i * 15, 'blue'));
-                entities.push(new Minion(MAP_SIZE - 450 + i * 15, 450 - i * 15, 'red'));
-            }, i * 400);
+                entities.push(new Minion(350 - i * 15, MAP_SIZE - 350 + i * 15, 'blue'));
+                entities.push(new Minion(MAP_SIZE - 350 + i * 15, 350 - i * 15, 'red'));
+            }, i * 300);
         }
     }
 
@@ -1076,8 +1085,8 @@ function gameLoop() {
     // 道路
     ctx.save();
     ctx.beginPath();
-    ctx.moveTo(400 - camera.x, MAP_SIZE - 400 - camera.y);
-    ctx.lineTo(MAP_SIZE - 400 - camera.x, 400 - camera.y);
+    ctx.moveTo(300 - camera.x, MAP_SIZE - 300 - camera.y);
+    ctx.lineTo(MAP_SIZE - 300 - camera.x, 300 - camera.y);
     ctx.strokeStyle = '#1e3a5f';
     ctx.lineWidth = ROAD_WIDTH;
     ctx.lineCap = 'round';
@@ -1093,7 +1102,11 @@ function gameLoop() {
         ctx.save();
         ctx.beginPath();
         ctx.arc(sx, sy, e.radius, 0, Math.PI * 2);
-        if (e instanceof Building) {
+        
+        // 隱形狀態半透明與顏色處理
+        if (e.isStealth) {
+            ctx.fillStyle = 'rgba(155, 89, 182, 0.45)';
+        } else if (e instanceof Building) {
             ctx.fillStyle = e.team === 'blue' ? '#00d2ff' : '#ff4444';
         } else if (e instanceof Minion) {
             ctx.fillStyle = e.team === 'blue' ? '#4dabf7' : '#ff6b6b';
@@ -1102,16 +1115,22 @@ function gameLoop() {
         }
         ctx.fill();
         ctx.lineWidth = 3;
-        ctx.strokeStyle = '#fff';
+        ctx.strokeStyle = e.isStealth ? 'rgba(236, 64, 122, 0.8)' : '#fff';
         ctx.stroke();
 
-        // 塔與主堡標示
         if (e instanceof Building) {
             ctx.font = '22px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillStyle = '#fff';
             ctx.fillText(e.type === 'core' ? '🏰' : '🗼', sx, sy);
+        }
+
+        if (e.isStealth) {
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#e1bee7';
+            ctx.fillText('👻 隱形中', sx, sy - e.radius - 24);
         }
 
         ctx.restore();
@@ -1131,6 +1150,39 @@ function gameLoop() {
         ctx.fillRect(sx - barW / 2, sy - e.radius - 14, barW, barH);
         ctx.fillStyle = e.team === 'blue' ? '#00e676' : '#ff3366';
         ctx.fillRect(sx - barW / 2, sy - e.radius - 14, barW * hpRatio, barH);
+    });
+
+    // 技能特效繪製與碰撞判定
+    skillEffects.forEach((eff, idx) => {
+        eff.life -= 1 / 60;
+        let sx = eff.x - camera.x;
+        let sy = eff.y - camera.y;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(sx, sy, eff.size, 0, Math.PI * 2);
+        ctx.fillStyle = eff.color || 'rgba(0, 210, 255, 0.5)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#fff';
+        ctx.stroke();
+        ctx.restore();
+
+        entities.forEach(target => {
+            if (target.alive && target.team !== eff.team && !eff.hitTargets?.includes(target)) {
+                let dist = Math.hypot(target.x - eff.x, target.y - eff.y);
+                if (dist <= eff.size + target.radius) {
+                    if (!eff.hitTargets) eff.hitTargets = [];
+                    eff.hitTargets.push(target);
+                    target.takeDamage(eff.dmg || 200, eff.team, 'magical');
+                    damageTexts.push({ x: target.x, y: target.y - 35, value: `💥 ${Math.floor(eff.dmg || 200)}`, color: '#e040fb', life: 0.8 });
+                }
+            }
+        });
+
+        if (eff.life <= 0) {
+            skillEffects.splice(idx, 1);
+        }
     });
 
     // 普攻/強普範圍環繪製
@@ -1159,15 +1211,15 @@ function gameLoop() {
         }
     }
 
-    // 技能拖曳指向線
+    // 技能動態指向線
     if (activeSkillDrag && player && player.alive) {
         ctx.save();
         ctx.beginPath();
         let startX = player.x - camera.x;
         let startY = player.y - camera.y;
-        let lineLength = 200;
-        let endX = startX + activeSkillDrag.dirX * lineLength;
-        let endY = startY + activeSkillDrag.dirY * lineLength;
+        let currentDist = Math.min(activeSkillDrag.dragDist, activeSkillDrag.maxRange);
+        let endX = startX + activeSkillDrag.dirX * currentDist;
+        let endY = startY + activeSkillDrag.dirY * currentDist;
 
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
