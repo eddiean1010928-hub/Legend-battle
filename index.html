@@ -735,7 +735,7 @@ class Building extends Entity {
 class Minion extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 18);
-        this.maxHp = 1200; this.hp = 1200;
+        this.maxHp = 1800; this.hp = 1800; // 小兵血量 1.5倍
         this.atk = 45; this.range = 100;
         this.targetX = team === 'blue' ? MAP_SIZE - 450 : 450;
         this.targetY = team === 'blue' ? 450 : MAP_SIZE - 450;
@@ -1061,17 +1061,11 @@ class Hero extends Entity {
 
 function performAttack() {
     if (!player || !player.alive) return;
-
-    if (joystickDir.x !== 0 || joystickDir.y !== 0) {
-        return;
-    }
+    if (player.atkCooldown > 0) return;
 
     let isRyomaEnhanced = (player.heroKey === 'ryoma' && player.hasRyomaEnhancedAtk);
     let isEnhancedAtk = player.hasEnhancedAttack || isRyomaEnhanced;
     let attackRange = isRyomaEnhanced ? 130 : (isEnhancedAtk ? player.range + 30 : player.range);
-
-    player.atkCooldown = 30;     
-    player.attackLockTimer = 15; 
 
     let nearestTarget = null;
     let minTargetDist = 9999;
@@ -1088,6 +1082,9 @@ function performAttack() {
     });
 
     if (nearestTarget) {
+        player.atkCooldown = 25; 
+        player.attackLockTimer = 10; 
+
         let isCrit = false;
         let finalAtk = player.atk * 1.5;
 
@@ -1130,6 +1127,11 @@ function performAttack() {
             color: isRyomaEnhanced ? '#00e676' : '#f3c654' 
         });
     } else {
+        if (joystickDir.x !== 0 || joystickDir.y !== 0) {
+            return;
+        }
+        
+        player.atkCooldown = 25;
         let emptyX = player.x + Math.cos(player.rotation) * 40;
         let emptyY = player.y + Math.sin(player.rotation) * 40;
         attackEffects.push({ 
@@ -1340,6 +1342,90 @@ function castSkill(skillId, dirX, dirY, dragDist) {
                 if (player) player.isStealth = false;
             }, 5000);
         }
+    } else if (player.heroKey === 'krixi') {
+        if (skillId === 1) {
+            stats.cd = Math.max(3.5, 5.0 - (sLv - 1) * 0.3);
+            stats.dmg = 180 + sLv * 50;
+            skillCooldowns[1] = stats.cd;
+
+            let targetX = player.x + dirX * 220;
+            let targetY = player.y + dirY * 220;
+
+            skillEffects.push({ 
+                x: targetX, y: targetY, 
+                life: 0.25, size: 55, 
+                color: 'rgba(67, 160, 71, 0.7)', 
+                dmg: stats.dmg, team: player.team 
+            });
+
+            setTimeout(() => {
+                if (!player.alive) return;
+                skillEffects.push({ 
+                    x: player.x, y: player.y, 
+                    life: 0.25, size: 55, 
+                    color: 'rgba(129, 199, 132, 0.8)', 
+                    dmg: stats.dmg, team: player.team 
+                });
+                damageTexts.push({ x: player.x, y: player.y - 40, value: `🦋 蝴蝶回旋！`, color: '#a5d6a7', life: 0.8 });
+            }, 400);
+
+        } else if (skillId === 2) {
+            stats.cd = Math.max(5.0, 7.0 - (sLv - 1) * 0.4);
+            stats.dmg = 150 + sLv * 40;
+            skillCooldowns[2] = stats.cd;
+
+            let targetX = player.x + dirX * 180;
+            let targetY = player.y + dirY * 180;
+
+            skillEffects.push({ 
+                x: targetX, y: targetY, 
+                life: 0.3, size: 65, 
+                color: 'rgba(76, 175, 80, 0.6)', 
+                dmg: stats.dmg, team: player.team 
+            });
+
+            entities.forEach(e => {
+                if (e instanceof Building) return;
+                if (e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) < 70) {
+                    e.takeDamage(stats.dmg, player.team, 'magical');
+                    e.isStunned = true; 
+                    setTimeout(() => { e.isStunned = false; }, 1000);
+                    damageTexts.push({ x: e.x, y: e.y - 45, value: `🌪️ 擊飛 1s (${Math.floor(stats.dmg)})`, color: '#ffd700', life: 1.0 });
+                }
+            });
+
+        } else if (skillId === 3) {
+            stats.cd = Math.max(12.0, 30.0 - (sLv - 1) * 6.0);
+            stats.dmg = 220 + sLv * 70; 
+            skillCooldowns[3] = stats.cd;
+
+            damageTexts.push({ x: player.x, y: player.y - 60, value: '✨ 星月怒放 (大招啟動)', color: '#00e676', life: 1.2 });
+
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    let angle = Math.random() * Math.PI * 2;
+                    let dist = Math.random() * 220;
+                    let strikeX = player.x + Math.cos(angle) * dist;
+                    let strikeY = player.y + Math.sin(angle) * dist;
+
+                    skillEffects.push({ 
+                        x: strikeX, y: strikeY, 
+                        life: 0.25, size: 70, 
+                        color: 'rgba(0, 230, 118, 0.65)', 
+                        dmg: stats.dmg, team: player.team 
+                    });
+
+                    entities.forEach(e => {
+                        if (e instanceof Building) return;
+                        if (e.alive && e.team !== player.team && Math.hypot(e.x - strikeX, e.y - strikeY) < 75) {
+                            e.takeDamage(stats.dmg, player.team, 'magical');
+                            damageTexts.push({ x: e.x, y: e.y - 35, value: `💫 ${Math.floor(stats.dmg)}`, color: '#ff4444', life: 0.7 });
+                        }
+                    });
+                }, i * 300);
+            }
+        }
     } else if (player.heroKey === 'ryoma') {
         if (skillId === 1) {
             let currentStage = heroSkillStage['ryoma'][1] || 1;
@@ -1475,6 +1561,11 @@ function updateSkillUI() {
         2: { name: '位移/強普', type: '位移' },
         3: { name: '傷害/霸體', type: '大招' }
     };
+    const krixiSkillNames = {
+        1: { name: '蝴蝶回旋', type: '輸出' },
+        2: { name: '擊飛法陣', type: '控場' },
+        3: { name: '星月怒放', type: '大招' }
+    };
 
     [1, 2, 3].forEach(id => {
         let btn = document.getElementById(`skill-${id}`);
@@ -1485,6 +1576,9 @@ function updateSkillUI() {
 
         if (player && player.heroKey === 'nakroth') {
             let info = nakrothSkillNames[id];
+            descLbl.innerText = `Lv.${sLv} ${info.name}`;
+        } else if (player && player.heroKey === 'krixi') {
+            let info = krixiSkillNames[id];
             descLbl.innerText = `Lv.${sLv} ${info.name}`;
         } else if (player && player.heroKey === 'ryoma' && id === 1) {
             descLbl.innerText = `Lv.${sLv} 兩段後撤`;
