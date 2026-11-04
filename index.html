@@ -232,9 +232,6 @@
             <div class="attack-btn" id="btn-attack">⚔️</div>
             
             <div class="bottom-actions-bar">
-                <div class="action-mini-btn" id="btn-recall">
-                    <span>回城</span>
-                </div>
                 <div class="action-mini-btn" id="btn-heal-spell">
                     <span>💚</span>
                     <div class="label">恢復</div>
@@ -270,7 +267,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v10';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v11';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 function initUserData() {
@@ -349,7 +346,7 @@ const HERO_DB = {
     },
     'ryoma': { 
         name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 5800, hpGrowth: 500, atk: 125, range: 110, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7',
-        skillRanges: { 1: 180, 2: 240, 3: 260 }
+        skillRanges: { 1: 140, 2: 180, 3: 190 }
     },
     'alice': { 
         name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 4000, hpGrowth: 320, atk: 40, range: 240, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7',
@@ -420,7 +417,6 @@ bindClick('btn-pick-back', () => backToMenuFromPick());
 bindClick('btn-back-lobby', () => backToLobby());
 bindClick('btn-challenger-spell', () => castChallengerSpell());
 bindClick('btn-heal-spell', () => castHealSpell());
-bindClick('btn-recall', () => castRecall());
 
 function castChallengerSpell() {
     if (challengerCooldown > 0 || !player || !player.alive) return;
@@ -436,10 +432,6 @@ function castHealSpell() {
     healSpellCooldown = 30;
     player.hp = Math.min(player.maxHp, player.hp + player.maxHp * 0.35);
     attackEffects.push({ x: player.x, y: player.y, life: 0.6, radius: 55, color: '#00e676' });
-}
-
-function castRecall() {
-    triggerAnnouncement('⚠️ 單挑模式無法使用回城！', '#ff4444');
 }
 
 function openHeroPick() {
@@ -668,6 +660,27 @@ class Building extends Entity {
         this.attackRange = 320;
         this.currentTarget = null;
     }
+    takeDamage(dmg, sourceTeam, type = 'physical') {
+        if (!this.alive) return;
+
+        if (this.type === 'tower') {
+            let hasMinionNearby = entities.some(e => 
+                e.alive && e instanceof Minion && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= 250
+            );
+
+            if (!hasMinionNearby) {
+                dmg *= 0.2; 
+                damageTexts.push({ x: this.x, y: this.y - 50, value: '🛡️ 無兵線減傷', color: '#00d2ff', life: 0.6 });
+            }
+        }
+
+        this.hp -= dmg;
+        if (this.hp <= 0) {
+            this.hp = 0;
+            this.alive = false;
+            this.onDeath(sourceTeam);
+        }
+    }
     update() {
         if (!this.alive) return;
         this.atkTimer++;
@@ -731,6 +744,7 @@ class Minion extends Entity {
     }
     update() {
         if (!this.alive) return;
+        if (this.isStunned) return;
         if (this.atkCooldown > 0) this.atkCooldown--;
 
         let nearestTarget = null;
@@ -751,8 +765,10 @@ class Minion extends Entity {
             let destX = nearestTarget ? nearestTarget.x : this.targetX;
             let destY = nearestTarget ? nearestTarget.y : this.targetY;
             let angle = Math.atan2(destY - this.y, destX - this.x);
-            let nx = this.x + Math.cos(angle) * this.moveSpeed;
-            let ny = this.y + Math.sin(angle) * this.moveSpeed;
+            let speed = this.moveSpeed;
+            if (this.isSlowed) speed *= (1 - (this.slowFactor || 0.4));
+            let nx = this.x + Math.cos(angle) * speed;
+            let ny = this.y + Math.sin(angle) * speed;
             let clamped = clampPosition(nx, ny, this.radius);
             this.x = clamped.x; this.y = clamped.y;
         }
@@ -781,6 +797,9 @@ class Hero extends Entity {
         this.hasEnhancedAttack = false;
         this.isStealth = false;
         this.isSuperArmor = false;
+        this.isStunned = false;
+        this.isSlowed = false;
+        this.slowFactor = 0.4;
         
         this.ryomaPassiveTimer = 0;
         this.hasRyomaEnhancedAtk = (heroKey === 'ryoma');
@@ -795,6 +814,14 @@ class Hero extends Entity {
     }
     update() {
         if (!this.alive) return;
+
+        if (this.isStunned) {
+            if (Math.random() < 0.2) {
+                damageTexts.push({ x: this.x, y: this.y - 45, value: '💫 暈眩中', color: '#ffd700', life: 0.4 });
+            }
+            return; 
+        }
+
         if (this.atkCooldown > 0) this.atkCooldown--;
         if (this.attackLockTimer > 0) this.attackLockTimer--;
 
@@ -809,17 +836,29 @@ class Hero extends Entity {
             }
         }
 
-        let baseHomeX = this.team === 'blue' ? 250 : MAP_SIZE - 250;
-        let baseHomeY = this.team === 'blue' ? MAP_SIZE - 250 : 250;
-        let distToBase = Math.hypot(this.x - baseHomeX, this.y - baseHomeY);
+        let fountainX = this.team === 'blue' ? 250 : MAP_SIZE - 250;
+        let fountainY = this.team === 'blue' ? MAP_SIZE - 250 : 250;
+        let distToFountain = Math.hypot(this.x - fountainX, this.y - fountainY);
         
-        if (distToBase <= 110) {
+        if (distToFountain <= 130) {
             if (this.hp < this.maxHp) {
-                this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.13);
-                if (Math.random() < 0.2) {
-                    damageTexts.push({ x: this.x, y: this.y - 35, value: '+❤️ 溫泉回復', color: '#00e676', life: 0.5 });
+                if (!this.fountainTimer) this.fountainTimer = 0;
+                this.fountainTimer++;
+                
+                if (this.fountainTimer >= 60) {
+                    this.fountainTimer = 0;
+                    let healAmount = this.maxHp * 0.13;
+                    this.hp = Math.min(this.maxHp, this.hp + healAmount);
+                    
+                    damageTexts.push({ 
+                        x: this.x, y: this.y - 35, 
+                        value: `+❤️ ${Math.floor(healAmount)} (13% MaxHP)`, 
+                        color: '#00e676', life: 0.8 
+                    });
                 }
             }
+        } else {
+            this.fountainTimer = 0;
         }
 
         if (this.isDashing) {
@@ -840,6 +879,7 @@ class Hero extends Entity {
             if (this.attackLockTimer <= 0) {
                 if (joystickDir.x !== 0 || joystickDir.y !== 0) {
                     let speed = 2.8;
+                    if (this.isSlowed) speed *= (1 - this.slowFactor);
                     let nx = this.x + joystickDir.x * speed;
                     let ny = this.y + joystickDir.y * speed;
                     let clamped = clampPosition(nx, ny, this.radius);
@@ -851,42 +891,67 @@ class Hero extends Entity {
                 performAttack();
             }
         } else {
+            if (!this.aiLevelTimer) this.aiLevelTimer = 0;
+            this.aiLevelTimer++;
+            if (this.aiLevelTimer >= 480 && this.level < 15) {
+                this.aiLevelTimer = 0;
+                this.level++;
+                let hpGain = this.heroData.hpGrowth || 400;
+                this.maxHp += hpGain;
+                this.hp = Math.min(this.maxHp, this.hp + hpGain);
+                this.atk += 8;
+            }
+
             if (this.attackLockTimer <= 0) {
                 let hpRatio = this.hp / this.maxHp;
+                let baseHomeX = this.team === 'blue' ? 250 : MAP_SIZE - 250;
+                let baseHomeY = this.team === 'blue' ? MAP_SIZE - 250 : 250;
                 let targetDestX = baseHomeX;
                 let targetDestY = baseHomeY;
 
-                if (hpRatio < 0.35 && distToBase > 80) {
+                let nearestEnemy = null;
+                let minDist = 9999;
+                entities.forEach(e => {
+                    if (e.alive && e.team !== this.team) {
+                        let dist = Math.hypot(e.x - this.x, e.y - this.y);
+                        if (dist < minDist) { minDist = dist; nearestEnemy = e; }
+                    }
+                });
+
+                if (hpRatio < 0.35 && distToFountain > 80) {
                     targetDestX = baseHomeX;
                     targetDestY = baseHomeY;
-                } else {
-                    let nearestEnemy = null;
-                    let minDist = 9999;
-                    entities.forEach(e => {
-                        if (e.alive && e.team !== this.team) {
-                            let dist = Math.hypot(e.x - this.x, e.y - this.y);
-                            if (dist < minDist) { minDist = dist; nearestEnemy = e; }
-                        }
-                    });
+                } else if (nearestEnemy) {
+                    targetDestX = nearestEnemy.x;
+                    targetDestY = nearestEnemy.y;
 
-                    if (nearestEnemy) {
-                        targetDestX = nearestEnemy.x;
-                        targetDestY = nearestEnemy.y;
+                    if (minDist <= 250 && Math.random() < 0.03) {
+                        skillEffects.push({ 
+                            x: nearestEnemy.x, y: nearestEnemy.y, 
+                            life: 0.3, size: 55, 
+                            color: 'rgba(255, 68, 68, 0.7)', 
+                            dmg: 180 + this.level * 20, team: this.team 
+                        });
+                        nearestEnemy.takeDamage(180 + this.level * 20, this.team, 'magical');
+                        damageTexts.push({ x: nearestEnemy.x, y: nearestEnemy.y - 40, value: `🤖 AI 技能攻擊`, color: '#ff4444', life: 0.8 });
+                    }
 
-                        if (minDist <= this.range + nearestEnemy.radius) {
-                            if (this.atkCooldown <= 0) {
-                                this.atkCooldown = 30;
-                                this.attackLockTimer = 15;
-                                nearestEnemy.takeDamage(this.atk * 1.5, this.team, 'physical');
-                                damageTexts.push({ x: nearestEnemy.x, y: nearestEnemy.y - 30, value: `${Math.floor(this.atk * 1.5)}`, color: '#ff4444', life: 0.6 });
-                            }
+                    if (minDist <= this.range + nearestEnemy.radius) {
+                        if (this.atkCooldown <= 0) {
+                            this.atkCooldown = 30;
+                            this.attackLockTimer = 15;
+                            let finalAtk = this.atk * 1.5;
+                            nearestEnemy.takeDamage(finalAtk, this.team, 'physical');
+                            damageTexts.push({ x: nearestEnemy.x, y: nearestEnemy.y - 30, value: `${Math.floor(finalAtk)}`, color: '#ff4444', life: 0.6 });
                         }
                     }
                 }
 
                 let angle = Math.atan2(targetDestY - this.y, targetDestX - this.x);
-                let nx = this.x + Math.cos(angle) * 1.6;
-                let ny = this.y + Math.sin(angle) * 1.6;
+                let speed = 1.6;
+                if (this.isSlowed) speed *= (1 - this.slowFactor);
+                let nx = this.x + Math.cos(angle) * speed;
+                let ny = this.y + Math.sin(angle) * speed;
                 let clamped = clampPosition(nx, ny, this.radius);
                 this.x = clamped.x; this.y = clamped.y;
             }
@@ -999,20 +1064,8 @@ function performAttack() {
 
     let isRyomaEnhanced = (player.heroKey === 'ryoma' && player.hasRyomaEnhancedAtk);
     let isEnhancedAtk = player.hasEnhancedAttack || isRyomaEnhanced;
-    let attackRange = isRyomaEnhanced ? 220 : (isEnhancedAtk ? player.range + 70 : player.range);
+    let attackRange = isRyomaEnhanced ? 130 : (isEnhancedAtk ? player.range + 30 : player.range);
 
-    let hasTargetInRange = false;
-    entities.forEach(target => {
-        if (!target.alive || target.team === player.team) return;
-        let dist = Math.hypot(target.x - player.x, target.y - player.y);
-        if (dist <= attackRange + target.radius) {
-            hasTargetInRange = true;
-        }
-    });
-
-    if (!hasTargetInRange) return;
-    if (player.atkCooldown > 0) return;
-    
     player.atkCooldown = 30;     
     player.attackLockTimer = 15; 
 
@@ -1041,7 +1094,7 @@ function performAttack() {
 
             if (isRyomaEnhanced) {
                 target.isSlowed = true;
-                target.slowFactor = 0.4;
+                target.slowFactor = 0.6;
                 setTimeout(() => { target.isSlowed = false; }, 2000);
                 damageTexts.push({ x: target.x, y: target.y - 50, value: '❄️ 減速 60%', color: '#00d2ff', life: 1.0 });
                 player.hasRyomaEnhancedAtk = false;
@@ -1258,24 +1311,24 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             let currentStage = heroSkillStage['ryoma'][1] || 1;
             stats.dmg = 200 + sLv * 55;
 
-            let backX = player.x - dirX * 140;
-            let backY = player.y - dirY * 140;
+            let backX = player.x - dirX * 110;
+            let backY = player.y - dirY * 110;
             let clampedBack = clampPosition(backX, backY, player.radius);
             player.startDash(clampedBack.x, clampedBack.y, 40);
 
-            let forwardX = player.x + dirX * 180;
-            let forwardY = player.y + dirY * 180;
+            let forwardX = player.x + dirX * 130;
+            let forwardY = player.y + dirY * 130;
             
             skillEffects.push({ 
                 x: forwardX, y: forwardY, 
-                life: 0.25, size: 60, 
+                life: 0.25, size: 50, 
                 color: 'rgba(46, 125, 50, 0.7)', 
                 dmg: stats.dmg, team: player.team 
             });
 
             entities.forEach(e => {
                 if (e instanceof Building) return;
-                if (e.alive && e.team !== player.team && Math.hypot(e.x - forwardX, e.y - forwardY) < 65) {
+                if (e.alive && e.team !== player.team && Math.hypot(e.x - forwardX, e.y - forwardY) < 55) {
                     e.takeDamage(stats.dmg, player.team, 'physical');
                     damageTexts.push({ x: e.x, y: e.y - 35, value: `⚔️ ${Math.floor(stats.dmg)}`, color: '#66bb6a', life: 0.8 });
                 }
@@ -1300,12 +1353,12 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             stats.dmg = 250 + sLv * 65;
             skillCooldowns[2] = stats.cd;
 
-            let tipX = player.x + dirX * 240;
-            let tipY = player.y + dirY * 240;
+            let tipX = player.x + dirX * 180;
+            let tipY = player.y + dirY * 180;
 
             skillEffects.push({ 
                 x: tipX, y: tipY, 
-                life: 0.3, size: 70, 
+                life: 0.3, size: 50, 
                 color: 'rgba(56, 142, 60, 0.8)', 
                 dmg: stats.dmg, team: player.team 
             });
@@ -1314,10 +1367,10 @@ function castSkill(skillId, dirX, dirY, dragDist) {
                 if (e instanceof Building) return;
                 if (e.alive && e.team !== player.team) {
                     let distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
-                    let isTip = (distToPlayer >= 120 && distToPlayer <= 260);
+                    let isTip = (distToPlayer >= 90 && distToPlayer <= 180);
                     let finalDmg = isTip ? stats.dmg * 1.5 : stats.dmg;
 
-                    if (distToPlayer <= 260) {
+                    if (distToPlayer <= 180) {
                         e.takeDamage(finalDmg, player.team, 'physical');
                         
                         if (isTip) {
@@ -1338,19 +1391,19 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             for (let i = 0; i < 4; i++) {
                 setTimeout(() => {
                     if (!player.alive) return;
-                    let strikeX = player.x + dirX * (100 + i * 40);
-                    let strikeY = player.y + dirY * (100 + i * 40);
+                    let strikeX = player.x + dirX * (70 + i * 30);
+                    let strikeY = player.y + dirY * (70 + i * 30);
 
                     skillEffects.push({ 
                         x: strikeX, y: strikeY, 
-                        life: 0.2, size: 55, 
+                        life: 0.2, size: 45, 
                         color: 'rgba(76, 175, 80, 0.7)', 
                         dmg: stats.dmg, team: player.team 
                     });
 
                     entities.forEach(e => {
                         if (e instanceof Building) return;
-                        if (e.alive && e.team !== player.team && Math.hypot(e.x - strikeX, e.y - strikeY) < 65) {
+                        if (e.alive && e.team !== player.team && Math.hypot(e.x - strikeX, e.y - strikeY) < 50) {
                             e.takeDamage(stats.dmg, player.team, 'physical');
                             damageTexts.push({ x: e.x, y: e.y - 30, value: `🔪 ${Math.floor(stats.dmg)}`, color: '#a5d6a7', life: 0.6 });
 
@@ -1641,7 +1694,7 @@ function gameLoop() {
             ctx.beginPath();
             let startX = player.x - camera.x;
             let startY = player.y - camera.y;
-            let rangeRadius = (player.heroKey === 'ryoma' && player.hasRyomaEnhancedAtk) ? 220 : (isEnhanced ? player.range + 70 : player.range);
+            let rangeRadius = (player.heroKey === 'ryoma' && player.hasRyomaEnhancedAtk) ? 130 : (isEnhanced ? player.range + 30 : player.range);
 
             ctx.arc(startX, startY, rangeRadius, 0, Math.PI * 2);
             if (isEnhanced) {
@@ -1665,8 +1718,8 @@ function gameLoop() {
         let startY = player.y - camera.y;
 
         if (player.heroKey === 'ryoma' && (activeSkillDrag.skillId === 2 || activeSkillDrag.skillId === 3)) {
-            let width = activeSkillDrag.skillId === 3 ? 90 : 60;
-            let length = 240;
+            let width = activeSkillDrag.skillId === 3 ? 80 : 50;
+            let length = activeSkillDrag.skillId === 3 ? 190 : 180;
             let angle = Math.atan2(activeSkillDrag.dirY, activeSkillDrag.dirX);
 
             ctx.save();
@@ -1681,9 +1734,9 @@ function gameLoop() {
 
             if (activeSkillDrag.skillId === 2) {
                 ctx.fillStyle = 'rgba(255, 215, 0, 0.35)';
-                ctx.fillRect(120, -width / 2, 120, width);
+                ctx.fillRect(90, -width / 2, 90, width);
                 ctx.strokeStyle = '#ffd700';
-                ctx.strokeRect(120, -width / 2, 120, width);
+                ctx.strokeRect(90, -width / 2, 90, width);
             }
 
             ctx.restore();
