@@ -260,7 +260,7 @@
                 <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
                 一技
                 <div class="skill-desc-label" id="lbl-skill-1">Lv.0 獵殺</div>
-                <div class="spell-cd-overlay hidden" id="cd-1"></div>
+                <div class="skill-cd-overlay hidden" id="cd-1"></div>
             </div>
         </div>
     </div>
@@ -271,7 +271,20 @@ const LOCAL_STORAGE_KEY = 'aov_game_user_data_v11';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
-    1: 20, 2: 25, 3: 30, 4: 50, 5: 60, 6: 70, 7: 80, 8: 90, 9: 100, 10: 110, 11: 120, 12: 130, 13: 140, 14: 150
+    1: 20, 
+    2: 25, 
+    3: 30, 
+    4: 50,   // 4 升 5
+    5: 80,   // 5 升 6
+    6: 140,  // 6 升 7
+    7: 160, 
+    8: 180, 
+    9: 200, 
+    10: 220, 
+    11: 240, 
+    12: 260, 
+    13: 280, 
+    14: 300  
 };
 
 function initUserData() {
@@ -330,32 +343,32 @@ resizeCanvas();
 
 const HERO_DB = {
     'valhein': { 
-        name: '凡恩', type: '射手 / 遠距輸出', baseHp: 6000, hpGrowth: 680, atk: 85, range: 280, avatar: '🎯', color1: '#c29b38', color2: '#ffe89e',
-        skillRanges: { 1: 300, 2: 300, 3: 320 }
+        name: '凡恩', type: '射手 / 遠距輸出', baseHp: 6000, hpGrowth: 680, atk: 85, range: 240, avatar: '🎯', color1: '#c29b38', color2: '#ffe89e',
+        skillRanges: { 1: 240, 2: 240, 3: 240 }
     },
     'nakroth': { 
-        name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 6500, hpGrowth: 750, atk: 120, range: 110, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2',
-        skillRanges: { 1: 180, 2: 150, 3: 200 }
+        name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 6500, hpGrowth: 750, atk: 120, range: 120, avatar: '🗡️', color1: '#8e44ad', color2: '#d7bde2',
+        skillRanges: { 1: 180, 2: 120, 3: 180 }
     },
     'quillen': { 
-        name: '奎倫', type: '刺客 / 背擊必爆', baseHp: 6200, hpGrowth: 700, atk: 70, range: 90, avatar: '🥷', color1: '#b71c1c', color2: '#ff8a80',
-        skillRanges: { 1: 90, 2: 150, 3: 200 }
+        name: '奎倫', type: '刺客 / 背擊必爆', baseHp: 6200, hpGrowth: 700, atk: 70, range: 120, avatar: '🥷', color1: '#b71c1c', color2: '#ff8a80',
+        skillRanges: { 1: 120, 2: 180, 3: 180 }
     },
     'krixi': { 
-        name: '克里希', type: '法師 / 魔法爆發', baseHp: 5800, hpGrowth: 650, atk: 45, range: 220, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7',
-        skillRanges: { 1: 250, 2: 220, 3: 300 }
+        name: '克里希', type: '法師 / 魔法爆發', baseHp: 5800, hpGrowth: 650, atk: 45, range: 240, avatar: '🧚‍♀️', color1: '#43a047', color2: '#a5d6a7',
+        skillRanges: { 1: 240, 2: 180, 3: 240 }
     },
     'zuka': { 
-        name: '祖卡', type: '戰士 / 物理爆發', baseHp: 7500, hpGrowth: 850, atk: 110, range: 140, avatar: '🐼', color1: '#ff9800', color2: '#ffe082',
-        skillRanges: { 1: 150, 2: 130, 3: 220 }
+        name: '祖卡', type: '戰士 / 物理爆發', baseHp: 7500, hpGrowth: 850, atk: 110, range: 120, avatar: '🐼', color1: '#ff9800', color2: '#ffe082',
+        skillRanges: { 1: 180, 2: 120, 3: 180 }
     },
     'ryoma': { 
-        name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 7200, hpGrowth: 800, atk: 125, range: 110, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7',
-        skillRanges: { 1: 140, 2: 180, 3: 190 }
+        name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 7200, hpGrowth: 800, atk: 125, range: 120, avatar: '🥷', color1: '#2e7d32', color2: '#a5d6a7',
+        skillRanges: { 1: 180, 2: 180, 3: 180 }
     },
     'alice': { 
         name: '愛麗絲', type: '法師 / 輔助控場', baseHp: 5600, hpGrowth: 620, atk: 40, range: 240, avatar: '✨', color1: '#ab47bc', color2: '#e1bee7',
-        skillRanges: { 1: 240, 2: 200, 3: 300 }
+        skillRanges: { 1: 240, 2: 180, 3: 240 }
     }
 };
 
@@ -678,7 +691,7 @@ class Building extends Entity {
         this.maxHp = type === 'core' ? 6000 : 4500;
         this.hp = this.maxHp;
         this.atkTimer = 0;
-        this.attackRange = 320;
+        this.attackRange = 240;
         this.currentTarget = null;
     }
     takeDamage(dmg, sourceTeam, type = 'physical') {
@@ -686,7 +699,7 @@ class Building extends Entity {
 
         if (this.type === 'tower' || this.type === 'core') {
             let hasMinionNearby = entities.some(e => 
-                e.alive && e instanceof Minion && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= 320
+                e.alive && e instanceof Minion && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= 240
             );
 
             if (!hasMinionNearby) {
@@ -757,7 +770,7 @@ class Minion extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 18);
         this.maxHp = 1800; this.hp = 1800;
-        this.atk = 45; this.range = 100;
+        this.atk = 45; this.range = 120;
         this.targetX = team === 'blue' ? MAP_SIZE - 450 : 450;
         this.targetY = team === 'blue' ? 450 : MAP_SIZE - 450;
         this.moveSpeed = 1.6;
@@ -825,7 +838,6 @@ class Hero extends Entity {
         this.isSlowed = false;
         this.slowFactor = 0.4;
         
-        // 凡恩被動：每3次普攻加1層被動（最多4層），5秒沒普攻歸零
         this.valheinPassiveStacks = 0;
         this.valheinAtkCounter = 0;
         this.valheinPassiveTimer = 0;
@@ -841,17 +853,11 @@ class Hero extends Entity {
     update() {
         if (!this.alive) return;
 
-        if (this.isStunned) {
-            if (Math.random() < 0.2) {
-                damageTexts.push({ x: this.x, y: this.y - 45, value: '💫 暈眩中', color: '#ffd700', life: 0.4 });
-            }
-            return; 
-        }
+        if (this.isStunned) return;
 
-        // 凡恩被動 5 秒計時遞減
         if (this.heroKey === 'valhein' && this.valheinPassiveStacks > 0) {
             this.valheinPassiveTimer++;
-            if (this.valheinPassiveTimer >= 300) { // 5秒 (60fps * 5)
+            if (this.valheinPassiveTimer >= 300) {
                 this.valheinPassiveTimer = 0;
                 this.valheinPassiveStacks = Math.max(0, this.valheinPassiveStacks - 1);
             }
@@ -915,7 +921,6 @@ class Hero extends Entity {
                 performAttack();
             }
         } else {
-            // AI 邏輯
             if (this.attackLockTimer <= 0) {
                 let hpRatio = this.hp / this.maxHp;
                 let baseHomeX = this.team === 'blue' ? 380 : MAP_SIZE - 380;
@@ -939,7 +944,7 @@ class Hero extends Entity {
                     targetDestX = nearestEnemy.x;
                     targetDestY = nearestEnemy.y;
 
-                    if (minDist <= 300 && Math.random() < 0.03 && this.atkCooldown <= 0) {
+                    if (minDist <= 240 && Math.random() < 0.03 && this.atkCooldown <= 0) {
                         this.atkCooldown = 40;
                         let skillDmg = 300 + this.level * 35;
                         skillEffects.push({ x: nearestEnemy.x, y: nearestEnemy.y, life: 0.35, size: 60, color: 'rgba(194, 155, 56, 0.8)', dmg: skillDmg, team: this.team });
@@ -1032,7 +1037,7 @@ class Hero extends Entity {
             }
 
             if (player && player.alive) {
-                player.gainExpAndGold(200, 150);
+                player.gainExpAndGold(20, 150); // 擊殺敵方英雄獲得 20 點經驗值與 150 金幣
             }
 
             setTimeout(() => {
@@ -1065,17 +1070,14 @@ function performAttack() {
     });
 
     if (nearestTarget) {
-        // 凡恩攻速受被動加成：每層 +10% 攻速
         let baseCd = 25;
         let speedBonus = 1 + (player.valheinPassiveStacks * 0.10);
         player.atkCooldown = Math.max(8, Math.floor(baseCd / speedBonus));
         player.attackLockTimer = 10; 
 
-        // 每層被動增加 20 點傷害
         let finalAtk = player.atk + (player.valheinPassiveStacks * 20);
         nearestTarget.takeDamage(finalAtk, player.team, 'physical');
 
-        // 凡恩被動計算：每 3 次普攻加 1 層被動 (最多 4 層)
         player.valheinAtkCounter++;
         if (player.valheinAtkCounter >= 3) {
             player.valheinAtkCounter = 0;
@@ -1084,7 +1086,7 @@ function performAttack() {
                 damageTexts.push({ x: player.x, y: player.y - 50, value: `⚡ 被動層數 +1 (${player.valheinPassiveStacks}/4)`, color: '#ffd700', life: 0.8 });
             }
         }
-        player.valheinPassiveTimer = 0; // 重置 5 秒倒數
+        player.valheinPassiveTimer = 0;
 
         damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `${Math.floor(finalAtk)}`, color: '#fff', life: 0.8 });
         attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#f3c654' });
@@ -1103,18 +1105,14 @@ function castSkill(skillId, dirX, dirY, dragDist) {
 
     let sLv = skillLevels[skillId] || 1;
 
-    // ==========================================
-    // ** 凡恩 (Valhein) 專屬技能組 **
-    // ==========================================
     if (player.heroKey === 'valhein') {
         if (skillId === 1) {
-            // 1技：長距離指定技（只能對人或小兵放），擊中後爆炸
             let targetEnemy = null;
             let minD = 9999;
             entities.forEach(e => {
                 if (e.alive && e.team !== player.team && !(e instanceof Building)) {
                     let d = Math.hypot(e.x - player.x, e.y - player.y);
-                    if (d <= 350 && d < minD) { minD = d; targetEnemy = e; }
+                    if (d <= 240 && d < minD) { minD = d; targetEnemy = e; }
                 }
             });
 
@@ -1126,7 +1124,6 @@ function castSkill(skillId, dirX, dirY, dragDist) {
                 targetEnemy.takeDamage(hitDmg, player.team, 'magical');
                 damageTexts.push({ x: targetEnemy.x, y: targetEnemy.y - 35, value: `🎯 獵殺 ${hitDmg}`, color: '#ffd700', life: 1.0 });
 
-                // 小範圍爆炸
                 setTimeout(() => {
                     skillEffects.push({ x: targetEnemy.x, y: targetEnemy.y, life: 0.3, size: 60, color: 'rgba(255, 193, 7, 0.7)', dmg: explodeDmg, team: player.team });
                     entities.forEach(e => {
@@ -1140,13 +1137,12 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             }
 
         } else if (skillId === 2) {
-            // 2技：長距離指定單體暈眩2秒
             let targetEnemy = null;
             let minD = 9999;
             entities.forEach(e => {
                 if (e.alive && e.team !== player.team && !(e instanceof Building)) {
                     let d = Math.hypot(e.x - player.x, e.y - player.y);
-                    if (d <= 350 && d < minD) { minD = d; targetEnemy = e; }
+                    if (d <= 240 && d < minD) { minD = d; targetEnemy = e; }
                 }
             });
 
@@ -1161,27 +1157,34 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             }
 
         } else if (skillId === 3) {
-            // 3技：前方範圍技，擊中後直接取得滿層被動 (4層)
             skillCooldowns[3] = Math.max(9.0, 15.0 - (sLv - 1) * 2.0);
             let strikeDmg = 500 + (sLv - 1) * 100;
 
-            player.valheinPassiveStacks = 4; // 直接滿層被動！
+            player.valheinPassiveStacks = 4;
             player.valheinPassiveTimer = 0;
             damageTexts.push({ x: player.x, y: player.y - 60, value: '⚡ 水銀彈幕：被動已疊滿 (4層)', color: '#00d2ff', life: 1.2 });
 
-            for (let i = 0; i < 4; i++) {
-                setTimeout(() => {
-                    if (!player.alive) return;
-                    let tx = player.x + dirX * (80 + i * 40);
-                    let ty = player.y + dirY * (80 + i * 40);
-                    skillEffects.push({ x: tx, y: ty, life: 0.25, size: 70, color: 'rgba(0, 210, 255, 0.7)', dmg: strikeDmg, team: player.team });
-                    entities.forEach(e => {
-                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) < 75) {
-                            e.takeDamage(strikeDmg, player.team, 'magical');
-                        }
-                    });
-                }, i * 120);
-            }
+            let baseAngle = Math.atan2(dirY, dirX);
+            let fanAngles = [-0.3, -0.1, 0.1, 0.3]; // 扇形 4 發散彈
+
+            fanAngles.forEach((offset, idx) => {
+                let bulletAngle = baseAngle + offset;
+                let bX = Math.cos(bulletAngle), bY = Math.sin(bulletAngle);
+
+                for (let step = 1; step <= 3; step++) {
+                    setTimeout(() => {
+                        if (!player.alive) return;
+                        let tx = player.x + bX * (step * 70);
+                        let ty = player.y + bY * (step * 70);
+                        skillEffects.push({ x: tx, y: ty, life: 0.2, size: 45, color: 'rgba(0, 210, 255, 0.8)', dmg: strikeDmg, team: player.team });
+                        entities.forEach(e => {
+                            if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) < 55) {
+                                e.takeDamage(strikeDmg, player.team, 'magical');
+                            }
+                        });
+                    }, idx * 30 + step * 40);
+                }
+            });
         }
     }
     updateSkillUI();
@@ -1396,7 +1399,6 @@ function gameLoop() {
         }
         ctx.restore();
 
-        // 英雄名稱與等級
         let barW = e instanceof Building ? 70 : 50, barH = 6;
         let barX = sx - barW / 2;
         let barY = sy - e.radius - 24;
@@ -1421,7 +1423,6 @@ function gameLoop() {
         ctx.fillStyle = e.team === 'blue' ? '#00e676' : '#ff3366';
         ctx.fillRect(barX, barY, barW * hpRatio, barH);
 
-        // 血量刻度線
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.9)';
         ctx.lineWidth = 1.5;
         if (maxHp > 1000) {
@@ -1438,11 +1439,13 @@ function gameLoop() {
             }
         }
 
+        let currentBottomY = barY + barH;
+
         // ==========================================
-        // **【血條下方、經驗上方的 4 格被動條】**
+        // ** 凡恩專屬 4 格被動條（只有凡恩顯示） **
         // ==========================================
         if (e instanceof Hero && e.heroKey === 'valhein') {
-            let passiveBarY = barY + barH + 2;
+            let passiveBarY = currentBottomY + 2;
             let passiveBarH = 4;
             let totalSlots = 4;
             let slotW = (barW - (totalSlots - 1) * 2) / totalSlots;
@@ -1453,16 +1456,18 @@ function gameLoop() {
                 ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
 
                 if (i < e.valheinPassiveStacks) {
-                    ctx.fillStyle = '#ffd700'; // 凡恩被動滿層金黃色
+                    ctx.fillStyle = '#ffd700';
                     ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
                 }
             }
-            barY = passiveBarY + passiveBarH; // 往下推擠經驗條
+            currentBottomY = passiveBarY + passiveBarH;
         }
 
-        // 經驗值進度條
+        // ==========================================
+        // ** 經驗值進度條（緊貼在血條或被動條下方） **
+        // ==========================================
         if (e instanceof Hero) {
-            let expBarY = barY + 2;
+            let expBarY = currentBottomY + 2;
             let expBarH = 3;
             let reqExp = LEVEL_EXP_TABLE[e.level] || 150;
             let expRatio = Math.min(1, e.exp / reqExp);
