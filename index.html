@@ -1037,7 +1037,7 @@ class Hero extends Entity {
             }
 
             if (player && player.alive) {
-                player.gainExpAndGold(20, 150); // 擊殺敵方英雄獲得 20 點經驗值與 150 金幣
+                player.gainExpAndGold(20, 150);
             }
 
             setTimeout(() => {
@@ -1078,15 +1078,17 @@ function performAttack() {
         let finalAtk = player.atk + (player.valheinPassiveStacks * 20);
         nearestTarget.takeDamage(finalAtk, player.team, 'physical');
 
-        player.valheinAtkCounter++;
-        if (player.valheinAtkCounter >= 3) {
-            player.valheinAtkCounter = 0;
-            if (player.valheinPassiveStacks < 4) {
-                player.valheinPassiveStacks++;
-                damageTexts.push({ x: player.x, y: player.y - 50, value: `⚡ 被動層數 +1 (${player.valheinPassiveStacks}/4)`, color: '#ffd700', life: 0.8 });
+        if (player.heroKey === 'valhein') {
+            player.valheinAtkCounter++;
+            if (player.valheinAtkCounter >= 3) {
+                player.valheinAtkCounter = 0;
+                if (player.valheinPassiveStacks < 4) {
+                    player.valheinPassiveStacks++;
+                    damageTexts.push({ x: player.x, y: player.y - 50, value: `⚡ 被動層數 +1 (${player.valheinPassiveStacks}/4)`, color: '#ffd700', life: 0.8 });
+                }
             }
+            player.valheinPassiveTimer = 0;
         }
-        player.valheinPassiveTimer = 0;
 
         damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `${Math.floor(finalAtk)}`, color: '#fff', life: 0.8 });
         attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#f3c654' });
@@ -1104,8 +1106,9 @@ function castSkill(skillId, dirX, dirY, dragDist) {
     }
 
     let sLv = skillLevels[skillId] || 1;
+    let heroKey = player.heroKey;
 
-    if (player.heroKey === 'valhein') {
+    if (heroKey === 'valhein') {
         if (skillId === 1) {
             let targetEnemy = null;
             let minD = 9999;
@@ -1135,7 +1138,6 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             } else {
                 damageTexts.push({ x: player.x, y: player.y - 40, value: '⚠️ 範圍內無指定目標', color: '#ff4444', life: 0.8 });
             }
-
         } else if (skillId === 2) {
             let targetEnemy = null;
             let minD = 9999;
@@ -1155,7 +1157,6 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             } else {
                 damageTexts.push({ x: player.x, y: player.y - 40, value: '⚠️ 範圍內無指定目標', color: '#ff4444', life: 0.8 });
             }
-
         } else if (skillId === 3) {
             skillCooldowns[3] = Math.max(9.0, 15.0 - (sLv - 1) * 2.0);
             let strikeDmg = 500 + (sLv - 1) * 100;
@@ -1165,8 +1166,7 @@ function castSkill(skillId, dirX, dirY, dragDist) {
             damageTexts.push({ x: player.x, y: player.y - 60, value: '⚡ 水銀彈幕：被動已疊滿 (4層)', color: '#00d2ff', life: 1.2 });
 
             let baseAngle = Math.atan2(dirY, dirX);
-            let fanAngles = [-0.3, -0.1, 0.1, 0.3]; // 扇形 4 發散彈
-
+            let fanAngles = [-0.3, -0.1, 0.1, 0.3];
             fanAngles.forEach((offset, idx) => {
                 let bulletAngle = baseAngle + offset;
                 let bX = Math.cos(bulletAngle), bY = Math.sin(bulletAngle);
@@ -1186,7 +1186,278 @@ function castSkill(skillId, dirX, dirY, dragDist) {
                 }
             });
         }
+    } else if (heroKey === 'nakroth') {
+        if (skillId === 1) {
+            skillCooldowns[1] = 6.0;
+            let range = 180;
+            let dashX = player.x + dirX * range;
+            let dashY = player.y + dirY * range;
+            
+            if (!heroSkillStage['nakroth']) heroSkillStage['nakroth'] = { 1: 1 };
+            let stage = heroSkillStage['nakroth'][1];
+
+            player.startDash(dashX, dashY, 40);
+            damageTexts.push({ x: player.x, y: player.y - 40, value: `🗡️ 掠影一閃 (段數 ${stage})`, color: '#d7bde2', life: 0.8 });
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 65) {
+                    let dmg = 350 + sLv * 50;
+                    e.takeDamage(dmg, player.team, 'physical');
+                    e.isStunned = true;
+                    setTimeout(() => { e.isStunned = false; }, 750);
+                }
+            });
+
+            if (stage === 1) {
+                heroSkillStage['nakroth'][1] = 2;
+                skillCooldowns[1] = 0.8;
+            } else {
+                heroSkillStage['nakroth'][1] = 1;
+                skillCooldowns[1] = 6.0;
+            }
+        } else if (skillId === 2) {
+            skillCooldowns[2] = 5.0;
+            let dashX = player.x - dirX * 120;
+            let dashY = player.y - dirY * 120;
+            player.startDash(dashX, dashY, 45);
+            damageTexts.push({ x: player.x, y: player.y - 40, value: '🗡️ 國士無雙 (反向位移)', color: '#d7bde2', life: 0.8 });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = 12.0;
+            let strikeDmg = 450 + sLv * 120;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🗡️ 審判狂舞！', color: '#8e44ad', life: 1.0 });
+
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    skillEffects.push({ x: player.x, y: player.y, life: 0.3, size: 90, color: 'rgba(142, 68, 173, 0.8)', dmg: strikeDmg, team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 90) {
+                            e.takeDamage(strikeDmg, player.team, 'physical');
+                        }
+                    });
+                }, i * 250);
+            }
+        }
+    } else if (heroKey === 'quillen') {
+        if (skillId === 1) {
+            skillCooldowns[1] = 4.0;
+            let dmg = 300 + sLv * 60;
+            let hitX = player.x + dirX * 120;
+            let hitY = player.y + dirY * 120;
+
+            skillEffects.push({ x: hitX, y: hitY, life: 0.3, size: 50, color: 'rgba(183, 28, 28, 0.8)', dmg: dmg, team: player.team });
+            
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - hitX, e.y - hitY) <= 60) {
+                    let angleToPlayer = Math.atan2(player.y - e.y, player.x - e.x);
+                    let diffAngle = Math.abs(angleToPlayer - (e.rotation || 0));
+                    let isBackAttack = diffAngle < Math.PI / 2;
+
+                    let finalDmg = isBackAttack ? dmg * 2.0 : dmg;
+                    let markText = isBackAttack ? '🎯 【背擊標記】 爆擊！' : '🥷 刺殺雙刃';
+
+                    e.takeDamage(finalDmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${markText} ${Math.floor(finalDmg)}`, color: '#ff8a80', life: 1.0 });
+                }
+            });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = 8.0;
+            let dashX = player.x + dirX * 180;
+            let dashY = player.y + dirY * 180;
+            player.startDash(dashX, dashY, 40);
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 70) {
+                    e.quillenMarked = true;
+                    damageTexts.push({ x: e.x, y: e.y - 45, value: '📌 已施加致命標記', color: '#ff3366', life: 1.2 });
+                }
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = 15.0;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🥷 隱身突襲 (重置技能)', color: '#b71c1c', life: 1.2 });
+            player.hp = Math.min(player.maxHp, player.hp + 300);
+        }
+    } else if (heroKey === 'krixi') {
+        if (skillId === 1) {
+            skillCooldowns[1] = 6.0;
+            let baseDmg = 350 + sLv * 75;
+            let maxDist = 240;
+            let startX = player.x, startY = player.y;
+            let endX = player.x + dirX * maxDist;
+            let endY = player.y + dirY * maxDist;
+
+            damageTexts.push({ x: player.x, y: player.y - 40, value: '🧚‍♀️ 蝶舞流轉 (來回雙段)', color: '#a5d6a7', life: 1.0 });
+
+            skillEffects.push({ x: endX, y: endY, life: 0.3, size: 65, color: 'rgba(67, 160, 71, 0.8)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - endX, e.y - endY) <= 70) {
+                    e.takeDamage(baseDmg, player.team, 'magical');
+                    damageTexts.push({ x: e.x, y: e.y - 30, value: `去程 ${baseDmg}`, color: '#a5d6a7', life: 0.8 });
+                }
+            });
+
+            setTimeout(() => {
+                if (!player.alive) return;
+                let returnDmg = Math.floor(baseDmg * 1.3);
+                skillEffects.push({ x: startX, y: startY, life: 0.3, size: 75, color: 'rgba(0, 230, 118, 0.9)', team: player.team });
+                entities.forEach(e => {
+                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - startX, e.y - startY) <= 75) {
+                        e.takeDamage(returnDmg, player.team, 'magical');
+                        damageTexts.push({ x: e.x, y: e.y - 30, value: `✨ 回程爆擊 ${returnDmg}`, color: '#00e676', life: 1.0 });
+                    }
+                });
+            }, 350);
+
+        } else if (skillId === 2) {
+            skillCooldowns[2] = 8.0;
+            let tx = player.x + dirX * 180;
+            let ty = player.y + dirY * 180;
+            skillEffects.push({ x: tx, y: ty, life: 0.5, size: 60, color: 'rgba(0, 230, 118, 0.7)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 65) {
+                    e.takeDamage(200, player.team, 'magical');
+                    e.isStunned = true;
+                    setTimeout(() => { e.isStunned = false; }, 1500);
+                }
+            });
+            damageTexts.push({ x: player.x, y: player.y - 40, value: '🧚‍♀️ 魔法旋風 (擊飛)', color: '#00e676', life: 1.0 });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = 20.0;
+            let dmg = 300 + sLv * 90;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🧚‍♀️ 月落星沉！', color: '#43a047', life: 1.2 });
+            for (let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    skillEffects.push({ x: player.x, y: player.y, life: 0.3, size: 120, color: 'rgba(67, 160, 71, 0.6)', dmg: dmg, team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 120) {
+                            e.takeDamage(dmg, player.team, 'magical');
+                        }
+                    });
+                }, i * 300);
+            }
+        }
+    } else if (heroKey === 'zuka') {
+        if (skillId === 1) {
+            skillCooldowns[1] = 5.0;
+            let dashX = player.x + dirX * 180;
+            let dashY = player.y + dirY * 180;
+            player.startDash(dashX, dashY, 35);
+            let dmg = 350 + sLv * 70;
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 60) {
+                    e.takeDamage(dmg, player.team, 'physical');
+                }
+            });
+            damageTexts.push({ x: player.x, y: player.y - 40, value: '🐼 猛獸衝鋒', color: '#ffe082', life: 0.8 });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = 6.0;
+            let shieldAmt = 300 + sLv * 100;
+            player.hp = Math.min(player.maxHp, player.hp + shieldAmt * 0.5);
+            damageTexts.push({ x: player.x, y: player.y - 40, value: `🐼 巨力護身 (+護盾)`, color: '#ff9800', life: 1.0 });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = 12.0;
+            let tx = player.x + dirX * 180;
+            let ty = player.y + dirY * 180;
+            player.startDash(tx, ty, 45);
+            let dmg = 500 + sLv * 150;
+            setTimeout(() => {
+                skillEffects.push({ x: tx, y: ty, life: 0.4, size: 85, color: 'rgba(255, 152, 0, 0.8)', dmg: dmg, team: player.team });
+                entities.forEach(e => {
+                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 90) {
+                        e.takeDamage(dmg, player.team, 'physical');
+                        e.isStunned = true;
+                        setTimeout(() => { e.isStunned = false; }, 1000);
+                    }
+                });
+            }, 150);
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🐼 落地開山捶！', color: '#ff9800', life: 1.2 });
+        }
+    } else if (heroKey === 'ryoma') {
+        if (skillId === 1) {
+            skillCooldowns[1] = 8.0;
+            let dashX = player.x - dirX * 120;
+            let dashY = player.y - dirY * 120;
+            player.startDash(dashX, dashY, 40);
+            damageTexts.push({ x: player.x, y: player.y - 40, value: '🥷 局部後撤斬', color: '#a5d6a7', life: 0.8 });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = 7.0;
+            let dmg = 450 + sLv * 90;
+            
+            let closeHitX = player.x + dirX * 90;
+            let closeHitY = player.y + dirY * 90;
+            let tipHitX = player.x + dirX * 180;
+            let tipHitY = player.y + dirY * 180;
+
+            skillEffects.push({ x: tipHitX, y: tipHitY, life: 0.35, size: 60, color: 'rgba(46, 125, 50, 0.8)', team: player.team });
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team) {
+                    let distFromPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+                    
+                    if (distFromPlayer <= 200) {
+                        e.takeDamage(dmg, player.team, 'physical');
+
+                        if (distFromPlayer >= 140 && distFromPlayer <= 200) {
+                            e.isStunned = true;
+                            setTimeout(() => { e.isStunned = false; }, 1200);
+                            damageTexts.push({ x: e.x, y: e.y - 45, value: '🎯 【槍尖命中】 暈眩 1.2秒！', color: '#00e676', life: 1.2 });
+                        } else {
+                            damageTexts.push({ x: e.x, y: e.y - 35, value: `🥷 一刀斬 ${dmg}`, color: '#2e7d32', life: 0.8 });
+                        }
+                    }
+                }
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = 12.0;
+            let strikeDmg = 200 + sLv * 50;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🥷 殺戮連刺！', color: '#2e7d32', life: 1.2 });
+            for (let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    let tx = player.x + dirX * (60 + i * 30);
+                    let ty = player.y + dirY * (60 + i * 30);
+                    skillEffects.push({ x: tx, y: ty, life: 0.2, size: 50, color: 'rgba(46, 125, 50, 0.7)', dmg: strikeDmg, team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 55) {
+                            e.takeDamage(strikeDmg, player.team, 'physical');
+                        }
+                    });
+                }, i * 150);
+            }
+        }
+    } else if (heroKey === 'alice') {
+        if (skillId === 1) {
+            skillCooldowns[1] = 6.0;
+            let dmg = 350 + sLv * 70;
+            let tx = player.x + dirX * 240;
+            let ty = player.y + dirY * 240;
+            skillEffects.push({ x: tx, y: ty, life: 0.4, size: 65, color: 'rgba(171, 71, 188, 0.8)', dmg: dmg, team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 70) {
+                    e.takeDamage(dmg, player.team, 'magical');
+                }
+            });
+            damageTexts.push({ x: player.x, y: player.y - 40, value: '✨ 嘟嘟光波', color: '#e1bee7', life: 0.8 });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = 10.0;
+            damageTexts.push({ x: player.x, y: player.y - 40, value: '✨ 奇蹟防護 (加速護盾)', color: '#ab47bc', life: 1.0 });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = 18.0;
+            let tx = player.x + dirX * 240;
+            let ty = player.y + dirY * 240;
+            skillEffects.push({ x: tx, y: ty, life: 2.0, size: 130, color: 'rgba(225, 190, 231, 0.5)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 130) {
+                    e.takeDamage(400, player.team, 'magical');
+                    e.isSlowed = true;
+                    setTimeout(() => { e.isSlowed = false; }, 2000);
+                }
+            });
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '✨ 萬世流芳 (大招法陣)', color: '#ab47bc', life: 1.2 });
+        }
     }
+
     updateSkillUI();
 }
 
@@ -1441,9 +1712,6 @@ function gameLoop() {
 
         let currentBottomY = barY + barH;
 
-        // ==========================================
-        // ** 凡恩專屬 4 格被動條（只有凡恩顯示） **
-        // ==========================================
         if (e instanceof Hero && e.heroKey === 'valhein') {
             let passiveBarY = currentBottomY + 2;
             let passiveBarH = 4;
@@ -1463,9 +1731,6 @@ function gameLoop() {
             currentBottomY = passiveBarY + passiveBarH;
         }
 
-        // ==========================================
-        // ** 經驗值進度條（緊貼在血條或被動條下方） **
-        // ==========================================
         if (e instanceof Hero) {
             let expBarY = currentBottomY + 2;
             let expBarH = 3;
