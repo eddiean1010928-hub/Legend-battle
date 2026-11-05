@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -142,7 +141,6 @@
         <span class="score-blue" id="score-blue">0</span>
         <span>VS</span>
         <span class="score-red" id="score-red">0</span>
-        <span id="enemy-respawn-display" style="color: #ff4444; margin-left: 5px; font-weight: bold; display: none;">💀 10s</span>
         <span class="game-time-text" id="game-time-display">⏱️ 00:00</span>
         <span class="gold-text" id="gold-display">🪙 300</span>
         <span class="kda-text" id="kda-display">KDA: 0 / 0 / 0</span>
@@ -255,20 +253,20 @@
                 <div class="skill-upgrade-btn hidden" id="up-btn-2">+</div>
                 二技
                 <div class="skill-desc-label" id="lbl-skill-2">Lv.0 二技</div>
-                <div class="spell-cd-overlay hidden" id="cd-2"></div>
+                <div class="skill-cd-overlay hidden" id="cd-2"></div>
             </div>
             <div class="skill-btn" id="skill-1" data-skill="1">
                 <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
                 一技
                 <div class="skill-desc-label" id="lbl-skill-1">Lv.0 一技</div>
-                <div class="spell-cd-overlay hidden" id="cd-1"></div>
+                <div class="skill-cd-overlay hidden" id="cd-1"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v13';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v15';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -363,7 +361,7 @@ const HERO_DB = {
 
 let blueKills = 0, redKills = 0;
 let kills = 0, deaths = 0, assists = 0;
-let player = null, entities = [], skillEffects = [], attackEffects = [], damageTexts = [], camera = { x: 0, y: 0 };
+let player = null, aiHero = null, entities = [], skillEffects = [], attackEffects = [], damageTexts = [], camera = { x: 0, y: 0 };
 let minionSpawnTimer = 0;
 
 let joystickDir = { x: 0, y: 0 };
@@ -497,7 +495,7 @@ function confirmStartGame() {
     let redTower = new Building(MAP_SIZE - 850, 850, 'red', 'tower');
 
     player = new Hero(380, MAP_SIZE - 380, 'blue', selectedHeroKey, true);
-    let aiHero = new Hero(MAP_SIZE - 380, 380, 'red', randomAiKey, false);
+    aiHero = new Hero(MAP_SIZE - 380, 380, 'red', randomAiKey, false);
 
     entities.push(blueCore, redCore, blueTower, redTower, player, aiHero);
     
@@ -583,6 +581,7 @@ const attackBtn = document.getElementById('btn-attack');
     window.addEventListener(evt, () => { isAttackingPressed = false; });
 });
 
+// 🕹️ 技能拖曳施放控制（按住拖動指示範圍、鬆開施放）
 document.querySelectorAll('.skill-btn').forEach(btn => {
     btn.addEventListener('pointerdown', e => {
         let skillId = parseInt(btn.dataset.skill);
@@ -834,6 +833,8 @@ class Hero extends Entity {
         this.nakrothPassiveCounter = 0;
         this.ryomaPassiveTimer = 5.0;
 
+        this.aiSkillCooldownTimer = 0;
+
         this.isDashing = false; this.dashTargetX = x; this.dashTargetY = y; this.dashSpeed = 30;
         this.rotation = team === 'blue' ? -Math.PI / 4 : Math.PI * 3 / 4;
     }
@@ -923,45 +924,43 @@ class Hero extends Entity {
                 performAttack();
             }
         } else {
-            if (this.attackLockTimer <= 0) {
-                let hpRatio = this.hp / this.maxHp;
-                let baseHomeX = this.team === 'blue' ? 380 : MAP_SIZE - 380;
-                let baseHomeY = this.team === 'blue' ? MAP_SIZE - 380 : 380;
-                let targetDestX = baseHomeX;
-                let targetDestY = baseHomeY;
+            // 🤖 AI 智慧對手行為邏輯（支援自動放招與走位）
+            if (this.aiSkillCooldownTimer > 0) this.aiSkillCooldownTimer--;
 
-                let nearestEnemy = null;
-                let minDist = 9999;
-                entities.forEach(e => {
-                    if (e.alive && e.team !== this.team) {
-                        let dist = Math.hypot(e.x - this.x, e.y - this.y);
-                        if (dist < minDist) { minDist = dist; nearestEnemy = e; }
-                    }
-                });
+            let nearestEnemy = null;
+            let minDist = 9999;
+            entities.forEach(e => {
+                if (e.alive && e.team !== this.team) {
+                    let dist = Math.hypot(e.x - this.x, e.y - this.y);
+                    if (dist < minDist) { minDist = dist; nearestEnemy = e; }
+                }
+            });
 
-                if (hpRatio < 0.35 && distToFountain > 80) {
-                    targetDestX = baseHomeX;
-                    targetDestY = baseHomeY;
-                } else if (nearestEnemy) {
-                    targetDestX = nearestEnemy.x;
-                    targetDestY = nearestEnemy.y;
+            if (nearestEnemy && this.attackLockTimer <= 0) {
+                let angleToEnemy = Math.atan2(nearestEnemy.y - this.y, nearestEnemy.x - this.x);
+                let dirX = Math.cos(angleToEnemy);
+                let dirY = Math.sin(angleToEnemy);
 
-                    if (minDist <= this.range + nearestEnemy.radius) {
-                        if (this.atkCooldown <= 0) {
-                            this.atkCooldown = 25;
-                            this.attackLockTimer = 15;
-                            nearestEnemy.takeDamage(this.atk, this.team, 'physical');
-                        }
-                    }
+                // AI 自動施放技能判定
+                if (this.aiSkillCooldownTimer === 0 && minDist <= 250) {
+                    this.aiSkillCooldownTimer = 180; // 每 3 秒嘗試放招一次
+                    let randomSkill = Math.random() < 0.5 ? 1 : 2;
+                    executeAiSkill(this, randomSkill, dirX, dirY);
                 }
 
-                let angle = Math.atan2(targetDestY - this.y, targetDestX - this.x);
-                let speed = 1.6;
-                if (this.isSlowed) speed *= (1 - this.slowFactor);
-                let nx = this.x + Math.cos(angle) * speed;
-                let ny = this.y + Math.sin(angle) * speed;
-                let clamped = clampPosition(nx, ny, this.radius);
-                this.x = clamped.x; this.y = clamped.y;
+                if (minDist <= this.range + nearestEnemy.radius) {
+                    if (this.atkCooldown <= 0) {
+                        this.atkCooldown = 25;
+                        this.attackLockTimer = 15;
+                        nearestEnemy.takeDamage(this.atk, this.team, 'physical');
+                    }
+                } else {
+                    let speed = 1.6;
+                    let nx = this.x + dirX * speed;
+                    let ny = this.y + dirY * speed;
+                    let clamped = clampPosition(nx, ny, this.radius);
+                    this.x = clamped.x; this.y = clamped.y;
+                }
             }
         }
     }
@@ -996,7 +995,8 @@ class Hero extends Entity {
     }
 
     onDeath(sourceTeam) {
-        let respawnTime = Math.min(35, Math.floor(5 + this.level * 0.8 + gameTimeSeconds / 60));
+        // 🌟 校準復活時間：基礎 4 秒，隨等級每級增加 1.5 秒，上限 25 秒
+        let respawnTime = Math.min(25, Math.max(4, Math.floor(4 + this.level * 1.5)));
 
         if (this.isPlayer) {
             deaths++;
@@ -1005,6 +1005,7 @@ class Hero extends Entity {
             triggerAnnouncement(`YOU HAVE BEEN SLAIN (復活倒數 ${respawnTime} 秒)`, '#ff3366');
 
             setTimeout(() => {
+                if (!isRunning) return;
                 this.hp = this.maxHp;
                 this.x = 380; this.y = MAP_SIZE - 380;
                 this.alive = true;
@@ -1028,6 +1029,7 @@ class Hero extends Entity {
             }
 
             setTimeout(() => {
+                if (!isRunning) return;
                 this.hp = this.maxHp;
                 this.x = MAP_SIZE - 380; this.y = 380;
                 this.alive = true;
@@ -1100,6 +1102,21 @@ function performAttack() {
         damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `${Math.floor(finalAtk)}`, color: '#fff', life: 0.8 });
         attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#f3c654' });
     }
+}
+
+function executeAiSkill(aiObj, skillId, dirX, dirY) {
+    let heroKey = aiObj.heroKey;
+    let targetX = aiObj.x + dirX * 150;
+    let targetY = aiObj.y + dirY * 150;
+    
+    skillEffects.push({ x: targetX, y: targetY, life: 0.3, size: 60, color: 'rgba(255, 68, 68, 0.6)', team: aiObj.team });
+    
+    entities.forEach(e => {
+        if (!(e instanceof Building) && e.alive && e.team !== aiObj.team && Math.hypot(e.x - targetX, e.y - targetY) <= 70) {
+            e.takeDamage(300, aiObj.team, 'magical');
+            damageTexts.push({ x: e.x, y: e.y - 40, value: `🤖 AI技能攻擊`, color: '#ff4444', life: 0.8 });
+        }
+    });
 }
 
 function castSkill(skillId, dirX, dirY, dragDist) {
@@ -1443,7 +1460,7 @@ function gameLoop() {
         let sx = e.x - camera.x;
         let sy = e.y - camera.y;
 
-        // 🎯 普攻範圍與強普常駐顯示（按住攻擊鍵或擁有強普時持續顯示）
+        // 🎯 普攻範圍與強普常駐顯示
         if (e instanceof Hero) {
             ctx.save();
             if (e.isPlayer && (isAttackingPressed || e.range)) {
@@ -1606,5 +1623,3 @@ function gameLoop() {
 </script>
 </body>
 </html>
-
-```
