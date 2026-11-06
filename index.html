@@ -3,15 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>傳說對決 1v1 模擬器 - 完整旗艦版</title>
+    <title>傳說對決 1v1 MOBA 引擎 - 完整旗艦版</title>
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
         body { margin: 0; padding: 0; background: #0a0a0c; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         #game-container { position: relative; width: 100vw; height: 100vh; max-width: 960px; max-height: 540px; background: #1b5e20; overflow: hidden; border: 4px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         canvas { display: block; background: #2e7d32; }
         
-        /* 選角畫面 */
-        #hero-select-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,12,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        /* 1. 高還原傳說對決大廳主畫面 (Lobby) */
+        #main-lobby-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #101626 0%, #1d263b 50%, #111522 100%); display: flex; flex-direction: column; justify-content: space-between; padding: 12px 20px; z-index: 150; }
+        .lobby-header { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .profile-box { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,215,0,0.3); }
+        .profile-avatar { width: 40px; height: 40px; border-radius: 50%; background: #ffd700; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid #fff; }
+        .currency-bar { display: flex; gap: 15px; font-size: 14px; font-weight: bold; }
+        .currency-item { background: rgba(0,0,0,0.5); padding: 4px 10px; border-radius: 12px; border: 1px solid #444; color: #ffd700; }
+        
+        .lobby-body { position: relative; flex: 1; display: flex; justify-content: space-between; align-items: center; }
+        .hero-showcase { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -45%); font-size: 140px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.7)); animation: floatHero 3s ease-in-out infinite; }
+        @keyframes floatHero { 0%, 100% { transform: translate(-50%, -48%); } 50% { transform: translate(-50%, -42%); } }
+        
+        .lobby-right-menu { display: flex; flex-direction: column; gap: 10px; z-index: 2; }
+        .menu-banner { background: rgba(20, 30, 55, 0.85); border: 1px solid #ffd700; border-radius: 8px; padding: 8px 15px; font-size: 13px; font-weight: bold; text-align: right; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        
+        .lobby-footer { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; z-index: 2; }
+        .bottom-nav { display: flex; gap: 15px; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; font-size: 12px; color: #ccc; cursor: pointer; }
+        .nav-icon { font-size: 20px; margin-bottom: 2px; }
+        
+        .start-match-btn { background: linear-gradient(135deg, #e65100, #ff9800); border: 2px solid #ffe082; padding: 12px 35px; border-radius: 30px; font-size: 22px; font-weight: 900; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.6); cursor: pointer; box-shadow: 0 6px 20px rgba(230,81,0,0.6); transition: 0.2s; }
+        .start-match-btn:active { transform: scale(0.95); }
+
+        /* 2. 選角畫面 */
+        #hero-select-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,12,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; display: none; }
         .hero-grid { display: flex; gap: 15px; margin-top: 20px; }
         .hero-card { width: 120px; height: 160px; background: #1a1a24; border: 3px solid #3d3d5c; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
         .hero-card:hover, .hero-card.selected { border-color: #ffd700; transform: translateY(-6px); background: #252538; box-shadow: 0 5px 15px rgba(255,215,0,0.3); }
@@ -20,21 +43,20 @@
         .hero-type { font-size: 11px; color: #888a9e; margin-top: 4px; text-align: center; }
         .btn-start { margin-top: 30px; padding: 12px 36px; font-size: 18px; background: linear-gradient(to bottom, #ff9800, #f57c00); border: none; color: #fff; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         
-        /* 遊戲介面 HUD */
+        /* 3. 遊戲介面 HUD */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         .top-hud { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); font-size: 20px; font-weight: bold; background: rgba(0,0,0,0.75); padding: 5px 18px; border-radius: 20px; border: 1px solid #444; letter-spacing: 2px; }
         
-        /* 虛擬搖桿 */
+        /* 搖桿與技能鈕 */
         #joystick-zone { position: absolute; bottom: 25px; left: 25px; width: 140px; height: 140px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 50%; pointer-events: auto; touch-action: none; }
         #joystick-knob { position: absolute; top: 45px; left: 45px; width: 50px; height: 50px; background: rgba(255,255,255,0.4); border-radius: 50%; pointer-events: none; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
         
-        /* 技能按鈕群組 */
         .skill-btn-group { position: absolute; bottom: 25px; right: 25px; display: flex; gap: 15px; pointer-events: auto; }
         .skill-btn { width: 70px; height: 70px; background: rgba(10,10,15,0.75); border: 3px solid #ffd700; border-radius: 50%; color: #fff; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 18px; position: relative; touch-action: none; box-shadow: 0 4px 10px rgba(0,0,0,0.6); }
         .skill-btn:active { transform: scale(0.92); }
         .skill-cd { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #ff5252; display: none; }
 
-        /* 結算畫面 */
+        /* 4. 結算畫面 */
         #result-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; display: none; }
         .result-title-win { font-size: 56px; color: #ffd700; font-weight: bold; text-shadow: 0 0 20px #ff9800; }
         .result-title-lose { font-size: 56px; color: #f44336; font-weight: bold; text-shadow: 0 0 20px #d32f2f; }
@@ -45,12 +67,53 @@
 <div id="game-container">
     <canvas id="gameCanvas" width="960" height="540"></canvas>
     
-    <div id="hero-select-screen">
-        <h2>傳說對決 1v1 模擬器 (全英雄詳細版)</h2>
-        <div class="hero-grid" id="hero-grid"></div>
-        <button class="btn-start" onclick="confirmStartGame()">進入戰場</button>
+    <!-- 大廳主畫面 -->
+    <div id="main-lobby-screen">
+        <div class="lobby-header">
+            <div class="profile-box">
+                <div class="profile-avatar">👑</div>
+                <div>
+                    <div style="font-size: 13px; font-weight: bold;">Eddie</div>
+                    <div style="font-size: 10px; color: #aaa;">S30 傳說聖者</div>
+                </div>
+            </div>
+            <div class="currency-bar">
+                <div class="currency-item">🪙 2,900</div>
+                <div class="currency-item">💎 49</div>
+                <div class="currency-item">⚡ 5,000</div>
+            </div>
+        </div>
+
+        <div class="lobby-body">
+            <div class="hero-showcase">🦋</div>
+            <div class="lobby-right-menu">
+                <div class="menu-banner">🎁 福利商店</div>
+                <div class="menu-banner">📅 七日簽到</div>
+                <div class="menu-banner">⚔️ 對戰獎勵</div>
+                <div class="menu-banner">📜 傳說聖典</div>
+            </div>
+        </div>
+
+        <div class="lobby-footer">
+            <div class="bottom-nav">
+                <div class="nav-btn"><span class="nav-icon">🛒</span>商店</div>
+                <div class="nav-btn"><span class="nav-icon">🎒</span>背包</div>
+                <div class="nav-btn"><span class="nav-icon">🛡️</span>英雄</div>
+                <div class="nav-btn"><span class="nav-icon">⚔️</span>備戰</div>
+                <div class="nav-btn"><span class="nav-icon">📊</span>生涯</div>
+            </div>
+            <button class="start-match-btn" onclick="openHeroSelect()">START 排位賽</button>
+        </div>
     </div>
 
+    <!-- 選角畫面 -->
+    <div id="hero-select-screen">
+        <h2>請選擇登場英雄 (1v1 傳說戰場)</h2>
+        <div class="hero-grid" id="hero-grid"></div>
+        <button class="btn-start" onclick="confirmStartGame()">確認選擇，進入戰場</button>
+    </div>
+
+    <!-- 遊戲 UI -->
     <div id="ui-layer">
         <div class="top-hud" id="top-hud">00:00</div>
         <div id="joystick-zone">
@@ -63,10 +126,11 @@
         </div>
     </div>
 
+    <!-- 結算畫面 -->
     <div id="result-screen">
         <div id="result-title">VICTORY</div>
         <div id="result-subtitle" style="margin: 20px 0; font-size: 20px; color: #ccc;"></div>
-        <button class="btn-start" onclick="location.reload()">再戰一局</button>
+        <button class="btn-start" onclick="location.reload()">返回主頁</button>
     </div>
 </div>
 
@@ -90,7 +154,7 @@ const HERO_DB = {
     'krixi': { name: '克里希', type: '法師 / 遠程爆發', baseHp: 5800, hpGrowth: 650, atk: 150, atkInterval: 0.5, range: 240, avatar: '🦋' }
 };
 
-// 動態生成選角卡片
+// 選角畫面動態生成
 const heroGrid = document.getElementById('hero-grid');
 Object.keys(HERO_DB).forEach(key => {
     let h = HERO_DB[key];
@@ -105,6 +169,11 @@ Object.keys(HERO_DB).forEach(key => {
     heroGrid.appendChild(card);
 });
 
+function openHeroSelect() {
+    document.getElementById('main-lobby-screen').style.display = 'none';
+    document.getElementById('hero-select-screen').style.display = 'flex';
+}
+
 class Entity {
     constructor(x, y, team, radius) {
         this.x = x; this.y = y; this.team = team; this.radius = radius;
@@ -112,7 +181,6 @@ class Entity {
     }
 }
 
-// 建築物 (主堡與防禦塔)
 class Building extends Entity {
     constructor(x, y, team, type) {
         super(x, y, team, type === 'core' ? 55 : 45);
@@ -146,7 +214,6 @@ class Building extends Entity {
     }
 }
 
-// 小兵類別
 class Minion extends Entity {
     constructor(x, y, team) {
         super(x, y, team, 14);
@@ -189,7 +256,6 @@ class Minion extends Entity {
     }
 }
 
-// 英雄類別
 class Hero extends Entity {
     constructor(x, y, team, heroKey, isPlayer) {
         super(x, y, team, 24);
@@ -210,7 +276,7 @@ class Hero extends Entity {
         this.dashTargetY = 0;
         this.dashSpeed = 0;
         
-        // 被動變數
+        // 特殊被動狀態變數
         this.valheinPassiveStacks = 0;
         this.valheinAutoCount = 0;
         this.valheinPassiveTimer = 0;
@@ -221,7 +287,7 @@ class Hero extends Entity {
     }
     takeDamage(dmg, sourceTeam) {
         if (!this.alive) return;
-        if (!this.isPlayer) dmg *= 0.8; // AI 傷害 0.8 倍降難度
+        if (!this.isPlayer) dmg *= 0.8; // AI 傷害 0.8 倍
         this.hp -= dmg;
         if (this.hp <= 0) {
             this.hp = 0;
@@ -266,15 +332,12 @@ class Hero extends Entity {
             }
         }
 
-        // 凡恩被動 5 秒未普攻遞減
         if (this.heroKey === 'valhein' && this.valheinPassiveStacks > 0) {
             this.valheinPassiveTimer--;
-            if (this.valheinPassiveTimer <= 0) {
-                this.valheinPassiveStacks = 0;
-            }
+            if (this.valheinPassiveTimer <= 0) this.valheinPassiveStacks = 0;
         }
 
-        // 溫泉回血 (主堡 250 位置)
+        // 溫泉回血
         let fx = this.team === 'blue' ? 250 : MAP_SIZE - 250;
         let fy = this.team === 'blue' ? MAP_SIZE - 250 : 250;
         if (Math.hypot(this.x - fx, this.y - fy) <= 130 && this.hp < this.maxHp) {
@@ -286,7 +349,7 @@ class Hero extends Entity {
             if (this.ryomaPassiveTimer <= 0) this.ryomaHasStrongAtk = true;
         }
 
-        // AI 行動邏輯 (低血量回溫泉、自動索敵與普攻)
+        // AI 控制邏輯
         if (!this.isPlayer) {
             let tx = this.team === 'blue' ? MAP_SIZE - 500 : 500;
             let ty = this.team === 'blue' ? 500 : MAP_SIZE - 500;
@@ -328,7 +391,6 @@ function confirmStartGame() {
     requestAnimationFrame(gameLoop);
 }
 
-// 普攻系統實作（帶範圍檢測與完整被動觸發）
 function performAttack(attacker = player) {
     if (!attacker || !attacker.alive || attacker.atkCooldown > 0) return;
 
@@ -349,33 +411,26 @@ function performAttack(attacker = player) {
         attacker.atkCooldown = Math.round((attacker.heroData.atkInterval || 0.5) * 60);
         let baseDmg = attacker.atk + (attacker.level - 1) * 25;
 
-        // 凡恩被動 (每3下普攻疊1層，最多4層，5秒沒普攻消失)
         if (attacker.heroKey === 'valhein') {
-            attacker.valheinPassiveTimer = 300; // 重置 5 秒
+            attacker.valheinPassiveTimer = 300;
             attacker.valheinAutoCount++;
             if (attacker.valheinAutoCount >= 3) {
                 attacker.valheinAutoCount = 0;
                 if (attacker.valheinPassiveStacks < 4) attacker.valheinPassiveStacks++;
             }
             baseDmg += attacker.valheinPassiveStacks * 20;
-        }
-        // 納克羅斯被動 (每4下普攻擊飛)
-        else if (attacker.heroKey === 'nakroth') {
+        } else if (attacker.heroKey === 'nakroth') {
             attacker.nakrothPassiveStacks++;
             if (attacker.nakrothPassiveStacks >= 4) {
                 attacker.nakrothPassiveStacks = 0;
                 target.isStunned = true;
                 setTimeout(() => { target.isStunned = false; }, 500);
             }
-        }
-        // 龍馬強普 (每5秒強普 2倍傷)
-        else if (attacker.heroKey === 'ryoma' && attacker.ryomaHasStrongAtk) {
+        } else if (attacker.heroKey === 'ryoma' && attacker.ryomaHasStrongAtk) {
             attacker.ryomaHasStrongAtk = false;
             attacker.ryomaPassiveTimer = 300;
             baseDmg *= 2.0;
-        }
-        // 奎倫背刺 (必定暴擊 200%)
-        else if (attacker.heroKey === 'quillen') {
+        } else if (attacker.heroKey === 'quillen') {
             baseDmg *= 2.0;
         }
 
@@ -383,7 +438,6 @@ function performAttack(attacker = player) {
     }
 }
 
-// 🎯 全英雄詳細技能路由 (castSkill)
 function castSkill(id) {
     if (!player || !player.alive || skillCooldowns[id] > 0) return;
     skillCooldowns[id] = 6.0;
@@ -395,13 +449,11 @@ function castSkill(id) {
 
     let heroKey = player.heroKey;
 
-    // 1. 凡恩 (Valhein)
     if (heroKey === 'valhein') {
         if (id === 1) {
             let target = findTargetInRange(240);
             if (target) {
                 target.takeDamage(500, player.team);
-                // 爆炸小範圍傷害
                 setTimeout(() => {
                     entities.forEach(e => {
                         if (e.alive && e.team !== player.team && Math.hypot(e.x - target.x, e.y - target.y) <= 90) {
@@ -415,10 +467,10 @@ function castSkill(id) {
             if (target) {
                 target.takeDamage(150, player.team);
                 target.isStunned = true;
-                setTimeout(() => { target.isStunned = false; }, 2000); // 2秒暈眩
+                setTimeout(() => { target.isStunned = false; }, 2000);
             }
         } else if (id === 3) {
-            player.valheinPassiveStacks = 4; // 滿被動
+            player.valheinPassiveStacks = 4;
             let tx = player.x + dirX * 200, ty = player.y + dirY * 200;
             entities.forEach(e => {
                 if (e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 120) {
@@ -426,9 +478,7 @@ function castSkill(id) {
                 }
             });
         }
-    }
-    // 2. 納克羅斯 (Nakroth)
-    else if (heroKey === 'nakroth') {
+    } else if (heroKey === 'nakroth') {
         if (id === 1) {
             let dashX = player.x + dirX * 200, dashY = player.y + dirY * 200;
             player.startDash(dashX, dashY, 45);
@@ -451,18 +501,12 @@ function castSkill(id) {
                     entities.forEach(e => {
                         if (e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 130) {
                             e.takeDamage(50, player.team);
-                            if (i === 5) { // 最後一段擊飛
-                                e.isStunned = true;
-                                setTimeout(() => { e.isStunned = false; }, 500);
-                            }
                         }
                     });
                 }, i * 150);
             }
         }
-    }
-    // 3. 龍馬 (Ryoma)
-    else if (heroKey === 'ryoma') {
+    } else if (heroKey === 'ryoma') {
         if (id === 1) {
             let dashX = player.x - dirX * 140, dashY = player.y - dirY * 140;
             player.startDash(dashX, dashY, 35);
@@ -472,7 +516,7 @@ function castSkill(id) {
                 if (e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 100) {
                     e.takeDamage(700, player.team);
                     e.isStunned = true;
-                    setTimeout(() => { e.isStunned = false; }, 1000); // 1秒暈眩
+                    setTimeout(() => { e.isStunned = false; }, 1000);
                 }
             });
         } else if (id === 3) {
@@ -489,9 +533,7 @@ function castSkill(id) {
                 }, i * 200);
             }
         }
-    }
-    // 4. 奎倫 (Quillen)
-    else if (heroKey === 'quillen') {
+    } else if (heroKey === 'quillen') {
         if (id === 1) {
             for (let i = 0; i < 2; i++) {
                 setTimeout(() => {
@@ -510,15 +552,13 @@ function castSkill(id) {
             player.isQuillenStealth = true;
             setTimeout(() => { if (player) player.isQuillenStealth = false; }, 4000);
         }
-    }
-    // 5. 克里希 (Krixi)
-    else if (heroKey === 'krixi') {
+    } else if (heroKey === 'krixi') {
         if (id === 1) {
             let tx = player.x + dirX * 280, ty = player.y + dirY * 280;
             setTimeout(() => {
                 entities.forEach(e => {
                     if (e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 90) {
-                        e.takeDamage(630, player.team); // 600 + 被動30
+                        e.takeDamage(630, player.team);
                     }
                 });
             }, 200);
@@ -527,9 +567,9 @@ function castSkill(id) {
             setTimeout(() => {
                 entities.forEach(e => {
                     if (e.alive && e.team !== player.team && Math.hypot(e.x - cx, e.y - cy) <= 80) {
-                        e.takeDamage(230, player.team); // 200 + 被動30
+                        e.takeDamage(230, player.team);
                         e.isStunned = true;
-                        setTimeout(() => { e.isStunned = false; }, 750); // 0.75秒暈眩
+                        setTimeout(() => { e.isStunned = false; }, 750);
                     }
                 });
             }, 500);
@@ -538,7 +578,7 @@ function castSkill(id) {
                 setTimeout(() => {
                     if (!player.alive) return;
                     let target = entities.find(e => e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 240);
-                    if (target) target.takeDamage(430, player.team); // 400 + 被動30
+                    if (target) target.takeDamage(430, player.team);
                 }, i * 500);
             }
         }
@@ -556,7 +596,6 @@ function findTargetInRange(range) {
     return target;
 }
 
-// 虛擬搖桿
 let joystickZone = document.getElementById('joystick-zone');
 let joystickKnob = document.getElementById('joystick-knob');
 let isDragging = false;
@@ -633,7 +672,7 @@ function gameLoop() {
         ctx.beginPath();
         ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
         if (e instanceof Building) {
-            ctx.fillStyle = e.team === 'blue' ? '#00bcd4' : '#ff5722';
+            ctx.fillStyle = e.team === 'blue' ? '#00bcd4' : '#ff5252';
         } else if (e instanceof Minion) {
             ctx.fillStyle = e.team === 'blue' ? '#80d8ff' : '#ff8a80';
         } else {
@@ -650,7 +689,6 @@ function gameLoop() {
             ctx.fillStyle = e.team === 'blue' ? '#00e676' : '#ff5252';
             ctx.fillRect(e.x - barW / 2, e.y - e.radius - 12, barW * (e.hp / e.maxHp), barH);
 
-            // 凡恩專屬被動條 (血條下方 4 格)
             if (e === player && e.heroKey === 'valhein') {
                 for (let i = 0; i < 4; i++) {
                     ctx.fillStyle = i < e.valheinPassiveStacks ? '#00e5ff' : '#444';
