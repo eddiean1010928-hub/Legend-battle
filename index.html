@@ -198,7 +198,7 @@
     <div id="pick-screen" class="pick-screen-overlay hidden">
         <div class="pick-top-bar">
             <div class="pick-tabs">
-                <span class="active">選擇 5 大傳說英雄</span>
+                <span class="active">選擇 6 大傳說英雄</span>
             </div>
             <button class="pick-cancel-btn" id="btn-pick-back">取消 ✕</button>
         </div>
@@ -266,7 +266,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v25';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v26';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -373,6 +373,15 @@ const HERO_DB = {
             1: { type: 'direction', range: 240 },
             2: { type: 'circle', range: 240, circleRadius: 75 },
             3: { type: 'direction', range: 240 }
+        }
+    },
+    'alice': {
+        name: '愛麗絲', type: '輔助 / 團隊護盾沉默', baseHp: 6400, hpGrowth: 720,
+        atk: 140, atkInterval: 0.5, atkRecovery: 0.4, range: 240, avatar: '🎀',
+        skillConfig: {
+            1: { type: 'circle', range: 240, circleRadius: 75 },
+            2: { type: 'direction', range: 240 },
+            3: { type: 'circle', range: 240, circleRadius: 110 }
         }
     }
 };
@@ -599,7 +608,7 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
         let skillId = parseInt(btn.dataset.skill);
         let sLv = skillLevels[skillId];
 
-        if (sLv === 0 || skillCooldowns[skillId] > 0 || !player || !player.alive) return;
+        if (sLv === 0 || skillCooldowns[skillId] > 0 || !player || !player.alive || player.isSilenced) return;
 
         if (e.cancelable) e.preventDefault();
         e.stopPropagation();
@@ -681,9 +690,25 @@ class Entity {
     constructor(x, y, team, radius = 26) {
         this.x = x; this.y = y; this.team = team; this.radius = radius;
         this.hp = 1000; this.maxHp = 1000; this.alive = true;
+        this.shield = 0;
     }
     takeDamage(dmg, sourceTeam, type = 'physical') {
         if (!this.alive) return;
+        
+        if (this instanceof Hero) {
+            this.outOfCombatTimer = 0; 
+        }
+
+        if (this.shield > 0) {
+            if (this.shield >= dmg) {
+                this.shield -= dmg;
+                dmg = 0;
+            } else {
+                dmg -= this.shield;
+                this.shield = 0;
+            }
+        }
+
         this.hp -= dmg;
         
         if (this === player) {
@@ -706,7 +731,6 @@ class Building extends Entity {
         this.maxHp = type === 'core' ? 6000 : 12000;
         this.hp = this.maxHp;
         this.atkTimer = 0;
-        // 🎯 塔的範圍改成 260
         this.attackRange = 260;
         this.currentTarget = null;
         this.towerAtkStack = 0;
@@ -753,7 +777,6 @@ class Building extends Entity {
             this.atkTimer = 0;
             if (this.currentTarget) {
                 let baseTowerDmg = 400;
-                // 🎯 塔的攻擊改成每下 * 1.5
                 let finalTowerDmg = baseTowerDmg * Math.pow(1.5, this.towerAtkStack);
                 this.towerAtkStack++;
 
@@ -847,9 +870,13 @@ class Hero extends Entity {
         this.hasEnhancedAttack = false;
         this.isSuperArmor = false;
         this.isStunned = false;
+        this.isSilenced = false;
         this.isSlowed = false;
         this.slowFactor = 0.4;
         
+        this.outOfCombatTimer = 300; 
+        this.speedBuffTimer = 0;
+
         this.valheinHitCounter = 0;
         this.valheinPassiveStacks = 0;
         this.valheinPassiveTimer = 0;
@@ -870,6 +897,19 @@ class Hero extends Entity {
     update() {
         if (!this.alive) return;
         if (this.isStunned) return;
+
+        this.outOfCombatTimer++;
+
+        // 🎯 愛麗絲被動：脫戰 5 秒後額外獲得 15% 跑速 + 每秒恢復 2.5% 已損生命
+        if (this.heroKey === 'alice' && this.outOfCombatTimer >= 300) {
+            if (this.hp < this.maxHp) {
+                let lostHp = this.maxHp - this.hp;
+                let healAmt = (lostHp * 0.025) / 60;
+                this.hp = Math.min(this.maxHp, this.hp + healAmt);
+            }
+        }
+
+        if (this.speedBuffTimer > 0) this.speedBuffTimer--;
 
         if (this.heroKey === 'valhein' && this.valheinPassiveStacks > 0) {
             this.valheinPassiveTimer++;
@@ -927,11 +967,14 @@ class Hero extends Entity {
             return;
         }
 
+        let speed = 2.8;
+        if (this.heroKey === 'alice' && this.outOfCombatTimer >= 300) speed *= 1.15;
+        if (this.speedBuffTimer > 0) speed *= 1.20;
+        if (this.isSlowed) speed *= (1 - this.slowFactor);
+
         if (this.isPlayer) {
             if (this.attackLockTimer <= 0) {
                 if (joystickDir.x !== 0 || joystickDir.y !== 0) {
-                    let speed = 2.8;
-                    if (this.isSlowed) speed *= (1 - this.slowFactor);
                     let nx = this.x + joystickDir.x * speed;
                     let ny = this.y + joystickDir.y * speed;
                     let clamped = clampPosition(nx, ny, this.radius);
@@ -945,7 +988,6 @@ class Hero extends Entity {
         } else {
             if (this.aiSkillCooldownTimer > 0) this.aiSkillCooldownTimer--;
 
-            // 🎯 敵方 AI 回家改成血量 25% 以下啟動
             if (this.hp < this.maxHp * 0.25) {
                 this.isRetreatingForHeal = true;
             }
@@ -956,9 +998,8 @@ class Hero extends Entity {
             if (this.isRetreatingForHeal) {
                 if (distToFountain > 80) {
                     let angleToFountain = Math.atan2(fountainY - this.y, fountainX - this.x);
-                    let speed = 2.2;
-                    let nx = this.x + Math.cos(angleToFountain) * speed;
-                    let ny = this.y + Math.sin(angleToFountain) * speed;
+                    let nx = this.x + Math.cos(angleToFountain) * (speed * 0.8);
+                    let ny = this.y + Math.sin(angleToFountain) * (speed * 0.8);
                     let clamped = clampPosition(nx, ny, this.radius);
                     this.x = clamped.x; this.y = clamped.y;
                 }
@@ -979,7 +1020,7 @@ class Hero extends Entity {
                 let dirX = Math.cos(angleToEnemy);
                 let dirY = Math.sin(angleToEnemy);
 
-                if (this.aiSkillCooldownTimer === 0 && minDist <= 280) {
+                if (this.aiSkillCooldownTimer === 0 && minDist <= 280 && !this.isSilenced) {
                     this.aiSkillCooldownTimer = 100;
                     executeAiSkill(this, 1, dirX, dirY);
                 }
@@ -989,11 +1030,11 @@ class Hero extends Entity {
                         this.atkCooldown = 25;
                         this.attackLockTimer = 15;
                         nearestEnemy.takeDamage(this.atk, this.team, 'physical');
+                        this.outOfCombatTimer = 0;
                     }
                 } else {
-                    let speed = 1.7;
-                    let nx = this.x + dirX * speed + (Math.random() - 0.5) * 1.5;
-                    let ny = this.y + dirY * speed + (Math.random() - 0.5) * 1.5;
+                    let nx = this.x + dirX * (speed * 0.6) + (Math.random() - 0.5) * 1.5;
+                    let ny = this.y + dirY * (speed * 0.6) + (Math.random() - 0.5) * 1.5;
                     let clamped = clampPosition(nx, ny, this.radius);
                     this.x = clamped.x; this.y = clamped.y;
                 }
@@ -1092,11 +1133,12 @@ function performAttack() {
     });
 
     if (nearestTarget) {
+        player.outOfCombatTimer = 0; // 重置脫戰計時器
         let interval = player.heroData.atkInterval || 0.5;
         player.atkCooldown = Math.round(interval * 60);
-        player.attackLockTimer = Math.round((player.heroData.atkRecovery || 0.3) * 60);
+        player.attackLockTimer = Math.round((player.heroData.atkRecovery || 0.4) * 60);
         
-        let baseDmg = player.atk + (player.level - 1) * 25;
+        let baseDmg = player.atk + (player.level - 1) * 30;
 
         if (player.heroKey === 'valhein') {
             player.valheinPassiveTimer = 0;
@@ -1109,6 +1151,8 @@ function performAttack() {
             baseDmg += player.valheinPassiveStacks * 20;
             damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `${Math.floor(baseDmg)}`, color: '#ffd700', life: 0.8 });
 
+        } else if (player.heroKey === 'alice') {
+            damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `🎀 愛麗絲普攻 (${Math.floor(baseDmg)})`, color: '#e040fb', life: 0.8 });
         } else if (player.heroKey === 'nakroth') {
             baseDmg = 200 + (player.level - 1) * 40;
             if (player.hasEnhancedAttack) {
@@ -1180,7 +1224,7 @@ function executeAiSkill(aiObj, skillId, dirX, dirY) {
 }
 
 function castSkill(skillId, dirX, dirY, customDist) {
-    if (!player || !player.alive) return;
+    if (!player || !player.alive || player.isSilenced) return;
     if (skillLevels[skillId] === 0 || skillCooldowns[skillId] > 0) return;
 
     if (skillId === 3) {
@@ -1191,8 +1235,71 @@ function castSkill(skillId, dirX, dirY, customDist) {
 
     let sLv = skillLevels[skillId] || 1;
     let heroKey = player.heroKey;
+    player.outOfCombatTimer = 0; // 使用技能算作戰鬥狀態
 
-    if (heroKey === 'valhein') {
+    if (heroKey === 'alice') {
+        if (skillId === 1) {
+            // 🎯 愛麗絲 1 技：600 (+50)，暈眩 1 秒，CD 6s (-0.3s)
+            skillCooldowns[1] = Math.max(3.0, 6.0 - (sLv - 1) * 0.3);
+            let dmg = 600 + (sLv - 1) * 50;
+            let dist = customDist || 240;
+            let targetX = player.x + dirX * dist;
+            let targetY = player.y + dirY * dist;
+
+            skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 75, color: 'rgba(224, 64, 251, 0.75)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
+                    e.takeDamage(dmg, player.team, 'magical');
+                    e.isStunned = true;
+                    setTimeout(() => { e.isStunned = false; }, 1000);
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🎀 星光暈眩 1秒! (${dmg})`, color: '#e040fb', life: 1.0 });
+                }
+            });
+        } else if (skillId === 2) {
+            // 🎯 愛麗絲 2 技：20% 最大生命 + 等級*100 護盾，持續 5 秒 + 20% 加速 3 秒，CD 8s (-0.5s)
+            skillCooldowns[2] = Math.max(4.0, 8.0 - (sLv - 1) * 0.5);
+            let shieldAmt = player.maxHp * 0.20 + player.level * 100;
+
+            entities.forEach(e => {
+                if (e instanceof Hero && e.alive && e.team === player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 240) {
+                    e.shield = Math.min(e.maxHp * 0.5, (e.shield || 0) + shieldAmt);
+                    e.speedBuffTimer = 180; // 3 秒 (+20% 跑速)
+                    
+                    damageTexts.push({ x: e.x, y: e.y - 45, value: `🛡️ 獲得護盾 +${Math.floor(shieldAmt)}`, color: '#ffffff', life: 1.2 });
+                    
+                    setTimeout(() => {
+                        if (e.alive && e.shield > 0) e.shield = Math.max(0, e.shield - shieldAmt);
+                    }, 5000);
+                }
+            });
+        } else if (skillId === 3) {
+            // 🎯 愛麗絲 3 技：召喚法陣 5 秒，陣內敵人沉默 3 秒 + 每秒 300 (+50) 傷害，CD 23s (-4s)
+            skillCooldowns[3] = Math.max(11.0, 23.0 - (sLv - 1) * 4.0);
+            let secDmg = 300 + (sLv - 1) * 50;
+            let dist = customDist || 240;
+            let targetX = player.x + dirX * dist;
+            let targetY = player.y + dirY * dist;
+
+            damageTexts.push({ x: targetX, y: targetY - 60, value: '🎀 沉默法陣降臨 (5秒)!', color: '#e040fb', life: 1.5 });
+
+            for (let t = 0; t < 5; t++) {
+                setTimeout(() => {
+                    if (!isRunning) return;
+                    skillEffects.push({ x: targetX, y: targetY, life: 0.5, size: 110, color: 'rgba(156, 39, 176, 0.45)', team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 110) {
+                            e.takeDamage(secDmg, player.team, 'magical');
+                            if (e instanceof Hero) {
+                                e.isSilenced = true;
+                                setTimeout(() => { e.isSilenced = false; }, 3000);
+                                damageTexts.push({ x: e.x, y: e.y - 40, value: '🤐 沉默中 (無法放招)', color: '#ba68c8', life: 0.8 });
+                            }
+                        }
+                    });
+                }, t * 1000);
+            }
+        }
+    } else if (heroKey === 'valhein') {
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(4.5, 7.0 - (sLv - 1) * 0.5);
             let hitDmg = 500 + (sLv - 1) * 20;
@@ -1444,7 +1551,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
         }
     } else if (heroKey === 'krixi') {
         if (skillId === 1) {
-            // 🎯 克里希 1 技：生成 1 顆氣球從身邊飛出去到 240 再回飛身邊
             skillCooldowns[1] = Math.max(5.0, 7.0 - (sLv - 1) * 0.4);
             let dmg = 600 + (sLv - 1) * 40;
 
@@ -1537,7 +1643,7 @@ function updateSkillUI() {
         if (canUpgrade) upBtn.classList.remove('hidden');
         else upBtn.classList.add('hidden');
 
-        if (sLv === 0) btn.classList.add('locked');
+        if (sLv === 0 || (player && player.isSilenced)) btn.classList.add('locked');
         else btn.classList.remove('locked');
 
         if (skillCooldowns[id] > 0) {
@@ -1601,7 +1707,6 @@ function gameLoop() {
 
     entities.forEach(e => e.update());
 
-    // 🎯 更新克里希 1 技飛行球體邏輯（去程與回程身邊）
     projectiles.forEach((p, idx) => {
         if (!p.returning) {
             let dx = p.targetX - p.x;
@@ -1807,7 +1912,6 @@ function gameLoop() {
         if (eff.life <= 0) attackEffects.splice(idx, 1);
     });
 
-    // 🎯 渲染克里希 1 技飛行球體
     projectiles.forEach(p => {
         let sx = p.x - camera.x;
         let sy = p.y - camera.y;
@@ -1887,11 +1991,22 @@ function gameLoop() {
 
         let maxHp = e.maxHp;
         let hpRatio = Math.max(0, Math.min(1, e.hp / maxHp));
+        let shieldRatio = Math.max(0, Math.min(1, (e.shield || 0) / maxHp));
         
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
         ctx.fillRect(barX, barY, barW, barH);
+        
+        // 渲染基礎血條
         ctx.fillStyle = e.team === 'blue' ? '#00e676' : '#ff3366';
         ctx.fillRect(barX, barY, barW * hpRatio, barH);
+
+        // 🎯 渲染護盾（白色一條緊接在當前血量右側）
+        if (shieldRatio > 0) {
+            ctx.fillStyle = '#ffffff';
+            let shieldStartX = barX + (barW * hpRatio);
+            let shieldW = Math.min(barW - (barW * hpRatio), barW * shieldRatio);
+            ctx.fillRect(shieldStartX, barY, shieldW, barH);
+        }
 
         if (e instanceof Hero || e instanceof Building) {
             let totalGridCount = Math.floor(maxHp / 1000);
@@ -1946,6 +2061,13 @@ function gameLoop() {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                 ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
                 ctx.fillStyle = '#00e676';
+                ctx.fillRect(barX, passiveBarY, barW * ratio, passiveBarH);
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'alice') {
+                let ratio = Math.min(1.0, e.outOfCombatTimer / 300);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
+                ctx.fillStyle = e.outOfCombatTimer >= 300 ? '#e040fb' : '#ba68c8';
                 ctx.fillRect(barX, passiveBarY, barW * ratio, passiveBarH);
                 currentBottomY = passiveBarY + passiveBarH;
             }
