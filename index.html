@@ -266,7 +266,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v24';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v25';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -306,6 +306,7 @@ let playerKillStreak = 0;
 let aiKillStreak = 0;
 let announcementTimer = null;
 let passiveExpTimer = 0;
+let projectiles = [];
 
 function triggerAnnouncement(text, color = '#ffd700') {
     let banner = document.getElementById('announcement-banner');
@@ -498,7 +499,7 @@ function confirmStartGame() {
         'nakroth': { 1: { stage: 1, timer: 0 } },
         'ryoma': { 1: { stage: 1, timer: 0 } }
     };
-    entities = []; skillEffects = []; attackEffects = []; damageTexts = [];
+    entities = []; skillEffects = []; attackEffects = []; damageTexts = []; projectiles = [];
 
     let keys = Object.keys(HERO_DB).filter(k => k !== selectedHeroKey);
     randomAiKey = keys[Math.floor(Math.random() * keys.length)];
@@ -705,7 +706,8 @@ class Building extends Entity {
         this.maxHp = type === 'core' ? 6000 : 12000;
         this.hp = this.maxHp;
         this.atkTimer = 0;
-        this.attackRange = 240;
+        // 🎯 塔的範圍改成 260
+        this.attackRange = 260;
         this.currentTarget = null;
         this.towerAtkStack = 0;
     }
@@ -713,7 +715,7 @@ class Building extends Entity {
         if (!this.alive) return;
         if (this.type === 'tower' || this.type === 'core') {
             let hasMinionNearby = entities.some(e => 
-                e.alive && e instanceof Minion && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= 240
+                e.alive && e instanceof Minion && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= 260
             );
             if (!hasMinionNearby) {
                 dmg *= 0.15; 
@@ -751,7 +753,8 @@ class Building extends Entity {
             this.atkTimer = 0;
             if (this.currentTarget) {
                 let baseTowerDmg = 400;
-                let finalTowerDmg = baseTowerDmg * Math.pow(1.2, this.towerAtkStack);
+                // 🎯 塔的攻擊改成每下 * 1.5
+                let finalTowerDmg = baseTowerDmg * Math.pow(1.5, this.towerAtkStack);
                 this.towerAtkStack++;
 
                 this.currentTarget.takeDamage(finalTowerDmg, this.team, 'magical');
@@ -942,7 +945,8 @@ class Hero extends Entity {
         } else {
             if (this.aiSkillCooldownTimer > 0) this.aiSkillCooldownTimer--;
 
-            if (this.hp < this.maxHp * 0.4) {
+            // 🎯 敵方 AI 回家改成血量 25% 以下啟動
+            if (this.hp < this.maxHp * 0.25) {
                 this.isRetreatingForHeal = true;
             }
             if (this.isRetreatingForHeal && this.hp >= this.maxHp * 0.9) {
@@ -1025,7 +1029,7 @@ class Hero extends Entity {
             deaths++;
             aiKillStreak++;
             playerKillStreak = 0;
-            redKills++; // 🎯 修正對方的擊殺正確計入紅方比數
+            redKills++; 
             triggerAnnouncement(`YOU HAVE BEEN SLAIN (復活倒數 ${respawnTime} 秒)`, '#ff3366');
 
             setTimeout(() => {
@@ -1134,7 +1138,6 @@ function performAttack() {
                 damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 40, value: `🥷 龍馬強普2倍傷害 (180範圍)`, color: '#00e676', life: 1.2 });
             }
         } else if (player.heroKey === 'quillen') {
-            // 🎯 奎倫普攻傷害改成 200（+每級成長30）
             baseDmg = 200 + (player.level - 1) * 30;
             let targetAngle = nearestTarget.rotation || 0;
             let angleToPlayer = Math.atan2(player.y - nearestTarget.y, player.x - nearestTarget.x);
@@ -1297,12 +1300,10 @@ function castSkill(skillId, dirX, dirY, customDist) {
         }
     } else if (heroKey === 'ryoma') {
         if (skillId === 1) {
-            // 🎯 龍馬 1 技：完整兩段位移與傷害實作
             let stInfo = heroSkillStage['ryoma'][1];
             let dmg = 400 + (sLv - 1) * 30;
 
             if (!stInfo.canSecondCast) {
-                // 第一段：向後位移並向前方造成傷害
                 let dashX = player.x - dirX * 180;
                 let dashY = player.y - dirY * 180;
                 player.startDash(dashX, dashY, 40);
@@ -1319,10 +1320,9 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 damageTexts.push({ x: player.x, y: player.y - 40, value: `🥷 1技1段後撤斬 (${dmg})`, color: '#00e676', life: 1.0 });
 
                 stInfo.canSecondCast = true;
-                stInfo.timer = 3.0; // 3秒內可施放第二段
-                skillCooldowns[1] = 0; // 第一段施放完暫不進CD
+                stInfo.timer = 3.0;
+                skillCooldowns[1] = 0;
             } else {
-                // 第二段：向前突進斬擊
                 let dashX = player.x + dirX * 180;
                 let dashY = player.y + dirY * 180;
                 player.startDash(dashX, dashY, 45);
@@ -1337,7 +1337,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
 
                 stInfo.canSecondCast = false;
                 stInfo.timer = 0;
-                skillCooldowns[1] = 5.0; // 第二段放完正式進 5 秒 CD
+                skillCooldowns[1] = 5.0;
             }
         } else if (skillId === 2) {
             skillCooldowns[2] = Math.max(5.0, 8.0 - (sLv - 1) * 0.6);
@@ -1393,7 +1393,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
         }
     } else if (heroKey === 'quillen') {
         if (skillId === 1) {
-            // 🎯 奎倫 1 技傷害改成 350（+30）、冷卻改成 4（-0.3）
             skillCooldowns[1] = Math.max(2.5, 4.0 - (sLv - 1) * 0.3);
             let dmgPerHit = 350 + (sLv - 1) * 30;
             let tx = player.x + dirX * 120;
@@ -1445,34 +1444,30 @@ function castSkill(skillId, dirX, dirY, customDist) {
         }
     } else if (heroKey === 'krixi') {
         if (skillId === 1) {
-            // 🎯 克里希 1 技：去程飛過去 + 回程飛回來
+            // 🎯 克里希 1 技：生成 1 顆氣球從身邊飛出去到 240 再回飛身邊
             skillCooldowns[1] = Math.max(5.0, 7.0 - (sLv - 1) * 0.4);
             let dmg = 600 + (sLv - 1) * 40;
-            let tx = player.x + dirX * 240;
-            let ty = player.y + dirY * 240;
 
-            // 1. 去程
-            skillEffects.push({ x: tx, y: ty, life: 0.3, size: 75, color: 'rgba(255, 105, 180, 0.7)', team: player.team });
-            entities.forEach(e => {
-                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 80) {
-                    e.takeDamage(dmg, player.team, 'magical');
-                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🧚‍♀️ 蝴蝶去程 (${dmg})`, color: '#ff69b4', life: 0.9 });
-                }
+            let startX = player.x;
+            let startY = player.y;
+            let targetX = startX + dirX * 240;
+            let targetY = startY + dirY * 240;
+
+            projectiles.push({
+                x: startX,
+                y: startY,
+                startX: startX,
+                startY: startY,
+                targetX: targetX,
+                targetY: targetY,
+                speed: 9.5,
+                radius: 22,
+                returning: false,
+                owner: player,
+                team: player.team,
+                damage: dmg,
+                hitTargets: new Set()
             });
-
-            // 2. 回程
-            setTimeout(() => {
-                if (!player.alive) return;
-                let returnX = player.x;
-                let returnY = player.y;
-                skillEffects.push({ x: returnX, y: returnY, life: 0.3, size: 75, color: 'rgba(255, 105, 180, 0.7)', team: player.team });
-                entities.forEach(e => {
-                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - returnX, e.y - returnY) <= 80) {
-                        e.takeDamage(dmg, player.team, 'magical');
-                        damageTexts.push({ x: e.x, y: e.y - 40, value: `🧚‍♀️ 蝴蝶回程 (${dmg})`, color: '#ff69b4', life: 0.9 });
-                    }
-                });
-            }, 300);
         } else if (skillId === 2) {
             skillCooldowns[2] = Math.max(6.0, 8.0 - (sLv - 1) * 0.5);
             let dmg = 200 + (sLv - 1) * 20;
@@ -1605,6 +1600,54 @@ function gameLoop() {
     }
 
     entities.forEach(e => e.update());
+
+    // 🎯 更新克里希 1 技飛行球體邏輯（去程與回程身邊）
+    projectiles.forEach((p, idx) => {
+        if (!p.returning) {
+            let dx = p.targetX - p.x;
+            let dy = p.targetY - p.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist <= p.speed) {
+                p.x = p.targetX;
+                p.y = p.targetY;
+                p.returning = true;
+                p.hitTargets.clear();
+            } else {
+                p.x += (dx / dist) * p.speed;
+                p.y += (dy / dist) * p.speed;
+            }
+        } else {
+            let ownerX = p.owner.x;
+            let ownerY = p.owner.y;
+            let dx = ownerX - p.x;
+            let dy = ownerY - p.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist <= p.speed + 15) {
+                projectiles.splice(idx, 1);
+                return;
+            } else {
+                p.x += (dx / dist) * (p.speed * 1.15);
+                p.y += (dy / dist) * (p.speed * 1.15);
+            }
+        }
+
+        entities.forEach(e => {
+            if (!(e instanceof Building) && e.alive && e.team !== p.team) {
+                let distToEnemy = Math.hypot(e.x - p.x, e.y - p.y);
+                if (distToEnemy <= p.radius + e.radius && !p.hitTargets.has(e)) {
+                    p.hitTargets.add(e);
+                    e.takeDamage(p.damage, p.team, 'magical');
+                    damageTexts.push({ 
+                        x: e.x, y: e.y - 40, 
+                        value: p.returning ? `🧚‍♀️ 蝴蝶回程 (${p.damage})` : `🧚‍♀️ 蝴蝶去程 (${p.damage})`, 
+                        color: '#ff69b4', life: 0.9 
+                    });
+                }
+            }
+        });
+    });
 
     if (player) {
         camera.x = player.x - canvas.width / 2;
@@ -1764,6 +1807,24 @@ function gameLoop() {
         if (eff.life <= 0) attackEffects.splice(idx, 1);
     });
 
+    // 🎯 渲染克里希 1 技飛行球體
+    projectiles.forEach(p => {
+        let sx = p.x - camera.x;
+        let sy = p.y - camera.y;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(sx, sy, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 105, 180, 0.9)';
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(255, 105, 180, 0.8)';
+        ctx.shadowBlur = 15;
+        ctx.stroke();
+        ctx.restore();
+    });
+
     entities.forEach(e => {
         if (!e.alive) return;
         let sx = e.x - camera.x;
@@ -1774,7 +1835,6 @@ function gameLoop() {
             let isEnhanced = (e.heroKey === 'nakroth' && e.hasEnhancedAttack) || (e.heroKey === 'ryoma' && e.hasEnhancedAttack);
             let drawRange = isEnhanced ? 180 : e.range;
 
-            // 🎯 強普距離顯示：無論是你或敵方 AI 擁有強普，都顯示 180 黃色虛線範圍圈
             if (isEnhanced || (e.isPlayer && isAttackingPressed)) {
                 ctx.beginPath();
                 ctx.arc(sx, sy, drawRange, 0, Math.PI * 2);
