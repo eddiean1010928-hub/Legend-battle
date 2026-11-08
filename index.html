@@ -259,14 +259,14 @@
                 <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
                 一技
                 <div class="skill-desc-label" id="lbl-skill-1">Lv.0 一技</div>
-                <div class="spell-cd-overlay hidden" id="cd-1"></div>
+                <div class="skill-cd-overlay hidden" id="cd-1"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v27';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v28';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -388,7 +388,7 @@ const HERO_DB = {
         name: '塔拉', type: '戰士 / 狂血不死', baseHp: 8000, hpGrowth: 950,
         atk: 160, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🪓',
         skillConfig: {
-            1: { type: 'circle', range: 180, circleRadius: 75 },
+            1: { type: 'self_circle', range: 85 }, // 🎯 塔拉 1 技改為自身一圈指示器
             2: { type: 'circle', range: 240, circleRadius: 75 }
         }
     }
@@ -739,7 +739,7 @@ class Building extends Entity {
         this.maxHp = type === 'core' ? 6000 : 12000;
         this.hp = this.maxHp;
         this.atkTimer = 0;
-        this.attackRange = 260;
+        this.attackRange = 280; // 🎯 防禦塔攻擊範圍加大至 280
         this.currentTarget = null;
         this.towerAtkStack = 0;
     }
@@ -747,7 +747,7 @@ class Building extends Entity {
         if (!this.alive) return;
         if (this.type === 'tower' || this.type === 'core') {
             let hasMinionNearby = entities.some(e => 
-                e.alive && e instanceof Minion && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= 260
+                e.alive && e instanceof Minion && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= 280
             );
             if (!hasMinionNearby) {
                 dmg *= 0.15; 
@@ -790,10 +790,9 @@ class Building extends Entity {
 
                 this.currentTarget.takeDamage(finalTowerDmg, this.team, 'magical');
                 
-                // 🎯 防禦塔打到英雄後附加減速（20% 緩速，最多疊加到 2 層）
                 if (this.currentTarget instanceof Hero) {
                     this.currentTarget.towerSlowStacks = Math.min(2, (this.currentTarget.towerSlowStacks || 0) + 1);
-                    this.currentTarget.towerSlowTimer = 90; // 1.5 秒
+                    this.currentTarget.towerSlowTimer = 90;
                     damageTexts.push({ x: this.currentTarget.x, y: this.currentTarget.y - 55, value: `❄️ 塔擊緩速 (${this.currentTarget.towerSlowStacks * 20}%)`, color: '#00d2ff', life: 0.9 });
                 }
 
@@ -896,9 +895,8 @@ class Hero extends Entity {
         this.outOfCombatTimer = 300; 
         this.speedBuffTimer = 0;
 
-        // 塔拉專屬狀態
+        // 塔拉狀態
         this.tarraHealTimer = 0;
-        this.tarraHealAmtPerSec = 0;
         this.tarraBuffStacks = 0;
         this.tarraBuffTimer = 0;
         this.tarraUltimateTimer = 0;
@@ -931,18 +929,17 @@ class Hero extends Entity {
             if (this.towerSlowTimer === 0) this.towerSlowStacks = 0;
         }
 
-        // 塔拉被動：使用技能後4秒內恢復4%最大生命值
+        // 🎯 塔拉修正後被動：每次使用技能扣除 4% 最大生命，4 秒內恢復 7% 生命，5 秒內傷害提升 5% (疊加 3 層)
         if (this.heroKey === 'tarra') {
             if (this.tarraHealTimer > 0) {
                 this.tarraHealTimer--;
-                let healPerFrame = (this.maxHp * 0.04) / 240; // 4秒 (240偵)
+                let healPerFrame = (this.maxHp * 0.07) / 240; // 4秒 (240幀) 恢復 7%
                 this.hp = Math.min(this.maxHp, this.hp + healPerFrame);
             }
             if (this.tarraBuffTimer > 0) {
                 this.tarraBuffTimer--;
                 if (this.tarraBuffTimer === 0) this.tarraBuffStacks = 0;
             }
-            // 塔拉大招：6秒內每0.5秒恢復4%最大生命值
             if (this.tarraUltimateTimer > 0) {
                 this.tarraUltimateTimer--;
                 if (this.tarraUltimateTimer % 30 === 0) {
@@ -953,7 +950,6 @@ class Hero extends Entity {
             }
         }
 
-        // 愛麗絲被動
         if (this.heroKey === 'alice' && this.outOfCombatTimer >= 300) {
             if (this.hp < this.maxHp) {
                 let lostHp = this.maxHp - this.hp;
@@ -1022,10 +1018,10 @@ class Hero extends Entity {
 
         let speed = 2.8;
         if (this.heroKey === 'alice' && this.outOfCombatTimer >= 300) speed *= 1.15;
-        if (this.heroKey === 'tarra' && this.tarraUltimateTimer > 0) speed *= 1.40; // 塔拉大招加速 40%
+        if (this.heroKey === 'tarra' && this.tarraUltimateTimer > 0) speed *= 1.40;
         if (this.speedBuffTimer > 0) speed *= 1.20;
         if (this.isSlowed) speed *= (1 - this.slowFactor);
-        if (this.towerSlowStacks > 0) speed *= (1 - this.towerSlowStacks * 0.20); // 塔擊緩速 20% 每層
+        if (this.towerSlowStacks > 0) speed *= (1 - this.towerSlowStacks * 0.20);
 
         if (this.isPlayer) {
             if (this.attackLockTimer <= 0) {
@@ -1100,13 +1096,13 @@ class Hero extends Entity {
     getEffectiveAtk() {
         let base = this.atk + (this.level - 1) * 30;
         if (this.heroKey === 'tarra') {
-            // 塔拉被動：血量少 1%，攻擊多增加 1.2%
+            // 🎯 塔拉修正後被動：血量每少 1%，攻擊多增加 0.5%
             let missingHpPercent = Math.max(0, (1 - (this.hp / this.maxHp))) * 100;
-            let bonusAtkRatio = 1 + (missingHpPercent * 0.012);
+            let bonusAtkRatio = 1 + (missingHpPercent * 0.005);
             base *= bonusAtkRatio;
         }
         if (this.tarraBuffStacks > 0) {
-            base *= (1 + this.tarraBuffStacks * 0.05); // 傷害提升 5% 疊加 3 層
+            base *= (1 + this.tarraBuffStacks * 0.05);
         }
         return base;
     }
@@ -1308,9 +1304,9 @@ function castSkill(skillId, dirX, dirY, customDist) {
     let heroKey = player.heroKey;
     player.outOfCombatTimer = 0;
 
-    // 塔拉被動：每次使用技能扣除 2% 最大生命值，觸發 4 秒內恢復 4% 生命，且傷害提升 5% 疊加 3 層
+    // 🎯 塔拉被動：每次使用技能扣除 4% 最大生命值，觸發 4 秒內恢復 7% 生命，且傷害提升 5% 疊加 3 層
     if (heroKey === 'tarra') {
-        let costHp = player.maxHp * 0.02;
+        let costHp = player.maxHp * 0.04;
         player.hp = Math.max(1, player.hp - costHp);
         player.tarraHealTimer = 240; // 4 秒
         player.tarraBuffStacks = Math.min(3, player.tarraBuffStacks + 1);
@@ -1320,14 +1316,14 @@ function castSkill(skillId, dirX, dirY, customDist) {
 
     if (heroKey === 'tarra') {
         if (skillId === 1) {
-            // 🎯 塔拉 1 技：轉一圈造成 250 (+40) 傷害，CD 5s (-0.2s)
+            // 🎯 塔拉 1 技：旋轉一圈造成 250 (+40) 傷害，CD 5s (-0.2s)
             skillCooldowns[1] = Math.max(2.5, 5.0 - (sLv - 1) * 0.2);
             let dmg = 250 + (sLv - 1) * 40;
             skillEffects.push({ x: player.x, y: player.y, life: 0.35, size: 85, color: 'rgba(255, 152, 0, 0.7)', team: player.team });
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 85) {
                     e.takeDamage(dmg, player.team, 'physical');
-                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🪓 旋風斬 (${dmg})`, color: '#ff9800', life: 0.9 });
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🪓 旋風狂斬 (${dmg})`, color: '#ff9800', life: 0.9 });
                 }
             });
         } else if (skillId === 2) {
@@ -1344,13 +1340,13 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 80) {
                     e.takeDamage(dmg, player.team, 'physical');
-                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🪓 跳砸傷害 (${dmg})`, color: '#ff9800', life: 0.9 });
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🪓 猛擊突進 (${dmg})`, color: '#ff9800', life: 0.9 });
                 }
             });
         } else if (skillId === 3) {
             // 🎯 塔拉 3 技：6秒內每0.5秒恢復4%最大生命值，加速40%，CD 25s (-4s)
             skillCooldowns[3] = Math.max(11.0, 25.0 - (sLv - 1) * 4.0);
-            player.tarraUltimateTimer = 360; // 6秒 (360偵)
+            player.tarraUltimateTimer = 360;
             damageTexts.push({ x: player.x, y: player.y - 55, value: '🪓 鋼軀怒吼：不死之身開啟!', color: '#00e676', life: 1.5 });
         }
     } else if (heroKey === 'alice') {
@@ -1927,7 +1923,16 @@ function gameLoop() {
 
         ctx.save();
         
-        if (activeSkillDrag.type === 'circle') {
+        if (activeSkillDrag.type === 'self_circle') {
+            // 🎯 塔拉 1 技：自身一圈指示器
+            ctx.beginPath();
+            ctx.arc(px, py, maxR, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 152, 0, 0.2)';
+            ctx.fill();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ff9800';
+            ctx.stroke();
+        } else if (activeSkillDrag.type === 'circle') {
             let targetX = px + dx * activeSkillDrag.currentDist;
             let targetY = py + dy * activeSkillDrag.currentDist;
 
