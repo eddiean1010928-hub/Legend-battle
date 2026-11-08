@@ -198,7 +198,7 @@
     <div id="pick-screen" class="pick-screen-overlay hidden">
         <div class="pick-top-bar">
             <div class="pick-tabs">
-                <span class="active">選擇 8 大傳說英雄</span>
+                <span class="active">選擇傳說英雄陣容</span>
             </div>
             <button class="pick-cancel-btn" id="btn-pick-back">取消 ✕</button>
         </div>
@@ -266,7 +266,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v30';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v31';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -295,8 +295,8 @@ const ctx = canvas.getContext('2d');
 let MAP_SIZE = 2600; 
 let ROAD_WIDTH = 380; 
 let isRunning = false;
-let selectedHeroKey = 'valhein';
-let randomAiKey = 'nakroth';
+let selectedHeroKey = 'liliana';
+let randomAiKey = 'raz';
 let challengerCooldown = 0;
 let healSpellCooldown = 0;
 
@@ -369,6 +369,11 @@ const HERO_DB = {
         name: '莉莉安', type: '法師 / 雙型態切換', baseHp: 5900, hpGrowth: 680,
         atk: 250, atkInterval: 0.5, atkRecovery: 0.3, range: 240, avatar: '🦊',
         skillConfig: { 1: { type: 'circle', range: 240, circleRadius: 65 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
+    },
+    'raz': {
+        name: '拉茲', type: '法刺 / 拳王擊退', baseHp: 6300, hpGrowth: 720,
+        atk: 200, atkInterval: 0.7, atkRecovery: 0.4, range: 120, avatar: '🥊',
+        skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
     }
 };
 
@@ -390,7 +395,8 @@ let unallocatedPoints = 0;
 let heroSkillStage = {
     'nakroth': { 1: { stage: 1, timer: 0 } },
     'ryoma': { 1: { stage: 1, timer: 0 } },
-    'liliana': { 2: { canSecondCast: false, hitHero: false } }
+    'liliana': { 2: { canSecondCast: false, hitHero: false } },
+    'raz': { passiveReady: false, passiveTimer: 0, atkCount: 0 }
 };
 
 const joystick = document.getElementById('joystick');
@@ -494,7 +500,8 @@ function confirmStartGame() {
     heroSkillStage = {
         'nakroth': { 1: { stage: 1, timer: 0 } },
         'ryoma': { 1: { stage: 1, timer: 0 } },
-        'liliana': { 2: { canSecondCast: false, hitHero: false } }
+        'liliana': { 2: { canSecondCast: false, hitHero: false } },
+        'raz': { passiveReady: false, passiveTimer: 0, atkCount: 0 }
     };
     entities = []; skillEffects = []; attackEffects = []; damageTexts = []; projectiles = [];
 
@@ -698,7 +705,7 @@ class Entity {
         if (this instanceof Hero) {
             this.outOfCombatTimer = 0; 
             if (this.isSuperArmor) {
-                return; // 霸體狀態免疫部分控制或傷害（若需要）
+                return; 
             }
             if (this.isDamageReduced) {
                 dmg *= (1 - (this.damageReductionRatio || 0.5));
@@ -896,7 +903,12 @@ class Hero extends Entity {
         this.speedBuffTimer = 0;
 
         // 莉莉安雙型態狀態
-        this.lilianaForm = 'human'; // 'human' | 'fox'
+        this.lilianaForm = 'human'; 
+
+        // 拉茲狀態
+        this.razPassiveTimer = 0;
+        this.razAtkCount = 0;
+        this.razHasEnhancedAtk = false;
 
         // 塔拉狀態
         this.tarraHealTimer = 0;
@@ -930,6 +942,14 @@ class Hero extends Entity {
         if (this.towerSlowTimer > 0) {
             this.towerSlowTimer--;
             if (this.towerSlowTimer === 0) this.towerSlowStacks = 0;
+        }
+
+        if (this.heroKey === 'raz') {
+            this.razPassiveTimer += 1 / 60;
+            if (this.razPassiveTimer >= 5.0 && !this.razHasEnhancedAtk) {
+                this.razHasEnhancedAtk = true;
+                damageTexts.push({ x: this.x, y: this.y - 45, value: '🥊 拉茲被動：獲得強化普攻！', color: '#ff9800', life: 1.0 });
+            }
         }
 
         if (this.heroKey === 'tarra') {
@@ -1190,6 +1210,7 @@ function performAttack() {
     }
     if (player.heroKey === 'nakroth' && player.hasEnhancedAttack) attackRange = 180;
     if (player.heroKey === 'ryoma' && player.hasEnhancedAttack) attackRange = 180;
+    if (player.heroKey === 'raz' && player.razHasEnhancedAtk) attackRange = 180;
 
     let nearestTarget = null;
     let minTargetDist = 9999;
@@ -1209,8 +1230,8 @@ function performAttack() {
         if (player.heroKey === 'liliana') {
             let sLv = skillLevels[1] || 1;
             if (player.lilianaForm === 'human') {
-                player.atkCooldown = 30; // 0.5s
-                player.attackLockTimer = 18; // 0.3s
+                player.atkCooldown = 30; 
+                player.attackLockTimer = 18; 
                 let baseDmg = 250 + (sLv - 1) * 30 + (player.level - 1) * 20;
                 nearestTarget.takeDamage(baseDmg, player.team, 'magical');
                 damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `🦊 靈狐法球 (${Math.floor(baseDmg)})`, color: '#e040fb', life: 0.8 });
@@ -1231,14 +1252,51 @@ function performAttack() {
                         }, i * 160);
                     }
                 } else {
-                    player.atkCooldown = 24; // 0.4s
-                    player.attackLockTimer = 12; // 0.2s
+                    player.atkCooldown = 24; 
+                    player.attackLockTimer = 12; 
                     let baseDmg = 280 + (sLv - 1) * 40 + (player.level - 1) * 20;
                     nearestTarget.takeDamage(baseDmg, player.team, 'physical');
                     damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `🐾 妖狐利爪 (${Math.floor(baseDmg)})`, color: '#ab47bc', life: 0.8 });
                 }
             }
             attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#e040fb' });
+            return;
+        }
+
+        if (player.heroKey === 'raz') {
+            player.atkCooldown = 42; 
+            player.attackLockTimer = 24; 
+            let baseDmg = 200 + (player.level - 1) * 20;
+
+            if (player.razHasEnhancedAtk) {
+                player.razHasEnhancedAtk = false;
+                player.razPassiveTimer = 0;
+                baseDmg *= 1.7;
+
+                let angleToTarget = Math.atan2(nearestTarget.y - player.y, nearestTarget.x - player.x);
+                let pushDist = 180;
+                let pushX = nearestTarget.x + Math.cos(angleToTarget) * pushDist;
+                let pushY = nearestTarget.y + Math.sin(angleToTarget) * pushDist;
+                let clampedPush = clampPosition(pushX, pushY, nearestTarget.radius);
+                nearestTarget.x = clampedPush.x;
+                nearestTarget.y = clampedPush.y;
+
+                player.x = nearestTarget.x - Math.cos(angleToTarget) * 40;
+                player.y = nearestTarget.y - Math.sin(angleToTarget) * 40;
+
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: `🥊 拳王強化普攻 (1.7倍擊退!)`, color: '#ff9800', life: 1.2 });
+            } else {
+                player.razAtkCount++;
+                if (player.razAtkCount >= 2) {
+                    player.razAtkCount = 0;
+                    player.razHasEnhancedAtk = true;
+                    damageTexts.push({ x: player.x, y: player.y - 45, value: '🥊 集滿2下普攻：獲得強化普攻！', color: '#ff9800', life: 1.0 });
+                }
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `🥊 普攻 (${Math.floor(baseDmg)})`, color: '#ff9800', life: 0.8 });
+            }
+
+            nearestTarget.takeDamage(baseDmg, player.team, 'physical');
+            attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#ff9800' });
             return;
         }
 
@@ -1288,8 +1346,9 @@ function performAttack() {
                 player.ryomaPassiveTimer = Math.max(1.0, 5.0 - intervalReduction);
                 baseDmg *= 2.0;
                 nearestTarget.isSlowed = true;
+                nearestTarget.slowFactor = 0.6; // 60% 緩速
                 setTimeout(() => { nearestTarget.isSlowed = false; }, 2000);
-                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 40, value: `🥷 龍馬強普2倍傷害 (180範圍)`, color: '#00e676', life: 1.2 });
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 40, value: `🥷 龍馬強普60%緩速 (2倍傷害)`, color: '#00e676', life: 1.2 });
             }
         } else if (player.heroKey === 'quillen') {
             baseDmg = 200 + (player.level - 1) * 30;
@@ -1347,6 +1406,106 @@ function castSkill(skillId, dirX, dirY, customDist) {
     let heroKey = player.heroKey;
     player.outOfCombatTimer = 0;
 
+    // 拳王拉茲技能邏輯
+    if (heroKey === 'raz') {
+        if (skillId === 1) {
+            skillCooldowns[1] = Math.max(3.6, 6.0 - (sLv - 1) * 0.4);
+            let dmg = 500 + (sLv - 1) * 50;
+            let targetX = player.x + dirX * 180;
+            let targetY = player.y + dirY * 180;
+
+            player.startDash(targetX, targetY, 40);
+            skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 75, color: 'rgba(255, 152, 0, 0.8)', team: player.team });
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
+                    e.takeDamage(dmg, player.team, 'magical');
+                    e.isStunned = true;
+                    setTimeout(() => { e.isStunned = false; }, 670);
+                    damageTexts.push({ x: e.x, y: e.y - 45, value: `🥊 1技上勾拳擊飛 0.67秒! (${dmg})`, color: '#ff9800', life: 1.2 });
+                }
+            });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(2.5, 5.0 - (sLv - 1) * 0.6);
+            let dmg = 900 + (sLv - 1) * 60;
+            let slowRatio = 0.40 + (sLv - 1) * 0.08;
+            let defReduce = 100 + (sLv - 1) * 20;
+
+            let startX = player.x, startY = player.y;
+            let targetX = startX + dirX * 240;
+            let targetY = startY + dirY * 240;
+
+            skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 70, color: 'rgba(255, 69, 0, 0.8)', team: player.team });
+
+            let hitEnemy = null;
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
+                    hitEnemy = e;
+                    e.takeDamage(dmg, player.team, 'magical');
+                    e.isSlowed = true;
+                    e.slowFactor = slowRatio;
+                    setTimeout(() => { e.isSlowed = false; }, 2000);
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🔥 火球命中! 緩速${Math.round(slowRatio*100)}% 扣防${defReduce}`, color: '#ff4444', life: 1.2 });
+                }
+            });
+
+            // 火球彈射判定
+            if (hitEnemy) {
+                let secondTarget = entities.find(e => !(e instanceof Building) && e.alive && e.team !== player.team && e !== hitEnemy && Math.hypot(e.x - hitEnemy.x, e.y - hitEnemy.y) <= 200);
+                if (secondTarget) {
+                    let bounceDmg = dmg * 0.75;
+                    secondTarget.takeDamage(bounceDmg, player.team, 'magical');
+                    secondTarget.isSlowed = true;
+                    secondTarget.slowFactor = slowRatio;
+                    setTimeout(() => { secondTarget.isSlowed = false; }, 2000);
+                    skillEffects.push({ x: secondTarget.x, y: secondTarget.y, life: 0.4, size: 60, color: 'rgba(255, 140, 0, 0.8)', team: player.team });
+                    damageTexts.push({ x: secondTarget.x, y: secondTarget.y - 45, value: `🔥 火球彈射！(${Math.floor(bounceDmg)})`, color: '#ff9800', life: 1.2 });
+                }
+            }
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(5.0, 14.0 - (sLv - 1) * 3.0);
+            let segDmg = 420 + (sLv - 1) * 60;
+            let targetX = player.x + dirX * 180;
+            let targetY = player.y + dirY * 180;
+
+            player.startDash(targetX, targetY, 35);
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🥊 3技爆發三段擊退!', color: '#ff9800', life: 1.5 });
+
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    skillEffects.push({ x: player.x, y: player.y, life: 0.2, size: 85, color: 'rgba(255, 140, 0, 0.8)', team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 85) {
+                            e.takeDamage(segDmg, player.team, 'magical');
+                            let pushAngle = Math.atan2(e.y - player.y, e.x - player.x);
+                            e.x += Math.cos(pushAngle) * 45;
+                            e.y += Math.sin(pushAngle) * 45;
+                        }
+                    });
+                }, i * 200);
+            }
+        }
+
+        // 被動：施放完任何技能後可進行 20 距離小位移
+        setTimeout(() => {
+            if (!player || !player.alive) return;
+            let smallDx = joystickDir.x !== 0 ? joystickDir.x : dirX;
+            let smallDy = joystickDir.y !== 0 ? joystickDir.y : dirY;
+            if (smallDx !== 0 || smallDy !== 0) {
+                let sfx = player.x + smallDx * 20;
+                let sfy = player.y + smallDy * 20;
+                let clampedS = clampPosition(sfx, sfy, player.radius);
+                player.x = clampedS.x;
+                player.y = clampedS.y;
+                damageTexts.push({ x: player.x, y: player.y - 35, value: '💨 拳王後搖小位移', color: '#ffeb3b', life: 0.6 });
+            }
+        }, 300);
+
+        updateSkillUI();
+        return;
+    }
+
     if (heroKey === 'liliana') {
         if (player.lilianaForm === 'human') {
             if (skillId === 1) {
@@ -1379,7 +1538,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     }
                 });
             } else if (skillId === 3) {
-                // 🎯 莉莉安 3 技：冷卻 6 秒 (-0.3秒)，切換型態重置 1、2 技
+                // 🎯 莉莉安 3 技（人形態）：位移並在起始處及終點處召喚法陣 0.5 秒後造成傷害 400(+100)
                 skillCooldowns[3] = Math.max(3.0, 6.0 - (sLv - 1) * 0.3);
                 skillCooldowns[1] = 0;
                 skillCooldowns[2] = 0;
@@ -1407,11 +1566,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
                         entities.forEach(e => {
                             if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - pos.x, e.y - pos.y) <= 75) {
                                 e.takeDamage(dmg, player.team, 'magical');
-                                damageTexts.push({ x: e.x, y: e.y - 40, value: `🦊 變形法陣爆破 (${dmg})`, color: '#ab47bc', life: 1.0 });
+                                damageTexts.push({ x: e.x, y: e.y - 40, value: `🦊 雙法陣爆破 (${dmg})`, color: '#ab47bc', life: 1.0 });
                             }
                         });
                     });
-                    triggerAnnouncement('🦊 切換為：狐狸型態（1、2技能已重置！）', '#ab47bc');
+                    triggerAnnouncement('🦊 轉換狐狸型態（1、2技能已重置！）', '#ab47bc');
                 }, 500);
             }
         } else {
@@ -1474,7 +1633,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     }, 2000);
                 }
             } else if (skillId === 3) {
-                // 🎯 莉莉安 3 技：冷卻 6 秒 (-0.3秒)，切換型態重置 1、2 技
+                // 🎯 莉莉安 3 技（狐狸形態）：位移霸體減傷 50%，轉換人類型態並重置 1、2 技
                 skillCooldowns[3] = Math.max(3.0, 6.0 - (sLv - 1) * 0.3);
                 skillCooldowns[1] = 0;
                 skillCooldowns[2] = 0;
@@ -1495,7 +1654,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     if (!isRunning) return;
                     player.isSuperArmor = false;
                     player.isDamageReduced = false;
-                    triggerAnnouncement('👩 切換為：人類型態（1、2技能已重置！）', '#00d2ff');
+                    triggerAnnouncement('👩 轉換人類型態（1、2技能已重置！）', '#00d2ff');
                 }, 500);
             }
         }
@@ -2279,8 +2438,8 @@ function gameLoop() {
 
         if (e instanceof Hero) {
             ctx.save();
-            let isEnhanced = (e.heroKey === 'nakroth' && e.hasEnhancedAttack) || (e.heroKey === 'ryoma' && e.hasEnhancedAttack) || (e.heroKey === 'liliana' && e.hasEnhancedAttack);
-            let drawRange = e.heroKey === 'liliana' ? (e.lilianaForm === 'human' ? 240 : (isEnhanced ? 180 : 120)) : (isEnhanced ? 180 : e.range);
+            let isEnhanced = (e.heroKey === 'nakroth' && e.hasEnhancedAttack) || (e.heroKey === 'ryoma' && e.hasEnhancedAttack) || (e.heroKey === 'liliana' && e.hasEnhancedAttack) || (e.heroKey === 'raz' && e.razHasEnhancedAtk);
+            let drawRange = e.heroKey === 'liliana' ? (e.lilianaForm === 'human' ? 240 : (isEnhanced ? 180 : 120)) : (e.heroKey === 'raz' ? (isEnhanced ? 180 : 120) : (isEnhanced ? 180 : e.range));
 
             if (isEnhanced || (e.isPlayer && isAttackingPressed)) {
                 ctx.beginPath();
@@ -2375,6 +2534,13 @@ function gameLoop() {
                 ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
                 ctx.fillStyle = e.lilianaForm === 'human' ? '#ffffff' : '#ab47bc';
                 ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'raz') {
+                let ratio = e.razHasEnhancedAtk ? 1.0 : Math.min(1.0, e.razPassiveTimer / 5.0);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
+                ctx.fillStyle = '#ff9800';
+                ctx.fillRect(barX, passiveBarY, barW * ratio, passiveBarH);
                 currentBottomY = passiveBarY + passiveBarH;
             } else if (e.heroKey === 'valhein') {
                 let slotW = (barW - 3 * 2) / 4;
