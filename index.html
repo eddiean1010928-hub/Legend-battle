@@ -259,14 +259,14 @@
                 <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
                 一技
                 <div class="skill-desc-label" id="lbl-skill-1">Lv.0 一技</div>
-                <div class="skill-cd-overlay hidden" id="cd-1"></div>
+                <div class="spell-cd-overlay hidden" id="cd-1"></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v29';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v30';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -697,6 +697,9 @@ class Entity {
         
         if (this instanceof Hero) {
             this.outOfCombatTimer = 0; 
+            if (this.isSuperArmor) {
+                return; // 霸體狀態免疫部分控制或傷害（若需要）
+            }
             if (this.isDamageReduced) {
                 dmg *= (1 - (this.damageReductionRatio || 0.5));
             }
@@ -1376,7 +1379,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     }
                 });
             } else if (skillId === 3) {
-                skillCooldowns[3] = 6.0;
+                // 🎯 莉莉安 3 技：冷卻 6 秒 (-0.3秒)，切換型態重置 1、2 技
+                skillCooldowns[3] = Math.max(3.0, 6.0 - (sLv - 1) * 0.3);
+                skillCooldowns[1] = 0;
+                skillCooldowns[2] = 0;
+
                 player.isSuperArmor = true;
                 player.isDamageReduced = true;
                 player.damageReductionRatio = 0.5;
@@ -1404,7 +1411,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                             }
                         });
                     });
-                    triggerAnnouncement('🦊 切換為：狐狸型態（近戰刺客）', '#ab47bc');
+                    triggerAnnouncement('🦊 切換為：狐狸型態（1、2技能已重置！）', '#ab47bc');
                 }, 500);
             }
         } else {
@@ -1458,16 +1465,20 @@ function castSkill(skillId, dirX, dirY, customDist) {
                             x: player.x,
                             y: player.y,
                             isLilianaSpiritBall: true,
-                            speed: 1.6, // 0.5s 50
+                            speed: 1.6,
                             targetHero: aiHero,
-                            lifeTime: 240, // 4秒
+                            lifeTime: 240,
                             team: player.team,
                             damage: ballDmg
                         });
                     }, 2000);
                 }
             } else if (skillId === 3) {
-                skillCooldowns[3] = 6.0;
+                // 🎯 莉莉安 3 技：冷卻 6 秒 (-0.3秒)，切換型態重置 1、2 技
+                skillCooldowns[3] = Math.max(3.0, 6.0 - (sLv - 1) * 0.3);
+                skillCooldowns[1] = 0;
+                skillCooldowns[2] = 0;
+
                 player.isSuperArmor = true;
                 player.isDamageReduced = true;
                 player.damageReductionRatio = 0.5;
@@ -1478,13 +1489,13 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 player.lilianaForm = 'human';
                 player.range = 240;
 
-                heroSkillStage['liliana'][2].canSecondCast = false; // 轉換為人類時 2段2技失效
+                heroSkillStage['liliana'][2].canSecondCast = false;
 
                 setTimeout(() => {
                     if (!isRunning) return;
                     player.isSuperArmor = false;
                     player.isDamageReduced = false;
-                    triggerAnnouncement('👩 切換為：人類型態（遠距風箏）', '#00d2ff');
+                    triggerAnnouncement('👩 切換為：人類型態（1、2技能已重置！）', '#00d2ff');
                 }, 500);
             }
         }
@@ -2012,7 +2023,7 @@ function gameLoop() {
                 return;
             }
 
-            p.speed += (1.6 / 60); // 0.5s +50
+            p.speed += (1.6 / 60);
             if (p.targetHero && p.targetHero.alive) {
                 let dx = p.targetHero.x - p.x;
                 let dy = p.targetHero.y - p.y;
@@ -2360,7 +2371,6 @@ function gameLoop() {
             let passiveBarH = 4;
             
             if (e.heroKey === 'liliana') {
-                // 🎯 莉莉安被動條：人類一整條白 / 狐狸一整條紫
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                 ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
                 ctx.fillStyle = e.lilianaForm === 'human' ? '#ffffff' : '#ab47bc';
