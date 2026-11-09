@@ -266,7 +266,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v35';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v36';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -333,52 +333,52 @@ resizeCanvas();
 const HERO_DB = {
     'valhein': { 
         name: '凡恩', type: '射手 / 遠距輸出', baseHp: 6000, hpGrowth: 680, 
-        atk: 250, atkInterval: 0.6, atkRecovery: 0.3, range: 240, avatar: '🎯',
+        atk: 250, atkInterval: 0.6, atkRecovery: 0.25, range: 240, avatar: '🎯',
         skillConfig: { 1: { type: 'target', range: 240 }, 2: { type: 'target', range: 240 }, 3: { type: 'direction', range: 240 } }
     },
     'nakroth': { 
         name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 6500, hpGrowth: 750, 
-        atk: 200, atkInterval: 0.4, atkRecovery: 0.3, range: 120, avatar: '🗡️',
+        atk: 200, atkInterval: 0.4, atkRecovery: 0.2, range: 120, avatar: '🗡️',
         skillConfig: { 1: { type: 'circle', range: 240, circleRadius: 70 }, 2: { type: 'direction', range: 180 }, 3: { type: 'self_circle', range: 110 } }
     },
     'ryoma': { 
         name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 7200, hpGrowth: 800, 
-        atk: 190, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🥷',
+        atk: 190, atkInterval: 0.5, atkRecovery: 0.25, range: 120, avatar: '🥷',
         skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'direction', range: 200, isRect: true }, 3: { type: 'direction', range: 200, isRect: true } }
     },
     'quillen': { 
         name: '奎倫', type: '刺客 / 背擊必爆', baseHp: 6200, hpGrowth: 700, 
-        atk: 200, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🥷',
+        atk: 200, atkInterval: 0.5, atkRecovery: 0.25, range: 120, avatar: '🥷',
         skillConfig: { 1: { type: 'direction', range: 120 }, 2: { type: 'direction', range: 120 }, 3: { type: 'direction', range: 180 } }
     },
     'krixi': { 
         name: '克里希', type: '法師 / 魔法爆發', baseHp: 5800, hpGrowth: 650, 
-        atk: 150, atkInterval: 0.5, atkRecovery: 0.4, range: 240, avatar: '🧚‍♀️',
+        atk: 150, atkInterval: 0.5, atkRecovery: 0.3, range: 240, avatar: '🧚‍♀️',
         skillConfig: { 1: { type: 'direction', range: 240 }, 2: { type: 'circle', range: 240, circleRadius: 75 }, 3: { type: 'direction', range: 240 } }
     },
     'alice': {
         name: '愛麗絲', type: '輔助 / 團隊護盾沉默', baseHp: 6400, hpGrowth: 720,
-        atk: 140, atkInterval: 0.5, atkRecovery: 0.4, range: 240, avatar: '🎀',
+        atk: 140, atkInterval: 0.5, atkRecovery: 0.3, range: 240, avatar: '🎀',
         skillConfig: { 1: { type: 'circle', range: 240, circleRadius: 75 }, 2: { type: 'direction', range: 240 }, 3: { type: 'circle', range: 240, circleRadius: 110 } }
     },
     'tarra': {
         name: '塔拉', type: '戰士 / 狂血不死', baseHp: 8000, hpGrowth: 950,
-        atk: 160, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🪓',
+        atk: 160, atkInterval: 0.5, atkRecovery: 0.25, range: 120, avatar: '🪓',
         skillConfig: { 1: { type: 'self_circle', range: 85 }, 2: { type: 'circle', range: 240, circleRadius: 75 }, 3: { type: 'direction', range: 240 } }
     },
     'liliana': {
         name: '莉莉安', type: '法師 / 雙型態切換', baseHp: 5900, hpGrowth: 680,
-        atk: 250, atkInterval: 0.5, atkRecovery: 0.3, range: 240, avatar: '🦊',
+        atk: 250, atkInterval: 0.5, atkRecovery: 0.25, range: 240, avatar: '🦊',
         skillConfig: { 1: { type: 'circle', range: 240, circleRadius: 65 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
     },
     'raz': {
         name: '拉茲', type: '法刺 / 拳王擊退', baseHp: 6300, hpGrowth: 720,
-        atk: 200, atkInterval: 0.7, atkRecovery: 0.4, range: 120, avatar: '🥊',
+        atk: 200, atkInterval: 0.6, atkRecovery: 0.3, range: 120, avatar: '🥊',
         skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
     },
     'murad': {
         name: '莫拉', type: '刺客 / 時空印記劍影', baseHp: 6100, hpGrowth: 710,
-        atk: 240, atkInterval: 0.6, atkRecovery: 0.2, range: 120, avatar: '⏳',
+        atk: 240, atkInterval: 0.5, atkRecovery: 0.2, range: 120, avatar: '⏳',
         skillConfig: { 1: { type: 'direction', range: 200 }, 2: { type: 'circle', range: 240, circleRadius: 85 }, 3: { type: 'self_circle', range: 100 } }
     }
 };
@@ -895,6 +895,7 @@ class Hero extends Entity {
         
         this.atkCooldown = 0;
         this.attackLockTimer = 0;
+        this.emptyAtkCooldown = 0; 
         this.hasEnhancedAttack = false;
         this.isSuperArmor = false;
         this.isInvincible = false;
@@ -1066,6 +1067,7 @@ class Hero extends Entity {
         if (this.quillenMarkedTimer > 0) this.quillenMarkedTimer--;
 
         if (this.atkCooldown > 0) this.atkCooldown--;
+        if (this.emptyAtkCooldown > 0) this.emptyAtkCooldown--;
         if (this.attackLockTimer > 0) this.attackLockTimer--;
 
         let fountainX = this.team === 'blue' ? 380 : MAP_SIZE - 380;
@@ -1111,14 +1113,12 @@ class Hero extends Entity {
         if (this.towerSlowStacks > 0) speed *= (1 - this.towerSlowStacks * 0.20);
 
         if (this.isPlayer) {
-            if (this.attackLockTimer <= 0) {
-                if (joystickDir.x !== 0 || joystickDir.y !== 0) {
-                    let nx = this.x + joystickDir.x * speed;
-                    let ny = this.y + joystickDir.y * speed;
-                    let clamped = clampPosition(nx, ny, this.radius);
-                    this.x = clamped.x; this.y = clamped.y;
-                    this.rotation = Math.atan2(joystickDir.y, joystickDir.x);
-                }
+            if (joystickDir.x !== 0 || joystickDir.y !== 0) {
+                let nx = this.x + joystickDir.x * speed;
+                let ny = this.y + joystickDir.y * speed;
+                let clamped = clampPosition(nx, ny, this.radius);
+                this.x = clamped.x; this.y = clamped.y;
+                this.rotation = Math.atan2(joystickDir.y, joystickDir.x);
             }
             if (isAttackingPressed) {
                 performAttack();
@@ -1153,7 +1153,7 @@ class Hero extends Entity {
                 }
             });
 
-            if (nearestEnemy && this.attackLockTimer <= 0) {
+            if (nearestEnemy) {
                 let angleToEnemy = Math.atan2(nearestEnemy.y - this.y, nearestEnemy.x - this.x);
                 let dirX = Math.cos(angleToEnemy);
                 let dirY = Math.sin(angleToEnemy);
@@ -1285,6 +1285,11 @@ function performAttack() {
         }
     });
 
+    let interval = player.heroData.atkInterval || 0.5;
+    let recovery = player.heroData.atkRecovery || 0.25;
+    player.atkCooldown = Math.round(interval * 60);
+    player.attackLockTimer = Math.round(recovery * 60);
+
     if (nearestTarget) {
         player.outOfCombatTimer = 0; 
         
@@ -1297,8 +1302,6 @@ function performAttack() {
                 damageTexts.push({ x: player.x, y: player.y - 50, value: '⏳ 莫拉解封狀態啟動 (30%傷害提升)!', color: '#00d2ff', life: 1.5 });
             }
 
-            player.atkCooldown = 36;
-            player.attackLockTimer = 12;
             let baseDmg = 240 + (skillLevels[1] > 0 ? 35 : 0) + (player.level - 1) * 25;
             if (player.muradIsUnlocked) baseDmg *= 1.3;
             nearestTarget.takeDamage(baseDmg, player.team, 'physical');
@@ -1310,16 +1313,12 @@ function performAttack() {
         if (player.heroKey === 'liliana') {
             let sLv = skillLevels[1] || 1;
             if (player.lilianaForm === 'human') {
-                player.atkCooldown = 30; 
-                player.attackLockTimer = 18; 
                 let baseDmg = 250 + (sLv - 1) * 30 + (player.level - 1) * 20;
                 nearestTarget.takeDamage(baseDmg, player.team, 'magical');
                 damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `🦊 靈狐法球 (${Math.floor(baseDmg)})`, color: '#e040fb', life: 0.8 });
             } else {
                 if (player.hasEnhancedAttack) {
                     player.hasEnhancedAttack = false;
-                    player.atkCooldown = 30;
-                    player.attackLockTimer = 18;
                     let tripleDmg = 300 + (sLv - 1) * 60;
                     
                     for (let i = 0; i < 3; i++) {
@@ -1332,8 +1331,6 @@ function performAttack() {
                         }, i * 160);
                     }
                 } else {
-                    player.atkCooldown = 24; 
-                    player.attackLockTimer = 12; 
                     let baseDmg = 280 + (sLv - 1) * 40 + (player.level - 1) * 20;
                     nearestTarget.takeDamage(baseDmg, player.team, 'physical');
                     damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `🐾 妖狐利爪 (${Math.floor(baseDmg)})`, color: '#ab47bc', life: 0.8 });
@@ -1344,8 +1341,6 @@ function performAttack() {
         }
 
         if (player.heroKey === 'raz') {
-            player.atkCooldown = 42; 
-            player.attackLockTimer = 24; 
             let baseDmg = 200 + (player.level - 1) * 20;
 
             if (player.razHasEnhancedAtk) {
@@ -1373,7 +1368,7 @@ function performAttack() {
                 player.x = nearestTarget.x - Math.cos(angleToTarget) * 40;
                 player.y = nearestTarget.y - Math.sin(angleToTarget) * 40;
 
-                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: `🥊 拳王強化普攻 (1.7倍範圍擊退!)`, color: '#ff9800', life: 1.2 });
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: `🥊 拳王強化普攻 (1.7倍範圍擊退!) [${Math.floor(baseDmg)}]`, color: '#ff9800', life: 1.2 });
             } else {
                 player.razAtkCount++;
                 if (player.razAtkCount >= 2) {
@@ -1389,10 +1384,6 @@ function performAttack() {
             return;
         }
 
-        let interval = player.heroData.atkInterval || 0.5;
-        player.atkCooldown = Math.round(interval * 60);
-        player.attackLockTimer = Math.round((player.heroData.atkRecovery || 0.3) * 60);
-        
         let baseDmg = player.getEffectiveAtk();
 
         if (player.heroKey === 'valhein') {
@@ -1404,7 +1395,7 @@ function performAttack() {
                 player.valheinPassiveStacks = Math.min(4, player.valheinPassiveStacks + 1);
             }
             baseDmg += player.valheinPassiveStacks * 20;
-            damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `${Math.floor(baseDmg)}`, color: '#ffd700', life: 0.8 });
+            damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `🎯 凡恩普攻 (${Math.floor(baseDmg)})`, color: '#ffd700', life: 0.8 });
 
         } else if (player.heroKey === 'alice') {
             damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `🎀 愛麗絲普攻 (${Math.floor(baseDmg)})`, color: '#e040fb', life: 0.8 });
@@ -1418,7 +1409,7 @@ function performAttack() {
                 nearestTarget.isStunned = true;
                 nearestTarget.setStatus('暈眩', 0.8);
                 setTimeout(() => { nearestTarget.isStunned = false; }, 800);
-                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: '🗡️ 2技強普 (180範圍橫掃)', color: '#d7bde2', life: 1.0 });
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: `🗡️ 2技強普橫掃 (${Math.floor(baseDmg)})`, color: '#d7bde2', life: 1.0 });
             } else {
                 player.nakrothPassiveCounter++;
                 if (player.nakrothPassiveCounter >= 4) {
@@ -1426,7 +1417,9 @@ function performAttack() {
                     nearestTarget.isStunned = true;
                     nearestTarget.setStatus('暈眩', 0.8);
                     setTimeout(() => { nearestTarget.isStunned = false; }, 800);
-                    damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: '🗡️ 第四下被動擊飛!', color: '#d7bde2', life: 1.0 });
+                    damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: `🗡️ 第四下被動擊飛! (${Math.floor(baseDmg)})`, color: '#d7bde2', life: 1.0 });
+                } else {
+                    damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `🗡️ 普攻 (${Math.floor(baseDmg)})`, color: '#d7bde2', life: 0.8 });
                 }
             }
         } else if (player.heroKey === 'ryoma') {
@@ -1440,7 +1433,9 @@ function performAttack() {
                 nearestTarget.slowFactor = 0.6; 
                 nearestTarget.setStatus('緩速', 2.0);
                 setTimeout(() => { nearestTarget.isSlowed = false; }, 2000);
-                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 40, value: `🥷 龍馬強普60%緩速 (2倍傷害)`, color: '#00e676', life: 1.2 });
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 40, value: `🥷 龍馬強普60%緩速 (${Math.floor(baseDmg)})`, color: '#00e676', life: 1.2 });
+            } else {
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `🥷 普攻 (${Math.floor(baseDmg)})`, color: '#00e676', life: 0.8 });
             }
         } else if (player.heroKey === 'quillen') {
             baseDmg = 200 + (player.level - 1) * 30;
@@ -1451,9 +1446,9 @@ function performAttack() {
 
             if (isBehind) {
                 baseDmg *= 2.0;
-                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: `💥 奎倫背擊爆擊! ${Math.floor(baseDmg)}`, color: '#ff3366', life: 1.0 });
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 45, value: `💥 奎倫背擊爆擊! (${Math.floor(baseDmg)})`, color: '#ff3366', life: 1.0 });
             } else {
-                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `正面未爆擊 ${Math.floor(baseDmg)}`, color: '#aaa', life: 0.8 });
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `奎倫正面普攻 (${Math.floor(baseDmg)})`, color: '#aaa', life: 0.8 });
             }
 
             if (nearestTarget.quillenMarkedTimer > 0) {
@@ -1469,20 +1464,21 @@ function performAttack() {
         nearestTarget.takeDamage(baseDmg, player.team, 'physical');
         attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#f3c654' });
     } else {
-        if (joystickDir.x === 0 && joystickDir.y === 0) {
-            if (player.heroKey === 'nakroth') {
-                player.nakrothPassiveCounter = (player.nakrothPassiveCounter || 0) + 1;
-                if (player.nakrothPassiveCounter > 4) player.nakrothPassiveCounter = 1;
-                damageTexts.push({ x: player.x, y: player.y - 35, value: `🗡️ 納克站立空揮 (${player.nakrothPassiveCounter}/4)`, color: '#d7bde2', life: 0.6 });
-            } else if (player.heroKey === 'raz') {
-                player.razAtkCount++;
-                if (player.razAtkCount >= 2) {
-                    player.razAtkCount = 0;
-                    player.razHasEnhancedAtk = true;
-                    damageTexts.push({ x: player.x, y: player.y - 45, value: '🥊 拉茲站立集滿：獲得強化普攻！', color: '#ff9800', life: 1.0 });
-                } else {
-                    damageTexts.push({ x: player.x, y: player.y - 35, value: `🥊 拉茲站立空揮普攻`, color: '#ff9800', life: 0.6 });
-                }
+        if (player.emptyAtkCooldown > 0) return;
+        player.emptyAtkCooldown = Math.round(interval * 60);
+
+        if (player.heroKey === 'nakroth') {
+            player.nakrothPassiveCounter = (player.nakrothPassiveCounter || 0) + 1;
+            if (player.nakrothPassiveCounter > 4) player.nakrothPassiveCounter = 1;
+            damageTexts.push({ x: player.x, y: player.y - 35, value: `🗡️ 納克空揮 (${player.nakrothPassiveCounter}/4)`, color: '#d7bde2', life: 0.6 });
+        } else if (player.heroKey === 'raz') {
+            player.razAtkCount++;
+            if (player.razAtkCount >= 2) {
+                player.razAtkCount = 0;
+                player.razHasEnhancedAtk = true;
+                damageTexts.push({ x: player.x, y: player.y - 45, value: '🥊 拉茲空疊集滿：獲得強化普攻！', color: '#ff9800', life: 1.0 });
+            } else {
+                damageTexts.push({ x: player.x, y: player.y - 35, value: `🥊 拉茲空疊普攻 (${player.razAtkCount}/2)`, color: '#ff9800', life: 0.6 });
             }
         }
     }
@@ -2487,7 +2483,7 @@ function gameLoop() {
                 hitEnemy.setStatus('緩速', 2.0);
                 setTimeout(() => { hitEnemy.isSlowed = false; }, 2000);
                 skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 70, color: 'rgba(255, 69, 0, 0.85)', team: p.team });
-                damageTexts.push({ x: hitEnemy.x, y: hitEnemy.y - 40, value: `🔥 火球命中! 緩速${Math.round(p.slowRatio*100)}%`, color: '#ff4444', life: 1.2 });
+                damageTexts.push({ x: hitEnemy.x, y: hitEnemy.y - 40, value: `🔥 火球命中! 緩速${Math.round(p.slowRatio*100)}% (${Math.floor(p.damage)})`, color: '#ff4444', life: 1.2 });
 
                 if (!p.hasBounced) {
                     let secondTarget = entities.find(e => !(e instanceof Building) && e.alive && e.team !== p.team && e !== hitEnemy && Math.hypot(e.x - hitEnemy.x, e.y - hitEnemy.y) <= 200);
