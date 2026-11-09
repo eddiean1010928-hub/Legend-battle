@@ -253,7 +253,7 @@
                 <div class="skill-upgrade-btn hidden" id="up-btn-2">+</div>
                 二技
                 <div class="skill-desc-label" id="lbl-skill-2">Lv.0 二技</div>
-                <div class="spell-cd-overlay hidden" id="cd-2"></div>
+                <div class="skill-cd-overlay hidden" id="cd-2"></div>
             </div>
             <div class="skill-btn" id="skill-1" data-skill="1">
                 <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
@@ -266,7 +266,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v34';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v35';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -959,7 +959,7 @@ class Hero extends Entity {
 
     startDash(tx, ty, speed = 35) {
         let dist = Math.hypot(tx - this.x, ty - this.y);
-        let durationFrames = Math.max(6, Math.round((dist / 50) * 0.15 * 60));
+        let durationFrames = Math.max(6, Math.round((dist / 100) * 0.1 * 60));
         this.isDashing = true;
         this.dashStartX = this.x; this.dashStartY = this.y;
         this.dashTargetX = tx; this.dashTargetY = ty;
@@ -1469,18 +1469,20 @@ function performAttack() {
         nearestTarget.takeDamage(baseDmg, player.team, 'physical');
         attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#f3c654' });
     } else {
-        if (player.heroKey === 'nakroth') {
-            player.nakrothPassiveCounter = (player.nakrothPassiveCounter || 0) + 1;
-            if (player.nakrothPassiveCounter > 4) player.nakrothPassiveCounter = 1;
-            damageTexts.push({ x: player.x, y: player.y - 35, value: `🗡️ 納克空揮普攻 (${player.nakrothPassiveCounter}/4)`, color: '#d7bde2', life: 0.6 });
-        } else if (player.heroKey === 'raz') {
-            player.razAtkCount++;
-            if (player.razAtkCount >= 2) {
-                player.razAtkCount = 0;
-                player.razHasEnhancedAtk = true;
-                damageTexts.push({ x: player.x, y: player.y - 45, value: '🥊 拉茲空揮集滿：獲得強化普攻！', color: '#ff9800', life: 1.0 });
-            } else {
-                damageTexts.push({ x: player.x, y: player.y - 35, value: `🥊 拉茲空揮普攻`, color: '#ff9800', life: 0.6 });
+        if (joystickDir.x === 0 && joystickDir.y === 0) {
+            if (player.heroKey === 'nakroth') {
+                player.nakrothPassiveCounter = (player.nakrothPassiveCounter || 0) + 1;
+                if (player.nakrothPassiveCounter > 4) player.nakrothPassiveCounter = 1;
+                damageTexts.push({ x: player.x, y: player.y - 35, value: `🗡️ 納克站立空揮 (${player.nakrothPassiveCounter}/4)`, color: '#d7bde2', life: 0.6 });
+            } else if (player.heroKey === 'raz') {
+                player.razAtkCount++;
+                if (player.razAtkCount >= 2) {
+                    player.razAtkCount = 0;
+                    player.razHasEnhancedAtk = true;
+                    damageTexts.push({ x: player.x, y: player.y - 45, value: '🥊 拉茲站立集滿：獲得強化普攻！', color: '#ff9800', life: 1.0 });
+                } else {
+                    damageTexts.push({ x: player.x, y: player.y - 35, value: `🥊 拉茲站立空揮普攻`, color: '#ff9800', life: 0.6 });
+                }
             }
         }
     }
@@ -2450,7 +2452,7 @@ function gameLoop() {
                 }
             });
 
-            if (hit || p.x === p.targetX && p.y === p.targetY) {
+            if (hit || (p.x === p.targetX && p.y === p.targetY)) {
                 projectiles.splice(idx, 1);
             }
             return;
