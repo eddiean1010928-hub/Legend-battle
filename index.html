@@ -244,22 +244,22 @@
             </div>
 
             <div class="skill-btn" id="skill-3" data-skill="3">
-                <div class="skill-upgrade-btn" id="up-btn-3">+</div>
+                <div class="skill-upgrade-btn hidden" id="up-btn-3">+</div>
                 大招
                 <div class="skill-desc-label" id="lbl-skill-3">Lv.0 大招</div>
                 <div class="skill-cd-overlay hidden" id="cd-3"></div>
             </div>
             <div class="skill-btn" id="skill-2" data-skill="2">
-                <div class="skill-upgrade-btn" id="up-btn-2">+</div>
+                <div class="skill-upgrade-btn hidden" id="up-btn-2">+</div>
                 二技
                 <div class="skill-desc-label" id="lbl-skill-2">Lv.0 二技</div>
                 <div class="spell-cd-overlay hidden" id="cd-2"></div>
             </div>
             <div class="skill-btn" id="skill-1" data-skill="1">
-                <div class="skill-upgrade-btn" id="up-btn-1">+</div>
+                <div class="skill-upgrade-btn hidden" id="up-btn-1">+</div>
                 一技
                 <div class="skill-desc-label" id="lbl-skill-1">Lv.0 一技</div>
-                <div class="skill-cd-overlay hidden" id="cd-1"></div>
+                <div class="spell-cd-overlay hidden" id="cd-1"></div>
             </div>
         </div>
     </div>
@@ -296,7 +296,7 @@ let MAP_SIZE = 2600;
 let ROAD_WIDTH = 380; 
 let isRunning = false;
 let selectedHeroKey = 'liliana';
-let randomAiKey = 'murad';
+let randomAiKey = 'valhein';
 let challengerCooldown = 0;
 let healSpellCooldown = 0;
 
@@ -339,12 +339,12 @@ const HERO_DB = {
     'nakroth': { 
         name: '納克羅斯', type: '刺客 / 高機動性', baseHp: 6500, hpGrowth: 750, 
         atk: 200, atkInterval: 0.4, atkRecovery: 0.3, range: 120, avatar: '🗡️',
-        skillConfig: { 1: { type: 'circle', range: 240, circleRadius: 70 }, 2: { type: 'direction', range: 180 }, 3: { type: 'self_circle', range: 100 } }
+        skillConfig: { 1: { type: 'target_pos', range: 240, circleRadius: 70 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
     },
     'ryoma': { 
         name: '龍馬', type: '戰士 / 槍尖爆發', baseHp: 7200, hpGrowth: 800, 
         atk: 190, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🥷',
-        skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'direction', range: 200, isRect: true }, 3: { type: 'direction', range: 180, isRect: true } }
+        skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'direction', range: 180, isRect: true }, 3: { type: 'direction', range: 180, isRect: true } }
     },
     'quillen': { 
         name: '奎倫', type: '刺客 / 背擊必爆', baseHp: 6200, hpGrowth: 700, 
@@ -354,32 +354,32 @@ const HERO_DB = {
     'krixi': { 
         name: '克里希', type: '法師 / 魔法爆發', baseHp: 5800, hpGrowth: 650, 
         atk: 150, atkInterval: 0.5, atkRecovery: 0.4, range: 240, avatar: '🧚‍♀️',
-        skillConfig: { 1: { type: 'direction', range: 240 }, 2: { type: 'circle', range: 240, circleRadius: 75 }, 3: { type: 'direction', range: 240 } }
+        skillConfig: { 1: { type: 'direction', range: 240 }, 2: { type: 'target_pos', range: 240, circleRadius: 75 }, 3: { type: 'self_circle', range: 240 } }
     },
     'alice': {
         name: '愛麗絲', type: '輔助 / 團隊護盾沉默', baseHp: 6400, hpGrowth: 720,
         atk: 140, atkInterval: 0.5, atkRecovery: 0.4, range: 240, avatar: '🎀',
-        skillConfig: { 1: { type: 'circle', range: 240, circleRadius: 75 }, 2: { type: 'direction', range: 240 }, 3: { type: 'circle', range: 240, circleRadius: 110 } }
+        skillConfig: { 1: { type: 'target_pos', range: 240, circleRadius: 75 }, 2: { type: 'self_circle', range: 240 }, 3: { type: 'target_pos', range: 240, circleRadius: 110 } }
     },
     'tarra': {
         name: '塔拉', type: '戰士 / 狂血不死', baseHp: 8000, hpGrowth: 950,
         atk: 160, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🪓',
-        skillConfig: { 1: { type: 'self_circle', range: 85 }, 2: { type: 'circle', range: 240, circleRadius: 75 }, 3: { type: 'direction', range: 240 } }
+        skillConfig: { 1: { type: 'self_circle', range: 120 }, 2: { type: 'target_pos', range: 240, circleRadius: 80 }, 3: { type: 'direction', range: 0 } }
     },
     'liliana': {
         name: '莉莉安', type: '法師 / 雙型態切換', baseHp: 5900, hpGrowth: 680,
         atk: 250, atkInterval: 0.5, atkRecovery: 0.3, range: 240, avatar: '🦊',
-        skillConfig: { 1: { type: 'circle', range: 240, circleRadius: 65 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
+        skillConfig: { 1: { type: 'target_pos', range: 240, circleRadius: 65 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
     },
     'raz': {
         name: '拉茲', type: '法刺 / 拳王擊退', baseHp: 6300, hpGrowth: 720,
         atk: 200, atkInterval: 0.7, atkRecovery: 0.4, range: 120, avatar: '🥊',
-        skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
+        skillConfig: { 1: { type: 'direction', range: 120 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
     },
     'murad': {
         name: '莫拉', type: '刺客 / 時空印記劍影', baseHp: 6100, hpGrowth: 710,
         atk: 240, atkInterval: 0.6, atkRecovery: 0.2, range: 120, avatar: '⏳',
-        skillConfig: { 1: { type: 'direction', range: 200 }, 2: { type: 'circle', range: 240, circleRadius: 85 }, 3: { type: 'self_circle', range: 110 } }
+        skillConfig: { 1: { type: 'direction', range: 120 }, 2: { type: 'self_circle', range: 180 }, 3: { type: 'self_circle', range: 180 } }
     }
 };
 
@@ -541,11 +541,7 @@ function confirmStartGame() {
     requestAnimationFrame(gameLoop);
 }
 
-function upgradeSkill(skillId, e) {
-    if (e) {
-        e.stopPropagation();
-        e.preventDefault();
-    }
+function upgradeSkill(skillId) {
     if (unallocatedPoints <= 0) return;
     if (skillId === 3) {
         let currentLvl = skillLevels[3];
@@ -563,11 +559,7 @@ function upgradeSkill(skillId, e) {
 }
 
 [1, 2, 3].forEach(id => {
-    let upBtn = document.getElementById(`up-btn-${id}`);
-    if (upBtn) {
-        upBtn.addEventListener('pointerdown', (e) => upgradeSkill(id, e));
-        upBtn.addEventListener('click', (e) => upgradeSkill(id, e));
-    }
+    bindClick(`up-btn-${id}`, () => upgradeSkill(id));
 });
 
 joystick.addEventListener('pointerdown', e => {
@@ -1001,7 +993,7 @@ class Hero extends Entity {
         if (this.heroKey === 'murad') {
             if (this.muradStacks > 0) {
                 this.muradStackTimer += 1 / 60;
-                if (this.muradStackTimer >= 7.0) {
+                if (this.muradStackTimer >= 5.0) {
                     this.muradStacks = 0;
                     this.muradStackTimer = 0;
                     damageTexts.push({ x: this.x, y: this.y - 45, value: '⏳ 莫拉印記超時全數消失', color: '#aaa', life: 1.0 });
@@ -1048,7 +1040,7 @@ class Hero extends Entity {
 
         if (this.heroKey === 'valhein' && this.valheinPassiveStacks > 0) {
             this.valheinPassiveTimer++;
-            if (this.valheinPassiveTimer >= 240) {
+            if (this.valheinPassiveTimer >= 300) {
                 this.valheinPassiveTimer = 0;
                 this.valheinPassiveStacks = 0;
                 this.valheinHitCounter = 0;
@@ -1500,6 +1492,218 @@ function castSkill(skillId, dirX, dirY, customDist) {
     let heroKey = player.heroKey;
     player.outOfCombatTimer = 0;
 
+    if (heroKey === 'murad') {
+        if (skillId === 1) {
+            let stageCount = player.muradStage1Count || 1;
+            let dmg = 650 + (sLv - 1) * 30;
+            if (player.muradIsUnlocked) dmg *= 1.3;
+
+            if (stageCount === 1) {
+                player.muradShadowPos = { x: player.x, y: player.y };
+                let targetX = player.x + dirX * 200;
+                let targetY = player.y + dirY * 200;
+                player.startDash(targetX, targetY, 40);
+
+                skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 70, color: 'rgba(0, 210, 255, 0.8)', team: player.team });
+                entities.forEach(e => {
+                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
+                        e.takeDamage(dmg, player.team, 'physical');
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 0.8);
+                        setTimeout(() => { e.isStunned = false; }, 800);
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `⏳ 莫拉1技第1段暈眩+傷害 (${Math.floor(dmg)})`, color: '#00d2ff', life: 1.0 });
+                    }
+                });
+
+                player.muradStage1Count = 2;
+                skillCooldowns[1] = 0; 
+            } else if (stageCount === 2) {
+                let targetX = player.x + dirX * 200;
+                let targetY = player.y + dirY * 200;
+                player.startDash(targetX, targetY, 40);
+
+                skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 70, color: 'rgba(0, 210, 255, 0.8)', team: player.team });
+                entities.forEach(e => {
+                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
+                        e.takeDamage(dmg, player.team, 'physical');
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 0.8);
+                        setTimeout(() => { e.isStunned = false; }, 800);
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `⏳ 莫拉1技第2段暈眩+傷害 (${Math.floor(dmg)})`, color: '#00d2ff', life: 1.0 });
+                    }
+                });
+
+                player.muradStage1Count = 3;
+                skillCooldowns[1] = 0;
+            } else {
+                if (player.muradShadowPos) {
+                    player.startDash(player.muradShadowPos.x, player.muradShadowPos.y, 50);
+                    damageTexts.push({ x: player.x, y: player.y - 45, value: '⏳ 莫拉返回影子處！', color: '#00d2ff', life: 1.2 });
+                }
+                player.muradStage1Count = 1;
+                player.muradShadowPos = null;
+                skillCooldowns[1] = Math.max(3.5, 6.0 - (sLv - 1) * 0.5);
+            }
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(4.0, 7.0 - (sLv - 1) * 0.5);
+            let dmg = 700 + (sLv - 1) * 20;
+            if (player.muradIsUnlocked) dmg *= 1.3;
+
+            player.isUntargetable = true; 
+            player.isCastingAction = true;
+            player.setStatus('不可選中', 0.5);
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '⏳ 莫拉2技法陣：0.5秒不可選中!', color: '#00d2ff', life: 1.2 });
+
+            setTimeout(() => {
+                if (player) {
+                    player.isUntargetable = false;
+                    player.isCastingAction = false;
+                }
+            }, 500);
+
+            skillEffects.push({ x: player.x, y: player.y, life: 0.6, size: 90, color: 'rgba(0, 210, 255, 0.5)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 90) {
+                    e.takeDamage(dmg, player.team, 'physical');
+                    e.isSlowed = true;
+                    e.slowFactor = 0.5;
+                    setTimeout(() => { e.isSlowed = false; }, 2000);
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `⏳ 結界邊緣傷害+50%緩速 (${Math.floor(dmg)})`, color: '#00d2ff', life: 1.0 });
+                }
+            });
+        } else if (skillId === 3) {
+            if (!player.muradIsUnlocked) {
+                triggerAnnouncement('⚠️ 莫拉大招未解封！需累積 4 層印記！', '#ff4444');
+                return;
+            }
+            skillCooldowns[3] = Math.max(5.0, 9.0 - (sLv - 1) * 2.0);
+            let perHitDmg = 250 + (sLv - 1) * 70;
+            player.isUntargetable = true; 
+            player.isCastingAction = true;
+            player.setStatus('不可選中', 3.0);
+
+            damageTexts.push({ x: player.x, y: player.y - 55, value: '⏳ 時空殺陣：3秒不可選中連斬!', color: '#ffd700', life: 1.8 });
+
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    skillEffects.push({ x: player.x, y: player.y, life: 0.3, size: 110, color: 'rgba(0, 210, 255, 0.65)', team: player.team });
+                    entities.forEach(target => {
+                        if (!(target instanceof Building) && target.alive && target.team !== player.team && Math.hypot(target.x - player.x, target.y - player.y) <= 120) {
+                            let missingHp = target.maxHp - target.hp;
+                            let extraDmg = missingHp * 0.03;
+                            let totalHitDmg = perHitDmg + extraDmg;
+                            target.takeDamage(totalHitDmg, player.team, 'physical');
+                            damageTexts.push({ x: target.x, y: target.y - 40, value: `⏳ 劍影連斬 #${i+1} (${Math.floor(totalHitDmg)})`, color: '#00d2ff', life: 0.8 });
+                        }
+                    });
+                    if (i === 4) {
+                        player.isUntargetable = false;
+                        player.isCastingAction = false;
+                    }
+                }, (i + 1) * 600);
+            }
+        }
+        updateSkillUI();
+        return;
+    }
+
+    if (heroKey === 'raz') {
+        if (skillId === 1) {
+            skillCooldowns[1] = Math.max(3.6, 6.0 - (sLv - 1) * 0.4);
+            let dmg = 500 + (sLv - 1) * 50;
+            let targetX = player.x + dirX * 180;
+            let targetY = player.y + dirY * 180;
+
+            player.startDash(targetX, targetY, 40);
+            skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 75, color: 'rgba(255, 152, 0, 0.8)', team: player.team });
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
+                    e.takeDamage(dmg, player.team, 'magical');
+                    e.isStunned = true;
+                    e.setStatus('暈眩', 0.67);
+                    setTimeout(() => { e.isStunned = false; }, 670);
+                    damageTexts.push({ x: e.x, y: e.y - 45, value: `🥊 1技上勾拳擊飛 0.67秒! (${dmg})`, color: '#ff9800', life: 1.2 });
+                }
+            });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(2.5, 5.0 - (sLv - 1) * 0.6);
+            let dmg = 900 + (sLv - 1) * 60;
+            let slowRatio = 0.40 + (sLv - 1) * 0.08;
+            let defReduce = 100 + (sLv - 1) * 20;
+
+            let startX = player.x, startY = player.y;
+            let targetX = startX + dirX * 240;
+            let targetY = startY + dirY * 240;
+
+            projectiles.push({
+                x: startX,
+                y: startY,
+                startX: startX,
+                startY: startY,
+                targetX: targetX,
+                targetY: targetY,
+                speed: 10,
+                radius: 20,
+                isRazFireball: true,
+                owner: player,
+                team: player.team,
+                damage: dmg,
+                slowRatio: slowRatio,
+                defReduce: defReduce,
+                hasBounced: false
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(5.0, 14.0 - (sLv - 1) * 3.0);
+            let segDmg = 420 + (sLv - 1) * 60;
+            let targetX = player.x + dirX * 180;
+            let targetY = player.y + dirY * 180;
+
+            player.startDash(targetX, targetY, 35);
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🥊 3技大招：強效三段推走!', color: '#ff9800', life: 1.5 });
+
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    skillEffects.push({ x: player.x, y: player.y, life: 0.25, size: 140, color: 'rgba(255, 140, 0, 0.85)', team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team) {
+                            let dist = Math.hypot(e.x - player.x, e.y - player.y);
+                            if (dist <= 180) {
+                                e.takeDamage(segDmg, player.team, 'magical');
+                                let pushAngle = Math.atan2(e.y - player.y, e.x - player.x);
+                                let pX = e.x + Math.cos(pushAngle) * 120;
+                                let pY = e.y + Math.sin(pushAngle) * 120;
+                                let clampedP = clampPosition(pX, pY, e.radius);
+                                e.x = clampedP.x;
+                                e.y = clampedP.y;
+                            }
+                        }
+                    });
+                }, i * 200);
+            }
+        }
+
+        setTimeout(() => {
+            if (!player || !player.alive) return;
+            let smallDx = joystickDir.x !== 0 ? joystickDir.x : dirX;
+            let smallDy = joystickDir.y !== 0 ? joystickDir.y : dirY;
+            if (smallDx !== 0 || smallDy !== 0) {
+                let sfx = player.x + smallDx * 20;
+                let sfy = player.y + smallDy * 20;
+                let clampedS = clampPosition(sfx, sfy, player.radius);
+                afterimages.push({ x: player.x, y: player.y, radius: player.radius, team: player.team, life: 0.35 });
+                player.x = clampedS.x;
+                player.y = clampedS.y;
+                damageTexts.push({ x: player.x, y: player.y - 35, value: '💨 拳王後搖小位移', color: '#ffeb3b', life: 0.6 });
+            }
+        }, 300);
+
+        updateSkillUI();
+        return;
+    }
+
     if (heroKey === 'liliana') {
         if (player.lilianaForm === 'human') {
             if (skillId === 1) {
@@ -1517,7 +1721,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     }
                 });
             } else if (skillId === 2) {
-                // 莉莉安人類型態 2 技：九尾幻球（安全防護，支援英雄與小兵/野怪命中暈眩）
                 skillCooldowns[2] = Math.max(4.0, 7.0 - (sLv - 1) * 0.5);
                 let dmg = 200 + (sLv - 1) * 30;
                 let startX = player.x, startY = player.y;
@@ -1533,7 +1736,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     targetY: targetY,
                     speed: 9.0,
                     radius: 22,
-                    isLilianaHumanBall: true,
+                    isLilianaBall: true,
                     owner: player,
                     team: player.team,
                     damage: dmg
@@ -1662,6 +1865,427 @@ function castSkill(skillId, dirX, dirY, customDist) {
         return;
     }
 
+    if (heroKey === 'tarra') {
+        let costHp = player.maxHp * 0.04;
+        player.hp = Math.max(1, player.hp - costHp);
+        player.tarraHealTimer = 240;
+        player.tarraBuffStacks = Math.min(3, player.tarraBuffStacks + 1);
+        player.tarraBuffTimer = 300;
+        damageTexts.push({ x: player.x, y: player.y - 50, value: `🪓 狂血消耗 -${Math.floor(costHp)} (疊層 ${player.tarraBuffStacks})`, color: '#ff9800', life: 1.0 });
+
+        if (skillId === 1) {
+            skillCooldowns[1] = Math.max(2.5, 5.0 - (sLv - 1) * 0.2);
+            let dmg = 250 + (sLv - 1) * 40;
+            skillEffects.push({ x: player.x, y: player.y, life: 0.35, size: 85, color: 'rgba(255, 152, 0, 0.7)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 85) {
+                    e.takeDamage(dmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🪓 旋風狂斬 (${dmg})`, color: '#ff9800', life: 0.9 });
+                }
+            });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(4.5, 9.0 - (sLv - 1) * 0.6);
+            let dmg = 200 + (sLv - 1) * 30;
+            let dist = customDist || 240;
+            let targetX = player.x + dirX * dist;
+            let targetY = player.y + dirY * dist;
+
+            player.startDash(targetX, targetY, 40);
+            skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 80, color: 'rgba(255, 152, 0, 0.8)', team: player.team });
+            
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 80) {
+                    e.takeDamage(dmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🪓 猛擊突進 (${dmg})`, color: '#ff9800', life: 0.9 });
+                }
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(11.0, 25.0 - (sLv - 1) * 4.0);
+            player.tarraUltimateTimer = 360;
+            damageTexts.push({ x: player.x, y: player.y - 55, value: '🪓 鋼軀怒吼：不死之身開啟!', color: '#00e676', life: 1.5 });
+        }
+    } else if (heroKey === 'alice') {
+        if (skillId === 1) {
+            skillCooldowns[1] = Math.max(3.0, 6.0 - (sLv - 1) * 0.3);
+            let dmg = 600 + (sLv - 1) * 50;
+            let dist = customDist || 240;
+            let targetX = player.x + dirX * dist;
+            let targetY = player.y + dirY * dist;
+
+            skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 75, color: 'rgba(224, 64, 251, 0.75)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
+                    e.takeDamage(dmg, player.team, 'magical');
+                    e.isStunned = true;
+                    e.setStatus('暈眩', 1.0);
+                    setTimeout(() => { e.isStunned = false; }, 1000);
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🎀 星光暈眩 1秒! (${dmg})`, color: '#e040fb', life: 1.0 });
+                }
+            });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(4.0, 8.0 - (sLv - 1) * 0.5);
+            let shieldAmt = player.maxHp * 0.20 + player.level * 100;
+
+            entities.forEach(e => {
+                if (e instanceof Hero && e.alive && e.team === player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 240) {
+                    e.shield = Math.min(e.maxHp * 0.5, (e.shield || 0) + shieldAmt);
+                    e.speedBuffTimer = 180; 
+                    damageTexts.push({ x: e.x, y: e.y - 45, value: `🛡️ 獲得護盾 +${Math.floor(shieldAmt)}`, color: '#ffffff', life: 1.2 });
+                    
+                    setTimeout(() => {
+                        if (e.alive && e.shield > 0) e.shield = Math.max(0, e.shield - shieldAmt);
+                    }, 5000);
+                }
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(11.0, 23.0 - (sLv - 1) * 4.0);
+            let secDmg = 300 + (sLv - 1) * 50;
+            let dist = customDist || 240;
+            let targetX = player.x + dirX * dist;
+            let targetY = player.y + dirY * dist;
+
+            damageTexts.push({ x: targetX, y: targetY - 60, value: '🎀 沉默法陣降臨 (5秒)!', color: '#e040fb', life: 1.5 });
+
+            for (let t = 0; t < 5; t++) {
+                setTimeout(() => {
+                    if (!isRunning) return;
+                    skillEffects.push({ x: targetX, y: targetY, life: 0.5, size: 110, color: 'rgba(156, 39, 176, 0.45)', team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 110) {
+                            e.takeDamage(secDmg, player.team, 'magical');
+                            if (e instanceof Hero) {
+                                e.isSilenced = true;
+                                setTimeout(() => { e.isSilenced = false; }, 3000);
+                                damageTexts.push({ x: e.x, y: e.y - 40, value: '🤐 沉默中 (無法放招)', color: '#ba68c8', life: 0.8 });
+                            }
+                        }
+                    });
+                }, t * 1000);
+            }
+        }
+    } else if (heroKey === 'valhein') {
+        if (skillId === 1) {
+            skillCooldowns[1] = Math.max(4.5, 7.0 - (sLv - 1) * 0.5);
+            let hitDmg = 500 + (sLv - 1) * 20;
+            let expDmg = 250 + (sLv - 1) * 20;
+            let tx = player.x + dirX * 240;
+            let ty = player.y + dirY * 240;
+
+            skillEffects.push({ x: tx, y: ty, life: 0.4, size: 80, color: 'rgba(255, 215, 0, 0.7)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 80) {
+                    e.takeDamage(hitDmg, player.team, 'magical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `🎯 1技擊中 ${hitDmg}`, color: '#ffd700', life: 0.9 });
+                    entities.forEach(subE => {
+                        if (!(subE instanceof Building) && subE.alive && subE.team !== player.team && Math.hypot(subE.x - e.x, subE.y - e.y) <= 90) {
+                            subE.takeDamage(expDmg, player.team, 'magical');
+                        }
+                    });
+                }
+            });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(5.5, 8.0 - (sLv - 1) * 0.5);
+            let tx = player.x + dirX * 240;
+            let ty = player.y + dirY * 240;
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 70) {
+                    e.isStunned = true;
+                    e.setStatus('暈眩', 2.0);
+                    setTimeout(() => { e.isStunned = false; }, 2000);
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: '🎯 2技暈眩 2秒!', color: '#00d2ff', life: 1.0 });
+                }
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(9.0, 15.0 - (sLv - 1) * 2.0);
+            let dmg = 500 + (sLv - 1) * 100;
+            player.valheinPassiveStacks = 4;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🎯 大招：直接滿層被動!', color: '#ffd700', life: 1.2 });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 240) {
+                    e.takeDamage(dmg, player.team, 'magical');
+                }
+            });
+        }
+    } else if (heroKey === 'nakroth') {
+        if (skillId === 1) {
+            let stInfo = heroSkillStage['nakroth'][1];
+            let dist = customDist || 240;
+            let dashX = player.x + dirX * dist;
+            let dashY = player.y + dirY * dist;
+            let dmg = 400 + (sLv - 1) * 50;
+
+            if (stInfo.stage === 1) {
+                player.startDash(dashX, dashY, 40);
+                damageTexts.push({ x: player.x, y: player.y - 40, value: `🗡️ 1技1段擊飛 (${dmg})`, color: '#d7bde2', life: 0.8 });
+                entities.forEach(e => {
+                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 70) {
+                        e.takeDamage(dmg, player.team, 'physical');
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 0.8);
+                        setTimeout(() => { e.isStunned = false; }, 800);
+                    }
+                });
+                stInfo.stage = 2;
+                stInfo.timer = 5.0;
+                skillCooldowns[1] = 0;
+            } else {
+                player.startDash(dashX, dashY, 40);
+                damageTexts.push({ x: player.x, y: player.y - 40, value: `🗡️ 1技2段衝刺 (${dmg})`, color: '#d7bde2', life: 0.8 });
+                entities.forEach(e => {
+                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 70) {
+                        e.takeDamage(dmg, player.team, 'physical');
+                    }
+                });
+                stInfo.stage = 1;
+                stInfo.timer = 0;
+                skillCooldowns[1] = Math.max(3.0, 5.0 - (sLv - 1) * 0.2);
+            }
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(5.5, 8.0 - (sLv - 1) * 0.5);
+            let dashX = player.x - dirX * 180;
+            let dashY = player.y - dirY * 180;
+            player.startDash(dashX, dashY, 45);
+            player.hasEnhancedAttack = true;
+            damageTexts.push({ x: player.x, y: player.y - 40, value: '🗡️ 2技：反向位移+強普預備', color: '#d7bde2', life: 1.0 });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(11.0, 20.0 - (sLv - 1) * 3.0);
+            player.isSuperArmor = true;
+            player.setStatus('霸體', 0.9);
+            player.isCastingAction = true;
+            let strikeDmg = 50 + (sLv - 1) * 20;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🗡️ 霸體連刺擊!', color: '#8e44ad', life: 1.2 });
+
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    let isLast = (i === 5);
+                    skillEffects.push({ x: player.x, y: player.y, life: 0.2, size: 90, color: 'rgba(142, 68, 173, 0.8)', team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 90) {
+                            e.takeDamage(strikeDmg, player.team, 'physical');
+                            if (isLast) {
+                                e.isStunned = true;
+                                e.setStatus('暈眩', 0.5);
+                                setTimeout(() => { e.isStunned = false; }, 500);
+                            }
+                        }
+                    });
+                    if (isLast) {
+                        player.isSuperArmor = false;
+                        player.isCastingAction = false;
+                    }
+                }, (i + 1) * 150);
+            }
+        }
+    } else if (heroKey === 'ryoma') {
+        if (skillId === 1) {
+            let stInfo = heroSkillStage['ryoma'][1];
+            let dmg = 400 + (sLv - 1) * 30;
+
+            if (!stInfo.canSecondCast) {
+                let dashX = player.x - dirX * 180;
+                let dashY = player.y - dirY * 180;
+                player.startDash(dashX, dashY, 40);
+                
+                let frontX = player.x + dirX * 180;
+                let frontY = player.y + dirY * 180;
+                skillEffects.push({ x: frontX, y: frontY, life: 0.3, size: 70, color: 'rgba(46, 125, 50, 0.8)', team: player.team });
+                
+                entities.forEach(e => {
+                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - frontX, e.y - frontY) <= 75) {
+                        e.takeDamage(dmg, player.team, 'physical');
+                    }
+                });
+                damageTexts.push({ x: player.x, y: player.y - 40, value: `🥷 1技1段後撤斬 (${dmg})`, color: '#00e676', life: 1.0 });
+
+                stInfo.canSecondCast = true;
+                stInfo.timer = 3.0;
+                skillCooldowns[1] = 0;
+            } else {
+                let dashX = player.x + dirX * 180;
+                let dashY = player.y + dirY * 180;
+                player.startDash(dashX, dashY, 45);
+
+                skillEffects.push({ x: dashX, y: dashY, life: 0.3, size: 75, color: 'rgba(46, 125, 50, 0.9)', team: player.team });
+                entities.forEach(e => {
+                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 80) {
+                        e.takeDamage(dmg, player.team, 'physical');
+                    }
+                });
+                damageTexts.push({ x: player.x, y: player.y - 40, value: `🥷 1技2段突進斬 (${dmg})`, color: '#00e676', life: 1.0 });
+
+                stInfo.canSecondCast = false;
+                stInfo.timer = 0;
+                skillCooldowns[1] = 5.0;
+            }
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(5.0, 8.0 - (sLv - 1) * 0.6);
+            let baseDmg = 700 + (sLv - 1) * 50;
+            let tipHitX = player.x + dirX * 200;
+            let tipHitY = player.y + dirY * 200;
+            skillEffects.push({ x: tipHitX, y: tipHitY, life: 0.35, size: 70, color: 'rgba(46, 125, 50, 0.8)', team: player.team });
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team) {
+                    let distFromPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+                    if (distFromPlayer <= 200) {
+                        let isTip = (distFromPlayer >= 120 && distFromPlayer <= 200);
+                        let finalDmg = isTip ? baseDmg * 1.5 : baseDmg;
+                        e.takeDamage(finalDmg, player.team, 'physical');
+                        if (isTip) {
+                            e.isStunned = true;
+                            e.setStatus('暈眩', 1.0);
+                            setTimeout(() => { e.isStunned = false; }, 1000);
+                            damageTexts.push({ x: e.x, y: e.y - 45, value: `🎯 槍尖後半段暈眩 1秒! (${Math.floor(finalDmg)})`, color: '#00e676', life: 1.2 });
+                        } else {
+                            damageTexts.push({ x: e.x, y: e.y - 35, value: `🥷 一刀斬前半 (${Math.floor(finalDmg)})`, color: '#2e7d32', life: 0.8 });
+                        }
+                    }
+                }
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(8.0, 13.0 - (sLv - 1) * 1.5);
+            let strikeDmg = 300 + (sLv - 1) * 100;
+            let healPercent = 0.07 + (sLv - 1) * 0.02;
+            player.isCastingAction = true;
+            player.setStatus('施法中', 0.6);
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🥷 殺戮連刺 (吸血+減2技CD)!', color: '#2e7d32', life: 1.2 });
+
+            for (let i = 0; i < 4; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    let tx = player.x + dirX * 180;
+                    let ty = player.y + dirY * 180;
+                    skillEffects.push({ x: tx, y: ty, life: 0.2, size: 75, color: 'rgba(46, 125, 50, 0.7)', team: player.team });
+                    let hitAny = false;
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 85) {
+                            e.takeDamage(strikeDmg, player.team, 'physical');
+                            hitAny = true;
+                        }
+                    });
+                    if (hitAny) {
+                        let healAmt = player.maxHp * healPercent;
+                        player.hp = Math.min(player.maxHp, player.hp + healAmt);
+                        skillCooldowns[2] = Math.max(0, skillCooldowns[2] - 1.0);
+                        damageTexts.push({ x: player.x, y: player.y - 35, value: `+❤️ ${Math.floor(healAmt)} (2技CD-1s)`, color: '#00e676', life: 0.8 });
+                    }
+                    if (i === 3) {
+                        player.isCastingAction = false;
+                    }
+                }, (i + 1) * 150);
+            }
+        }
+    } else if (heroKey === 'quillen') {
+        if (skillId === 1) {
+            skillCooldowns[1] = Math.max(2.5, 4.0 - (sLv - 1) * 0.3);
+            let dmgPerHit = 350 + (sLv - 1) * 30;
+            let tx = player.x + dirX * 120;
+            let ty = player.y + dirY * 120;
+
+            for (let i = 0; i < 2; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    skillEffects.push({ x: tx, y: ty, life: 0.3, size: 55, color: 'rgba(255, 69, 0, 0.7)', team: player.team });
+                    entities.forEach(e => {
+                        if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 65) {
+                            e.takeDamage(dmgPerHit, player.team, 'physical');
+                            damageTexts.push({ x: e.x, y: e.y - 35, value: `🥷 刺擊 #${i+1} (${dmgPerHit})`, color: '#ff9800', life: 0.8 });
+                        }
+                    });
+                }, i * 150);
+            }
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(6.0, 8.0 - (sLv - 1) * 0.4);
+            let dashX = player.x + dirX * 120;
+            let dashY = player.y + dirY * 120;
+            player.startDash(dashX, dashY, 35);
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 70) {
+                    e.quillenMarkedTimer = 180;
+                    damageTexts.push({ x: e.x, y: e.y - 50, value: '🎯 標記目標 3秒!', color: '#ffeb3b', life: 1.0 });
+                }
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(10.0, 16.0 - (sLv - 1) * 2.0);
+            let dashX = player.x + dirX * 180;
+            let dashY = player.y + dirY * 180;
+            player.startDash(dashX, dashY, 40);
+
+            let stealthFrames = 0;
+            let healInterval = setInterval(() => {
+                stealthFrames += 30;
+                if (!player.alive || stealthFrames >= 240) {
+                    clearInterval(healInterval);
+                    return;
+                }
+                let lostHp = player.maxHp - player.hp;
+                let healAmt = lostHp * 0.06;
+                player.hp = Math.min(player.maxHp, player.hp + healAmt);
+                damageTexts.push({ x: player.x, y: player.y - 35, value: `+❤️ 已損回血 ${Math.floor(healAmt)}`, color: '#00e676', life: 0.7 });
+            }, 500);
+            damageTexts.push({ x: player.x, y: player.y - 45, value: '🥷 隱形4秒 + 持續回血', color: '#9c27b0', life: 1.0 });
+        }
+    } else if (heroKey === 'krixi') {
+        if (skillId === 1) {
+            skillCooldowns[1] = Math.max(5.0, 7.0 - (sLv - 1) * 0.4);
+            let dmg = 600 + (sLv - 1) * 40;
+
+            let startX = player.x;
+            let startY = player.y;
+            let targetX = startX + dirX * 240;
+            let targetY = startY + dirY * 240;
+
+            projectiles.push({
+                x: startX,
+                y: startY,
+                startX: startX,
+                startY: startY,
+                targetX: targetX,
+                targetY: targetY,
+                speed: 9.5,
+                radius: 22,
+                returning: false,
+                owner: player,
+                team: player.team,
+                damage: dmg,
+                hitTargets: new Set()
+            });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(6.0, 8.0 - (sLv - 1) * 0.5);
+            let dmg = 200 + (sLv - 1) * 20;
+            let dist = customDist || 240;
+            let targetX = player.x + dirX * dist;
+            let targetY = player.y + dirY * dist;
+            skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 75, color: 'rgba(0, 210, 255, 0.8)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
+                    e.takeDamage(dmg, player.team, 'magical');
+                    e.isStunned = true;
+                    e.setStatus('暈眩', 0.75);
+                    setTimeout(() => { e.isStunned = false; }, 750);
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: '🧚‍♀️ 法陣擊飛 0.75秒', color: '#00d2ff', life: 1.0 });
+                }
+            });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(16.0, 24.0 - (sLv - 1) * 4.0);
+            let perHitDmg = 400 + (sLv - 1) * 50;
+            damageTexts.push({ x: player.x, y: player.y - 50, value: '🧚‍♀️ 暴風流星雨 (6段打擊)!', color: '#ff69b4', life: 1.2 });
+
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => {
+                    if (!player.alive) return;
+                    let target = entities.find(e => e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 240);
+                    if (target) {
+                        skillEffects.push({ x: target.x, y: target.y, life: 0.2, size: 50, color: 'rgba(255, 105, 180, 0.8)', team: player.team });
+                        target.takeDamage(perHitDmg, player.team, 'magical');
+                    }
+                }, i * 200);
+            }
+        }
+    }
+
     updateSkillUI();
 }
 
@@ -1690,6 +2314,10 @@ function updateSkillUI() {
             } else {
                 labelName = id === 1 ? '狐1技' : (id === 2 ? '狐2技' : '切換人類');
             }
+        } else if (player && player.heroKey === 'murad') {
+            if (id === 1) labelName = player.muradStage1Count === 3 ? '返回影子' : `1技(${player.muradStage1Count}/3)`;
+            else if (id === 2) labelName = '時空結界';
+            else if (id === 3) labelName = player.muradIsUnlocked ? '時空殺陣(已解封)' : '殺陣(未解封)';
         }
         descLbl.innerText = `Lv.${sLv} ${labelName}`;
 
@@ -1771,8 +2399,7 @@ function gameLoop() {
     entities.forEach(e => e.update());
 
     projectiles.forEach((p, idx) => {
-        // 莉莉安人類型態 2 技法球判定（安全支援所有目標：英雄、小兵、野怪）
-        if (p.isLilianaHumanBall) {
+        if (p.isLilianaBall) {
             let dx = p.targetX - p.x;
             let dy = p.targetY - p.y;
             let dist = Math.hypot(dx, dy);
@@ -1793,7 +2420,7 @@ function gameLoop() {
                         e.takeDamage(p.damage, p.team, 'magical');
                         e.isStunned = true;
                         e.setStatus('暈眩', 1.5);
-                        setTimeout(() => { if (e && e.alive) e.isStunned = false; }, 1500);
+                        setTimeout(() => { e.isStunned = false; }, 1500);
                         skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 75, color: 'rgba(224, 64, 251, 0.85)', team: p.team });
                         damageTexts.push({ x: e.x, y: e.y - 45, value: `🦊 靈魂法球命中！暈眩 1.5秒 (${p.damage})`, color: '#e040fb', life: 1.2 });
                     }
@@ -1801,6 +2428,59 @@ function gameLoop() {
             });
 
             if (hit || (p.x === p.targetX && p.y === p.targetY)) {
+                projectiles.splice(idx, 1);
+            }
+            return;
+        }
+
+        if (p.isRazFireball) {
+            let dx = p.targetX - p.x;
+            let dy = p.targetY - p.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist <= p.speed) {
+                p.x = p.targetX;
+                p.y = p.targetY;
+            } else {
+                p.x += (dx / dist) * p.speed;
+                p.y += (dy / dist) * p.speed;
+            }
+
+            let hitEnemy = null;
+            entities.forEach(e => {
+                if (!hitEnemy && !(e instanceof Building) && e.alive && e.team !== p.team) {
+                    if (Math.hypot(e.x - p.x, e.y - p.y) <= p.radius + e.radius) {
+                        hitEnemy = e;
+                    }
+                }
+            });
+
+            if (hitEnemy) {
+                hitEnemy.takeDamage(p.damage, p.team, 'magical');
+                hitEnemy.isSlowed = true;
+                hitEnemy.slowFactor = p.slowRatio;
+                setTimeout(() => { hitEnemy.isSlowed = false; }, 2000);
+                skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 70, color: 'rgba(255, 69, 0, 0.85)', team: p.team });
+                damageTexts.push({ x: hitEnemy.x, y: hitEnemy.y - 40, value: `🔥 火球命中! 緩速${Math.round(p.slowRatio*100)}%`, color: '#ff4444', life: 1.2 });
+
+                if (!p.hasBounced) {
+                    let secondTarget = entities.find(e => !(e instanceof Building) && e.alive && e.team !== p.team && e !== hitEnemy && Math.hypot(e.x - hitEnemy.x, e.y - hitEnemy.y) <= 200);
+                    if (secondTarget) {
+                        let bounceDmg = p.damage * 0.75;
+                        secondTarget.takeDamage(bounceDmg, p.team, 'magical');
+                        secondTarget.isSlowed = true;
+                        secondTarget.slowFactor = p.slowRatio;
+                        setTimeout(() => { secondTarget.isSlowed = false; }, 2000);
+                        skillEffects.push({ x: secondTarget.x, y: secondTarget.y, life: 0.4, size: 60, color: 'rgba(255, 140, 0, 0.8)', team: p.team });
+                        damageTexts.push({ x: secondTarget.x, y: secondTarget.y - 45, value: `🔥 火球彈射！(${Math.floor(bounceDmg)})`, color: '#ff9800', life: 1.2 });
+                    }
+                }
+
+                projectiles.splice(idx, 1);
+                return;
+            }
+
+            if (p.x === p.targetX && p.y === p.targetY) {
                 projectiles.splice(idx, 1);
             }
             return;
@@ -1832,6 +2512,51 @@ function gameLoop() {
             }
             return;
         }
+
+        if (!p.returning) {
+            let dx = p.targetX - p.x;
+            let dy = p.targetY - p.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist <= p.speed) {
+                p.x = p.targetX;
+                p.y = p.targetY;
+                p.returning = true;
+                p.hitTargets.clear();
+            } else {
+                p.x += (dx / dist) * p.speed;
+                p.y += (dy / dist) * p.speed;
+            }
+        } else {
+            let ownerX = p.owner.x;
+            let ownerY = p.owner.y;
+            let dx = ownerX - p.x;
+            let dy = ownerY - p.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist <= p.speed + 15) {
+                projectiles.splice(idx, 1);
+                return;
+            } else {
+                p.x += (dx / dist) * (p.speed * 1.15);
+                p.y += (dy / dist) * (p.speed * 1.15);
+            }
+        }
+
+        entities.forEach(e => {
+            if (!(e instanceof Building) && e.alive && e.team !== p.team) {
+                let distToEnemy = Math.hypot(e.x - p.x, e.y - p.y);
+                if (distToEnemy <= p.radius + e.radius && !p.hitTargets.has(e)) {
+                    p.hitTargets.add(e);
+                    e.takeDamage(p.damage, p.team, 'magical');
+                    damageTexts.push({ 
+                        x: e.x, y: e.y - 40, 
+                        value: p.returning ? `🧚‍♀️ 蝴蝶回程 (${p.damage})` : `🧚‍♀️ 蝴蝶去程 (${p.damage})`, 
+                        color: '#ff69b4', life: 0.9 
+                    });
+                }
+            }
+        });
     });
 
     if (player) {
@@ -1868,6 +2593,25 @@ function gameLoop() {
         ctx.stroke();
     });
     ctx.restore();
+
+    if (player && player.heroKey === 'murad' && player.muradShadowPos) {
+        let sx = player.muradShadowPos.x - camera.x;
+        let sy = player.muradShadowPos.y - camera.y;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(sx, sy, 28, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 210, 255, 0.35)';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#00d2ff';
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.font = 'bold 12px Arial';
+        ctx.fillStyle = '#00d2ff';
+        ctx.textAlign = 'center';
+        ctx.fillText('⏳ 影子位置', sx, sy - 34);
+        ctx.restore();
+    }
 
     afterimages.forEach((af, idx) => {
         af.life -= 1 / 60;
@@ -2011,8 +2755,8 @@ function gameLoop() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.arc(sx, sy, p.isLilianaHumanBall ? 24 : (p.isLilianaSpiritBall ? 28 : p.radius), 0, Math.PI * 2);
-        ctx.fillStyle = p.isLilianaHumanBall ? 'rgba(224, 64, 251, 0.95)' : (p.isLilianaSpiritBall ? 'rgba(171, 71, 188, 0.95)' : 'rgba(255, 105, 180, 0.9)');
+        ctx.arc(sx, sy, p.isLilianaBall ? 24 : (p.isRazFireball ? 22 : (p.isLilianaSpiritBall ? 28 : p.radius)), 0, Math.PI * 2);
+        ctx.fillStyle = p.isLilianaBall ? 'rgba(224, 64, 251, 0.95)' : (p.isRazFireball ? 'rgba(255, 140, 0, 0.95)' : (p.isLilianaSpiritBall ? 'rgba(171, 71, 188, 0.95)' : 'rgba(255, 105, 180, 0.9)'));
         ctx.fill();
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#ffffff';
@@ -2097,7 +2841,7 @@ function gameLoop() {
         ctx.fillStyle = e.team === 'blue' ? '#00e676' : '#ff3366';
         ctx.fillRect(barX, barY, barW * hpRatio, barH);
 
-        // 1000 血量間距刻度
+        // 血量 1000 間距刻度
         ctx.save();
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.lineWidth = 1.5;
@@ -2134,11 +2878,83 @@ function gameLoop() {
             let passiveBarY = currentBottomY + 2;
             let passiveBarH = 4;
             
-            if (e.heroKey === 'liliana') {
+            if (e.heroKey === 'murad') {
+                let slotW = (barW - 3 * 2) / 4;
+                for (let i = 0; i < 4; i++) {
+                    let slotX = barX + i * (slotW + 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    if (i < e.muradStacks) {
+                        ctx.fillStyle = '#00d2ff';
+                        ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    }
+                }
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'liliana') {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
                 ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
                 ctx.fillStyle = e.lilianaForm === 'human' ? '#ffffff' : '#ab47bc';
                 ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'raz') {
+                let ratio = e.razHasEnhancedAtk ? 1.0 : Math.min(1.0, e.razPassiveTimer / 5.0);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
+                ctx.fillStyle = '#ff9800';
+                ctx.fillRect(barX, passiveBarY, barW * ratio, passiveBarH);
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'valhein') {
+                let slotW = (barW - 3 * 2) / 4;
+                for (let i = 0; i < 4; i++) {
+                    let slotX = barX + i * (slotW + 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    if (i < e.valheinPassiveStacks) {
+                        ctx.fillStyle = '#ffd700';
+                        ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    }
+                }
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'nakroth') {
+                let slotW = (barW - 3 * 2) / 4;
+                for (let i = 0; i < 4; i++) {
+                    let slotX = barX + i * (slotW + 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    if (i < e.nakrothPassiveCounter) {
+                        ctx.fillStyle = '#d7bde2';
+                        ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    }
+                }
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'ryoma') {
+                let intervalReduction = (e.level - 1) * 0.1;
+                let maxInterval = Math.max(1.0, 5.0 - intervalReduction);
+                let ratio = e.hasEnhancedAttack ? 1.0 : Math.max(0, 1.0 - (e.ryomaPassiveTimer / maxInterval));
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
+                ctx.fillStyle = '#00e676';
+                ctx.fillRect(barX, passiveBarY, barW * ratio, passiveBarH);
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'alice') {
+                let ratio = Math.min(1.0, e.outOfCombatTimer / 300);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
+                ctx.fillStyle = e.outOfCombatTimer >= 300 ? '#e040fb' : '#ba68c8';
+                ctx.fillRect(barX, passiveBarY, barW * ratio, passiveBarH);
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'tarra') {
+                let slotW = (barW - 2 * 2) / 3;
+                for (let i = 0; i < 3; i++) {
+                    let slotX = barX + i * (slotW + 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    if (i < e.tarraBuffStacks) {
+                        ctx.fillStyle = '#ff9800';
+                        ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    }
+                }
                 currentBottomY = passiveBarY + passiveBarH;
             }
         }
