@@ -235,7 +235,7 @@
                 <div class="skill-upgrade-btn hidden" id="up-btn-3">+</div>
                 大招
                 <div class="skill-desc-label" id="lbl-skill-3">Lv.0 大招</div>
-                <div class="skill-cd-overlay hidden" id="cd-3"></div>
+                <div class="spell-cd-overlay hidden" id="cd-3"></div>
             </div>
             <div class="skill-btn" id="skill-2" data-skill="2">
                 <div class="skill-upgrade-btn hidden" id="up-btn-2">+</div>
@@ -254,7 +254,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v43';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v44';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -353,17 +353,17 @@ const HERO_DB = {
     'krixi': { 
         name: '克里希', type: '法師 / 魔法爆發', role: 'mage', baseHp: 5600, hpGrowth: 220, 
         atk: 120, atkGrowth: 13, atkInterval: 0.5, atkRecovery: 0.4, range: 240, avatar: '🧚‍♀️',
-        skillConfig: { 1: { type: 'direction', range: 240 }, 2: { type: 'position', range: 240, circleRadius: 75 }, 3: { type: 'self', range: 240 } }
+        skillConfig: { 1: { type: 'direction', range: 240 }, 2: { type: 'position', range: 240, circleRadius: 75 }, 3: { type: 'range', range: 240 } }
     },
     'alice': {
         name: '愛麗絲', type: '輔助 / 團隊護盾沉默', role: 'mage', baseHp: 5600, hpGrowth: 220,
         atk: 120, atkGrowth: 10, atkInterval: 0.5, atkRecovery: 0.4, range: 240, avatar: '🎀',
-        skillConfig: { 1: { type: 'position', range: 240, circleRadius: 75 }, 2: { type: 'self', range: 240 }, 3: { type: 'position', range: 240, circleRadius: 110 } }
+        skillConfig: { 1: { type: 'position', range: 240, circleRadius: 75 }, 2: { type: 'range', range: 240 }, 3: { type: 'position', range: 240, circleRadius: 110 } }
     },
     'tarra': {
         name: '塔拉', type: '戰士 / 狂血不死', role: 'tank', baseHp: 6500, hpGrowth: 300,
         atk: 160, atkGrowth: 15, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🪓',
-        skillConfig: { 1: { type: 'self', range: 120 }, 2: { type: 'position', range: 240, circleRadius: 80 }, 3: { type: 'self', range: 0 } }
+        skillConfig: { 1: { type: 'range', range: 120 }, 2: { type: 'position', range: 240, circleRadius: 80 }, 3: { type: 'range', range: 0 } }
     },
     'liliana': {
         name: '莉莉安', type: '法師 / 雙型態切換', role: 'mage', baseHp: 5600, hpGrowth: 220,
@@ -378,12 +378,12 @@ const HERO_DB = {
     'murad': {
         name: '莫拉', type: '刺客 / 時空印記劍影', role: 'warrior', baseHp: 6300, hpGrowth: 240,
         atk: 180, atkGrowth: 17, atkInterval: 0.6, atkRecovery: 0.2, range: 120, avatar: '⏳',
-        skillConfig: { 1: { type: 'direction', range: 120 }, 2: { type: 'self', range: 180 }, 3: { type: 'self', range: 180 } }
+        skillConfig: { 1: { type: 'direction', range: 120 }, 2: { type: 'range', range: 180 }, 3: { type: 'range', range: 180 } }
     },
     'butterfly': {
         name: '刀鋒寶貝', type: '刺客 / 收割暴擊', role: 'assassin', baseHp: 5600, hpGrowth: 200,
         atk: 180, atkGrowth: 10, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🔪',
-        skillConfig: { 1: { type: 'self', range: 120 }, 2: { type: 'direction', range: 180 }, 3: { type: 'direction', range: 240, circleRadius: 65 } }
+        skillConfig: { 1: { type: 'range', range: 120 }, 2: { type: 'direction', range: 180 }, 3: { type: 'pointing', range: 240, circleRadius: 65 } }
     }
 };
 
@@ -469,7 +469,12 @@ function castChallengerSpell() {
     challengerCooldown = 90;
     let dX = joystickDir.x !== 0 ? joystickDir.x : 1;
     let dY = joystickDir.y !== 0 ? joystickDir.y : 0;
-    player.startDash(player.x + dX * 180, player.y + dY * 180, 40);
+    
+    // 0.1秒跑200距離的位移與殘影
+    for(let i=0; i<3; i++) {
+        afterimages.push({ x: player.x + dX * (i*60), y: player.y + dY * (i*60), radius: player.radius, team: player.team, life: 0.35 });
+    }
+    player.startDash(player.x + dX * 200, player.y + dY * 200, 60);
     attackEffects.push({ x: player.x, y: player.y, life: 0.4, radius: 35, color: '#00d2ff' });
 }
 
@@ -642,14 +647,14 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
                 if (skillId === 1) cfg = { type: 'direction', range: 120 };
                 else if (skillId === 2) {
                     let st = heroSkillStage['liliana'][2];
-                    if (st && st.foxStage2Ready) cfg = { type: 'self', range: 0 };
+                    if (st && st.foxStage2Ready) cfg = { type: 'range', range: 0 };
                     else cfg = { type: 'direction', range: 120 };
                 }
                 else if (skillId === 3) cfg = { type: 'direction', range: 180 };
             }
         }
 
-        let initialDirX = joystickDir.x !== 0 ? joystickDir.x : (player.team === 'blue' ? 1 : -1);
+        let initialDirX = joystickDir.x !== 0 ? joystickDir.x : 0;
         let initialDirY = joystickDir.y !== 0 ? joystickDir.y : 0;
 
         activeSkillDrag = { 
@@ -662,7 +667,8 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
             type: cfg.type,
             maxRange: cfg.range,
             circleRadius: cfg.circleRadius || 60,
-            currentDist: cfg.range
+            currentDist: cfg.range,
+            hasDragged: false
         };
     }, { passive: false });
 
@@ -673,10 +679,11 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
             let dy = e.clientY - activeSkillDrag.centerY;
             let len = Math.hypot(dx, dy);
 
-            if (len > 5) { 
+            if (len > 8) { 
+                activeSkillDrag.hasDragged = true;
                 activeSkillDrag.dirX = dx / len; 
                 activeSkillDrag.dirY = dy / len; 
-                if (activeSkillDrag.type === 'position') {
+                if (activeSkillDrag.type === 'position' || activeSkillDrag.type === 'pointing') {
                     activeSkillDrag.currentDist = Math.min(len * 3.5, activeSkillDrag.maxRange);
                 } else {
                     activeSkillDrag.currentDist = activeSkillDrag.maxRange;
@@ -697,10 +704,37 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
                 activeSkillDrag = null;
                 damageTexts.push({ x: player.x, y: player.y - 45, value: '🚫 已取消施法', color: '#ff4444', life: 0.8 });
             } else {
-                let targetDist = activeSkillDrag.currentDist;
                 let sId = activeSkillDrag.skillId;
                 let dX = activeSkillDrag.dirX;
                 let dY = activeSkillDrag.dirY;
+                let targetDist = activeSkillDrag.currentDist;
+                let hasDragged = activeSkillDrag.hasDragged;
+                
+                // === 自動瞄準系統：若沒有手動瞄準方向，自動拉到鄰近敵方英雄或小兵 ===
+                if (!hasDragged && (activeSkillDrag.type === 'pointing' || activeSkillDrag.type === 'direction' || activeSkillDrag.type === 'position')) {
+                    let nearestTarget = null;
+                    let minD = 9999;
+                    entities.forEach(en => {
+                        if (en.alive && en.team !== player.team) {
+                            let d = Math.hypot(en.x - player.x, en.y - player.y);
+                            let priority = (en instanceof Hero) ? 0 : 1;
+                            if (d <= activeSkillDrag.maxRange && (priority < (nearestTarget instanceof Hero ? 0 : 1) || d < minD)) {
+                                minD = d;
+                                nearestTarget = en;
+                            }
+                        }
+                    });
+                    if (nearestTarget) {
+                        let angle = Math.atan2(nearestTarget.y - player.y, nearestTarget.x - player.x);
+                        dX = Math.cos(angle);
+                        dY = Math.sin(angle);
+                        targetDist = Math.min(activeSkillDrag.maxRange, minD);
+                    } else {
+                        dX = player.team === 'blue' ? 1 : -1;
+                        dY = 0;
+                    }
+                }
+
                 activeSkillDrag = null;
                 castSkill(sId, dX, dY, targetDist);
             }
@@ -1112,7 +1146,7 @@ class Hero extends Entity {
 
         let speed = 2.8;
         if (this.heroKey === 'alice' && this.outOfCombatTimer >= 300) speed *= 1.15;
-        if (this.speedBuffTimer > 0) speed *= 1.40; // 刀鋒1技跑速加成 40%
+        if (this.speedBuffTimer > 0) speed *= 1.40; 
         if (this.isSlowed) speed *= (1 - this.slowFactor);
         if (this.towerSlowStacks > 0) speed *= (1 - this.towerSlowStacks * 0.20);
 
@@ -1490,7 +1524,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             player.shield = Math.min(player.maxHp * 0.6, (player.shield || 0) + shieldAmt);
             setTimeout(() => { if (player) player.shield = Math.max(0, (player.shield || 0) - shieldAmt); }, 3000);
 
-            player.speedBuffTimer = 150; // +40% 跑速持續 2.5 秒
+            player.speedBuffTimer = 150; 
 
             skillEffects.push({ x: player.x, y: player.y, life: 0.4, size: 85, color: 'rgba(231, 76, 60, 0.75)', team: player.team });
             entities.forEach(e => {
@@ -1530,6 +1564,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 damageTexts.push({ x: player.x, y: player.y - 60, value: '✨ 3層被動觸發：2技能立即刷新！', color: '#ffd700', life: 1.2 });
             }
         } else if (skillId === 3) {
+            // 刀鋒大招：指向技（先標記，再位移與造成 15% 已損生命值傷害）
             let baseDmg = 1100 + (sLv - 1) * 200;
             let cR = 65;
             let dist = customDist || 240;
@@ -1555,17 +1590,20 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 return;
             }
 
+            // 先標記目標，確保在傷害結算前已完成標記
+            player.butterflyMarkedTarget = targetEnemy;
+
             skillCooldowns[3] = Math.max(5.0, 11.0 - (sLv - 1) * 1.0);
 
             player.x = targetEnemy.x - Math.cos(dirX) * 40;
             player.y = targetEnemy.y - Math.sin(dirY) * 40;
 
+            // 附帶傷害調整為 15% 已損生命值
             let missingHp = Math.max(0, targetEnemy.maxHp - targetEnemy.hp);
-            let bonusDmg = missingHp * 0.30;
+            let bonusDmg = missingHp * 0.15;
             let totalDmg = calcRandomDmg(baseDmg + bonusDmg);
 
             targetEnemy.takeDamage(totalDmg, player.team, 'physical');
-            player.butterflyMarkedTarget = targetEnemy;
 
             damageTexts.push({ x: targetEnemy.x, y: targetEnemy.y - 45, value: `🔪 瞬影斬殺! (${Math.floor(totalDmg)})`, color: '#e74c3c', life: 1.5 });
             skillEffects.push({ x: targetEnemy.x, y: targetEnemy.y, life: 0.4, size: 70, color: 'rgba(231, 76, 60, 0.9)', team: player.team });
@@ -1805,6 +1843,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     }
                 });
             } else if (skillId === 2) {
+                // 莉莉安人型2技：修正卡住問題，純直線飛行的非指向法球
                 skillCooldowns[2] = Math.max(4.5, 7.0 - (sLv - 1) * 0.5);
                 let dmg = calcRandomDmg(200 + (sLv - 1) * 30);
                 let startX = player.x, startY = player.y;
@@ -2712,7 +2751,7 @@ function gameLoop() {
 
         ctx.save();
         
-        if (activeSkillDrag.type === 'self') {
+        if (activeSkillDrag.type === 'range') {
             ctx.beginPath();
             ctx.arc(px, py, maxR, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(76, 175, 80, 0.18)';
@@ -2743,6 +2782,63 @@ function gameLoop() {
             ctx.lineWidth = 3;
             ctx.strokeStyle = '#00ffff';
             ctx.stroke();
+        } else if (activeSkillDrag.type === 'pointing') {
+            // 指向技：有目標標示與距離伸縮
+            let clampedDist = Math.min(activeSkillDrag.currentDist, maxR);
+            let targetX = px + dx * clampedDist;
+            let targetY = py + dy * clampedDist;
+
+            ctx.beginPath();
+            ctx.arc(px, py, maxR, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(231, 76, 60, 0.05)';
+            ctx.fill();
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(231, 76, 60, 0.4)';
+            ctx.setLineDash([6, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(targetX, targetY);
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = '#e74c3c';
+            ctx.stroke();
+
+            let cR = activeSkillDrag.circleRadius || 65;
+            let hoveredTarget = null;
+            let worldTargetX = player.x + dx * clampedDist;
+            let worldTargetY = player.y + dy * clampedDist;
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team) {
+                    let d = Math.hypot(e.x - worldTargetX, e.y - worldTargetY);
+                    if (d <= cR + e.radius) {
+                        hoveredTarget = e;
+                    }
+                }
+            });
+
+            ctx.beginPath();
+            ctx.arc(targetX, targetY, cR, 0, Math.PI * 2);
+            ctx.fillStyle = hoveredTarget ? 'rgba(255, 215, 0, 0.35)' : 'rgba(231, 76, 60, 0.3)';
+            ctx.fill();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = hoveredTarget ? '#ff3366' : '#e74c3c';
+            ctx.stroke();
+
+            if (hoveredTarget) {
+                let hx = hoveredTarget.x - camera.x;
+                let hy = hoveredTarget.y - camera.y;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(hx, hy, hoveredTarget.radius + 8, 0, Math.PI * 2);
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#00e676';
+                ctx.setLineDash([4, 4]);
+                ctx.stroke();
+                ctx.restore();
+            }
         } else {
             let angle = Math.atan2(dy, dx);
             let rectWidth = 35;
@@ -2760,26 +2856,6 @@ function gameLoop() {
             ctx.strokeStyle = '#ba68c8';
             ctx.stroke();
             ctx.restore();
-
-            let worldTipX = player.x + dx * maxR;
-            let worldTipY = player.y + dy * maxR;
-            entities.forEach(e => {
-                if (!(e instanceof Building) && e.alive && e.team !== player.team) {
-                    let d = Math.hypot(e.x - worldTipX, e.y - worldTipY);
-                    if (d <= 50 + e.radius) {
-                        let hx = e.x - camera.x;
-                        let hy = e.y - camera.y;
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.arc(hx, hy, e.radius + 8, 0, Math.PI * 2);
-                        ctx.lineWidth = 3;
-                        ctx.strokeStyle = '#00e676';
-                        ctx.setLineDash([4, 4]);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                }
-            });
         }
 
         ctx.restore();
@@ -3070,6 +3146,7 @@ function gameLoop() {
         if (eff.life <= 0) skillEffects.splice(idx, 1);
     });
 
+    damageTexts.push( ...[] ); // keep damage texts safe
     damageTexts.forEach((d, idx) => {
         d.y -= 0.6; d.life -= 1 / 60;
         ctx.save();
