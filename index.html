@@ -254,7 +254,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v45';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v46';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -329,11 +329,7 @@ const HERO_DB = {
     'valhein': { 
         name: '凡恩', type: '射手 / 遠距輸出', role: 'shooter', baseHp: 5200, hpGrowth: 200, 
         atk: 200, atkGrowth: 15, atkInterval: 0.6, atkRecovery: 0.3, range: 240, avatar: '🎯',
-        skillConfig: { 
-            1: { type: 'position', range: 240, circleRadius: 65 }, 
-            2: { type: 'position', range: 240, circleRadius: 65 }, 
-            3: { type: 'direction', range: 240 } 
-        }
+        skillConfig: { 1: { type: 'position', range: 240, circleRadius: 65 }, 2: { type: 'position', range: 240, circleRadius: 65 }, 3: { type: 'direction', range: 240 } }
     },
     'nakroth': { 
         name: '納克羅斯', type: '刺客 / 高機動性', role: 'assassin', baseHp: 5600, hpGrowth: 200, 
@@ -388,11 +384,12 @@ const HERO_DB = {
     'lindis': {
         name: '蘭鐸', type: '射手 / 靈動刺客', role: 'shooter', baseHp: 5200, hpGrowth: 200, 
         atk: 120, atkGrowth: 5, atkInterval: 0.3, atkRecovery: 0.15, range: 240, avatar: '🦋',
-        skillConfig: { 
-            1: { type: 'direction', range: 180 }, 
-            2: { type: 'range', range: 120 },     
-            3: { type: 'direction', range: 240 }  
-        }
+        skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'range', range: 120 }, 3: { type: 'direction', range: 240 } }
+    },
+    'slimz': {
+        name: '史蘭茲', type: '射手 / 長矛兔王', role: 'shooter', baseHp: 5100, hpGrowth: 190,
+        atk: 100, atkGrowth: 10, atkInterval: 0.4, atkRecovery: 0.1, range: 260, avatar: '🐰',
+        skillConfig: { 1: { type: 'direction', range: 480 }, 2: { type: 'position', range: 240, circleRadius: 70 }, 3: { type: 'range', range: 0 } }
     }
 };
 
@@ -415,6 +412,7 @@ const SKILL_MAX_LEVEL_ULT = 3;
 
 let heroSkillStage = {
     'lindis': {},
+    'slimz': { atks: 0, ultActiveTimer: 0 },
     'nakroth': { 1: { stage: 1, timer: 0 } },
     'ryoma': { 1: { stage: 1, timer: 0 } },
     'liliana': { 2: { canSecondCast: false, hitHero: false, foxStage2Ready: false } },
@@ -528,6 +526,7 @@ function confirmStartGame() {
 
     heroSkillStage = {
         'lindis': {},
+        'slimz': { atks: 0, ultActiveTimer: 0 },
         'nakroth': { 1: { stage: 1, timer: 0 } },
         'ryoma': { 1: { stage: 1, timer: 0 } },
         'liliana': { 2: { canSecondCast: false, hitHero: false, foxStage2Ready: false } },
@@ -815,7 +814,7 @@ class Building extends Entity {
     constructor(x, y, team, type) {
         super(x, y, team, type === 'core' ? 55 : 45);
         this.type = type;
-        this.maxHp = type === 'core' ? 300000 : 30000; 
+        this.maxHp = type === 'core' ? 300000 : 18000;[cite: 3]
         this.hp = this.maxHp;
         this.atkTimer = 0;
         this.attackRange = 300; 
@@ -834,6 +833,7 @@ class Building extends Entity {
             }
         }
         this.hp -= dmg;
+        damageTexts.push({ x: this.x, y: this.y - 45, value: `-${Math.floor(dmg)}`, color: '#ff4444', life: 0.8 });
         if (this.hp <= 0) {
             this.hp = 0;
             this.alive = false;
@@ -923,7 +923,9 @@ class Minion extends Entity {
         if (nearestTarget && minDist <= this.range) {
             if (this.atkCooldown === 0) {
                 this.atkCooldown = 60;
-                nearestTarget.takeDamage(calcRandomDmg(this.atk), this.team, 'physical');
+                let dmg = calcRandomDmg(this.atk);
+                nearestTarget.takeDamage(dmg, this.team, 'physical');
+                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `${Math.floor(dmg)}`, color: '#f3c654', life: 0.8 });
             }
         } else {
             let destX = nearestTarget ? nearestTarget.x : this.targetX;
@@ -943,6 +945,13 @@ class Minion extends Entity {
                 e.gainExpAndGold(10, 25);
                 if (e.heroKey === 'butterfly') {
                     e.butterflyStacks = Math.min(3, e.butterflyStacks + 1);
+                }
+                if (e.heroKey === 'slimz') {
+                    let st = heroSkillStage['slimz'];
+                    if (st && st.ultActiveTimer > 0) {
+                        st.ultActiveTimer += 1.5; // 擊殺小兵增加1.5秒
+                        damageTexts.push({ x: e.x, y: e.y - 55, value: '⏱️ 大招時間+1.5s', color: '#00e676', life: 1.0 });
+                    }
                 }
             }
         });
@@ -1058,6 +1067,13 @@ class Hero extends Entity {
             if (this.towerSlowTimer === 0) this.towerSlowStacks = 0;
         }
 
+        if (this.heroKey === 'slimz') {
+            let st = heroSkillStage['slimz'];
+            if (st && st.ultActiveTimer > 0) {
+                st.ultActiveTimer -= 1 / 60;
+            }
+        }
+
         if (this.heroKey === 'murad' && this.muradTimerActive) {
             this.muradWindowTimer--;
             if (this.muradWindowTimer <= 0) {
@@ -1074,19 +1090,20 @@ class Hero extends Entity {
                 let gb = st.globalButterfly;
                 gb.timer--;
                 let progress = (300 - gb.timer) / 300;
-                if (gb.centerPos) {
-                    let angle = progress * Math.PI * 2;
+                if (gb.type === 2 && gb.centerPos) {
+                    let angle = -progress * Math.PI * 2;
                     gb.pos = {
-                        x: gb.centerPos.x + Math.cos(angle) * 120,
-                        y: gb.centerPos.y + Math.sin(angle) * 120
+                        x: this.x + Math.cos(angle) * 120,
+                        y: this.y + Math.sin(angle) * 120
                     };
-                } else if (gb.dirX !== undefined && (300 - gb.timer) <= 180) {
-                    gb.pos.x += gb.dirX * 2.0;
-                    gb.pos.y += gb.dirY * 2.0;
+                } else if (gb.type === 3 && gb.dirX !== undefined && (300 - gb.timer) <= 180) {
+                    gb.pos.x += gb.dirX * 2.5;
+                    gb.pos.y += gb.dirY * 2.5;
                 }
 
                 if (gb.timer <= 0) {
                     gb.active = false;
+                    gb.type = null;
                     gb.pos = null;
                 }
             }
@@ -1189,6 +1206,10 @@ class Hero extends Entity {
         let speed = 2.8;
         if (this.heroKey === 'alice' && this.outOfCombatTimer >= 300) speed *= 1.15;
         if (this.speedBuffTimer > 0) speed *= 1.40; 
+        if (this.heroKey === 'slimz') {
+            let st = heroSkillStage['slimz'];
+            if (st && st.ultActiveTimer > 0) speed *= 1.5;
+        }
         if (this.isSlowed) speed *= (1 - this.slowFactor);
         if (this.towerSlowStacks > 0) speed *= (1 - this.towerSlowStacks * 0.20);
 
@@ -1239,7 +1260,9 @@ class Hero extends Entity {
                 let distToOpponent = Math.hypot(player.x - this.x, player.y - this.y);
                 if (distToOpponent <= this.range + player.radius && this.atkCooldown <= 0) {
                     this.atkCooldown = 25;
-                    player.takeDamage(calcRandomDmg(this.getEffectiveAtk()), this.team, 'physical');
+                    let dmg = calcRandomDmg(this.getEffectiveAtk());
+                    player.takeDamage(dmg, this.team, 'physical');
+                    damageTexts.push({ x: player.x, y: player.y - 35, value: `${Math.floor(dmg)}`, color: '#f3c654', life: 0.8 });
                 }
                 return;
             }
@@ -1282,7 +1305,9 @@ class Hero extends Entity {
                     if (this.atkCooldown <= 0) {
                         this.atkCooldown = 25;
                         this.attackLockTimer = 15;
-                        nearestEnemy.takeDamage(calcRandomDmg(this.getEffectiveAtk()), this.team, 'physical');
+                        let dmg = calcRandomDmg(this.getEffectiveAtk());
+                        nearestEnemy.takeDamage(dmg, this.team, 'physical');
+                        damageTexts.push({ x: nearestEnemy.x, y: nearestEnemy.y - 35, value: `${Math.floor(dmg)}`, color: '#f3c654', life: 0.8 });
                         this.outOfCombatTimer = 0;
                     }
                 } else {
@@ -1359,6 +1384,13 @@ class Hero extends Entity {
                 if (player.heroKey === 'butterfly') {
                     player.butterflyStacks = Math.min(3, player.butterflyStacks + 2);
                 }
+                if (player.heroKey === 'slimz') {
+                    let st = heroSkillStage['slimz'];
+                    if (st && st.ultActiveTimer > 0) {
+                        st.ultActiveTimer += 4.0; // 擊殺英雄增加4秒
+                        damageTexts.push({ x: player.x, y: player.y - 55, value: '⏱️ 大招時間+4s', color: '#00e676', life: 1.2 });
+                    }
+                }
             }
 
             if (player && player.heroKey === 'butterfly' && player.butterflyMarkedTarget === this) {
@@ -1398,6 +1430,40 @@ function performAttack() {
     if (nearestTarget) {
         player.outOfCombatTimer = 0; 
         
+        if (player.heroKey === 'slimz') {
+            let intervalReduction = (player.level - 1) * 0.01;
+            let currentInterval = Math.max(0.1, 0.4 - intervalReduction);
+            let st = heroSkillStage['slimz'];
+            if (st && st.ultActiveTimer > 0) currentInterval -= 0.05;
+
+            player.atkCooldown = Math.round(currentInterval * 60);
+            player.attackLockTimer = Math.round(0.1 * 60);
+
+            st.atks++;
+            let baseDmg = player.getEffectiveAtk();
+            if (st.ultActiveTimer > 0) {
+                let sLv = skillLevels[3] || 1;
+                let flatAdd = 200 + (sLv - 1) * 200;
+                let maxHpAdd = nearestTarget.maxHp * 0.01;
+                baseDmg += (flatAdd + maxHpAdd);
+            }
+
+            let isPassiveProc = false;
+            if (st.atks >= 3) {
+                st.atks = 0;
+                isPassiveProc = true;
+                let sLv1 = skillLevels[1] || 1;
+                let passiveDmg = 300 + (sLv1 - 1) * 10;
+                baseDmg += passiveDmg;
+            }
+
+            let totalDmg = calcRandomDmg(baseDmg);
+            nearestTarget.takeDamage(totalDmg, player.team, 'physical');
+            damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `${Math.floor(totalDmg)}`, color: isPassiveProc ? '#00d2ff' : '#ffd700', life: 0.9 });
+            attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#ff9800' });
+            return;
+        }
+
         if (player.heroKey === 'lindis') {
             player.atkCooldown = Math.round(player.heroData.atkInterval * 60);
             player.attackLockTimer = Math.round(player.heroData.atkRecovery * 60);
@@ -1539,7 +1605,9 @@ function executeAiSkill(aiObj, skillId, dirX, dirY) {
     
     entities.forEach(e => {
         if (!(e instanceof Building) && e.alive && e.team !== aiObj.team && Math.hypot(e.x - targetX, e.y - targetY) <= 80) {
-            e.takeDamage(calcRandomDmg(350), aiObj.team, 'magical');
+            let dmg = calcRandomDmg(350);
+            e.takeDamage(dmg, aiObj.team, 'magical');
+            damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ff4444', life: 0.8 });
         }
     });
 }
@@ -1558,62 +1626,106 @@ function castSkill(skillId, dirX, dirY, customDist) {
     let heroKey = player.heroKey;
     player.outOfCombatTimer = 0;
 
+    if (heroKey === 'slimz') {
+        if (skillId === 1) {
+            skillCooldowns[1] = Math.max(2.0, 7.0 - (sLv - 1) * 0.5);
+            let dmg = calcRandomDmg(600 + (sLv - 1) * 50);
+            let startX = player.x, startY = player.y;
+            let targetX = startX + dirX * 480;
+            let targetY = startY + dirY * 480;
+
+            projectiles.push({
+                x: startX, y: startY, startX: startX, startY: startY,
+                targetX: targetX, targetY: targetY, speed: 14.0, radius: 18,
+                isSlimzSpear: true, owner: player, team: player.team, damage: dmg
+            });
+        } else if (skillId === 2) {
+            skillCooldowns[2] = Math.max(3.0, 10.0 - (sLv - 1) * 0.8);
+            let dist = customDist || 240;
+            let tx = player.x + dirX * dist;
+            let ty = player.y + dirY * dist;
+            player.startDash(tx, ty, 45);
+
+            let st = heroSkillStage['slimz'];
+            st.ultActiveTimer = Math.max(st.ultActiveTimer, 0) + 5.0; // 強化5秒
+
+            skillEffects.push({ x: tx, y: ty, life: 0.4, size: 80, color: 'rgba(255, 152, 0, 0.75)', team: player.team });
+            damageTexts.push({ x: player.x, y: player.y - 45, value: '🐰 狩獵爆發啟動！', color: '#ff9800', life: 1.2 });
+        } else if (skillId === 3) {
+            skillCooldowns[3] = Math.max(10.0, 20.0 - (sLv - 1) * 2.0);
+            let st = heroSkillStage['slimz'];
+            st.ultActiveTimer = 10.0; // 大招持續10秒
+
+            skillEffects.push({ x: player.x, y: player.y, life: 0.5, size: 100, color: 'rgba(255, 69, 0, 0.85)', team: player.team });
+            damageTexts.push({ x: player.x, y: player.y - 45, value: '🔥 狂野增幅 10秒！', color: '#ff3366', life: 1.5 });
+        }
+        updateSkillUI();
+        return;
+    }
+
     if (heroKey === 'lindis') {
         let st = heroSkillStage['lindis'] = heroSkillStage['lindis'] || {};
-        let globalButterfly = st.globalButterfly || { active: false, pos: null, timer: 0, centerPos: null, dirX: 0, dirY: 0 };
+        let gb = st.globalButterfly || { active: false, type: null, pos: null, timer: 0, centerPos: null, dirX: 0, dirY: 0 };
 
-        if (globalButterfly.active) {
-            if (globalButterfly.pos) {
-                player.x = globalButterfly.pos.x;
-                player.y = globalButterfly.pos.y;
-                damageTexts.push({ x: player.x, y: player.y - 45, value: '🦋 瞬息返回蝴蝶處！', color: '#00d2ff', life: 1.0 });
+        if (gb.active && gb.type === skillId) {
+            if (gb.pos) {
+                player.x = gb.pos.x;
+                player.y = gb.pos.y;
+                damageTexts.push({ x: player.x, y: player.y - 45, value: `🦋 藉由 ${skillId} 技返回蝴蝶處！`, color: '#00d2ff', life: 1.0 });
             }
-            globalButterfly.active = false;
-            globalButterfly.pos = null;
-            globalButterfly.timer = 0;
-            st.globalButterfly = globalButterfly;
-            skillCooldowns[skillId] = skillId === 1 ? Math.max(2.0, 5.0 - (sLv - 1) * 0.2) : (skillId === 2 ? Math.max(3.5, 8.0 - (sLv - 1) * 0.4) : Math.max(8.0, 17.0 - (sLv - 1) * 2.0));
+            gb.active = false;
+            gb.type = null;
+            gb.pos = null;
+            gb.timer = 0;
+            st.globalButterfly = gb;
+            skillCooldowns[skillId] = skillId === 1 ? 4.0 : (skillId === 2 ? 6.0 : 10.0);
             updateSkillUI();
             return;
         }
 
         player.lindisPassiveNextAtk = true;
 
-        if (!globalButterfly.active) {
-            globalButterfly.active = true;
-            globalButterfly.timer = 300;
+        if (!gb.active) {
+            gb.active = true;
+            gb.type = skillId;
+            gb.timer = 300;
             if (skillId === 2) {
-                globalButterfly.centerPos = { x: player.x, y: player.y };
-                globalButterfly.pos = { x: player.x + 120, y: player.y };
+                gb.centerPos = { x: player.x, y: player.y };
+                gb.pos = { x: player.x + 120, y: player.y };
             } else if (skillId === 3) {
-                globalButterfly.pos = { x: player.x, y: player.y };
-                globalButterfly.dirX = dirX;
-                globalButterfly.dirY = dirY;
+                gb.pos = { x: player.x, y: player.y };
+                gb.dirX = dirX;
+                gb.dirY = dirY;
             } else {
-                globalButterfly.pos = { x: player.x, y: player.y };
+                gb.pos = { x: player.x, y: player.y };
             }
         }
-        st.globalButterfly = globalButterfly;
+        st.globalButterfly = gb;
 
         if (skillId === 1) {
-            let tx = player.x + dirX * 180;
-            let ty = player.y + dirY * 180;
+            let tx = player.x + dirX * 120;
+            let ty = player.y + dirY * 120;
             player.startDash(tx, ty, 35);
+            damageTexts.push({ x: player.x, y: player.y - 35, value: '✨ 1技短位移', color: '#00d2ff', life: 0.8 });
         } else if (skillId === 2) {
             skillEffects.push({ x: player.x, y: player.y, life: 0.4, size: 90, color: 'rgba(0, 210, 255, 0.6)', team: player.team });
             player.isUntargetable = true;
+            damageTexts.push({ x: player.x, y: player.y - 35, value: '🛡️ 2技擋塔傷', color: '#00d2ff', life: 0.8 });
             setTimeout(() => { if (player) player.isUntargetable = false; }, 500);
         } else if (skillId === 3) {
             let pushDist = 180;
+            let strikeDmg = calcRandomDmg(600 + (sLv - 1) * 100);
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 220) {
-                    e.takeDamage(calcRandomDmg(600 + (sLv - 1) * 100), player.team, 'physical');
+                    e.takeDamage(strikeDmg, player.team, 'physical');
                     let pushX = e.x + dirX * pushDist;
                     let pushY = e.y + dirY * pushDist;
                     let clamped = clampPosition(pushX, pushY, e.radius);
                     e.x = clamped.x; e.y = clamped.y;
+                    damageTexts.push({ x: e.x, y: e.y - 45, value: `${Math.floor(strikeDmg)}`, color: '#e74c3c', life: 1.0 });
                 }
             });
+            damageTexts.push({ x: player.x, y: player.y - 35, value: '💥 3技純擊退', color: '#00d2ff', life: 0.8 });
         }
         updateSkillUI();
         return;
@@ -1641,6 +1753,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 75) {
                     e.takeDamage(baseDmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(baseDmg)}`, color: '#00d2ff', life: 0.8 });
                     e.isStunned = true;
                     e.setStatus('暈眩', 1.0);
                     setTimeout(() => { e.isStunned = false; }, 1000);
@@ -1662,6 +1775,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 75) {
                     e.takeDamage(baseDmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(baseDmg)}`, color: '#00d2ff', life: 0.8 });
                     e.isStunned = true;
                     e.setStatus('暈眩', 1.0);
                     setTimeout(() => { e.isStunned = false; }, 1000);
@@ -1698,6 +1812,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 85) {
                     e.takeDamage(dmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#e74c3c', life: 0.8 });
                 }
             });
 
@@ -1716,6 +1831,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - hitX, e.y - hitY) <= 80) {
                     e.takeDamage(dmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#e74c3c', life: 0.8 });
                     e.isSlowed = true;
                     e.slowFactor = slowRatio;
                     setTimeout(() => { e.isSlowed = false; }, 2000);
@@ -1796,6 +1912,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 90) {
                     e.takeDamage(dmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#00d2ff', life: 0.8 });
                     e.isSlowed = true;
                     e.slowFactor = 0.5;
                     setTimeout(() => { e.isSlowed = false; }, 2000);
@@ -1852,6 +1969,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ff9800', life: 0.8 });
                     e.isStunned = true;
                     e.setStatus('暈眩', 0.67);
                     setTimeout(() => { e.isStunned = false; }, 670);
@@ -1890,6 +2008,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                             let dist = Math.hypot(e.x - player.x, e.y - player.y);
                             if (dist <= 180) {
                                 e.takeDamage(segDmg, player.team, 'magical');
+                                damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(segDmg)}`, color: '#ff9800', life: 0.8 });
                                 let pushAngle = Math.atan2(e.y - player.y, e.x - player.x);
                                 let pX = e.x + Math.cos(pushAngle) * 120;
                                 let pY = e.y + Math.sin(pushAngle) * 120;
@@ -1973,6 +2092,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                         entities.forEach(e => {
                             if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - pos.x, e.y - pos.y) <= 75) {
                                 e.takeDamage(dmg, player.team, 'magical');
+                                damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#e040fb', life: 0.8 });
                             }
                         });
                     });
@@ -1989,6 +2109,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 entities.forEach(e => {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 80) {
                         e.takeDamage(dmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#e040fb', life: 0.8 });
                     }
                 });
                 player.hasEnhancedAttack = true;
@@ -2035,6 +2156,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     entities.forEach(e => {
                         if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 75) {
                             e.takeDamage(dmg, player.team, 'magical');
+                            damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#e040fb', life: 0.8 });
                             if (e instanceof Hero) hitHeroFound = true;
                         }
                     });
@@ -2081,9 +2203,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 65) {
                     e.takeDamage(hitDmg, player.team, 'magical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(hitDmg)}`, color: '#ffd700', life: 0.8 });
                     entities.forEach(subE => {
                         if (!(subE instanceof Building) && subE.alive && subE.team !== player.team && Math.hypot(subE.x - e.x, subE.y - e.y) <= 90) {
                             subE.takeDamage(expDmg, player.team, 'magical');
+                            damageTexts.push({ x: subE.x, y: subE.y - 40, value: `${Math.floor(expDmg)}`, color: '#ffd700', life: 0.8 });
                         }
                     });
                 }
@@ -2105,6 +2229,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 240) {
                     e.takeDamage(dmg, player.team, 'magical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ffd700', life: 0.8 });
                 }
             });
         }
@@ -2126,6 +2251,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 85) {
                     e.takeDamage(dmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ff9800', life: 0.8 });
                 }
             });
         } else if (skillId === 2) {
@@ -2141,6 +2267,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 80) {
                     e.takeDamage(dmg, player.team, 'physical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ff9800', life: 0.8 });
                 }
             });
         } else if (skillId === 3) {
@@ -2159,6 +2286,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#e040fb', life: 0.8 });
                     e.isStunned = true;
                     e.setStatus('暈眩', 1.0);
                     setTimeout(() => { e.isStunned = false; }, 1000);
@@ -2191,6 +2319,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     entities.forEach(e => {
                         if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 110) {
                             e.takeDamage(secDmg, player.team, 'magical');
+                            damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(secDmg)}`, color: '#e040fb', life: 0.8 });
                             if (e instanceof Hero) {
                                 e.isSilenced = true;
                                 setTimeout(() => { e.isSilenced = false; }, 3000);
@@ -2213,6 +2342,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 entities.forEach(e => {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 70) {
                         e.takeDamage(dmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ba68c8', life: 0.8 });
                         e.isStunned = true;
                         e.setStatus('暈眩', 0.8);
                         setTimeout(() => { e.isStunned = false; }, 800);
@@ -2226,6 +2356,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 entities.forEach(e => {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 70) {
                         e.takeDamage(dmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ba68c8', life: 0.8 });
                     }
                 });
                 stInfo.stage = 1;
@@ -2260,6 +2391,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 entities.forEach(e => {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 90) {
                         e.takeDamage(strikeDmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(strikeDmg)}`, color: '#ba68c8', life: 0.8 });
                         if (isLast) {
                             e.isStunned = true;
                             e.setStatus('暈眩', 0.5);
@@ -2286,6 +2418,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 entities.forEach(e => {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - frontX, e.y - frontY) <= 75) {
                         e.takeDamage(dmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#2e7d32', life: 0.8 });
                     }
                 });
 
@@ -2301,6 +2434,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 entities.forEach(e => {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 80) {
                         e.takeDamage(dmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#2e7d32', life: 0.8 });
                     }
                 });
 
@@ -2322,6 +2456,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                         let isTip = (distFromPlayer >= 120 && distFromPlayer <= 200);
                         let finalDmg = isTip ? baseDmg * 1.5 : baseDmg;
                         e.takeDamage(finalDmg, player.team, 'physical');
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(finalDmg)}`, color: '#2e7d32', life: 0.8 });
                         if (isTip) {
                             e.isStunned = true;
                             e.setStatus('暈眩', 1.0);
@@ -2350,6 +2485,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     entities.forEach(e => {
                         if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 85) {
                             e.takeDamage(strikeDmg, player.team, 'physical');
+                            damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(strikeDmg)}`, color: '#2e7d32', life: 0.8 });
                             hitAny = true;
                         }
                     });
@@ -2378,6 +2514,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     entities.forEach(e => {
                         if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 65) {
                             e.takeDamage(dmgPerHit, player.team, 'physical');
+                            damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmgPerHit)}`, color: '#ff4500', life: 0.8 });
                         }
                     });
                 }, i * 150);
@@ -2437,6 +2574,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical');
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#00d2ff', life: 0.8 });
                     e.isStunned = true;
                     e.setStatus('暈眩', 0.75);
                     setTimeout(() => { e.isStunned = false; }, 750);
@@ -2453,6 +2591,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     if (target) {
                         skillEffects.push({ x: target.x, y: target.y, life: 0.2, size: 50, color: 'rgba(255, 105, 180, 0.8)', team: player.team });
                         target.takeDamage(perHitDmg, player.team, 'magical');
+                        damageTexts.push({ x: target.x, y: target.y - 40, value: `${Math.floor(perHitDmg)}`, color: '#ff69b4', life: 0.8 });
                     }
                 }, i * 200);
             }
@@ -2481,7 +2620,9 @@ function updateSkillUI() {
         let sLv = skillLevels[id];
 
         let labelName = `技能${id}`;
-        if (player && player.heroKey === 'lindis') {
+        if (player && player.heroKey === 'slimz') {
+            labelName = id === 1 ? '投擲飛鏢' : (id === 2 ? '狩獵爆發' : '狂野增幅');
+        } else if (player && player.heroKey === 'lindis') {
             let st = heroSkillStage['lindis'];
             let gb = st && st.globalButterfly;
             if (gb && gb.active) {
@@ -2586,6 +2727,45 @@ function gameLoop() {
     entities.forEach(e => e.update());
 
     projectiles.forEach((p, idx) => {
+        if (p.isSlimzSpear) {
+            let dx = p.targetX - p.x;
+            let dy = p.targetY - p.y;
+            let dist = Math.hypot(dx, dy);
+
+            if (dist <= p.speed) {
+                p.x = p.targetX; p.y = p.targetY;
+            } else {
+                p.x += (dx / dist) * p.speed;
+                p.y += (dy / dist) * p.speed;
+            }
+
+            let hitEnemy = null;
+            entities.forEach(e => {
+                if (!hitEnemy && !(e instanceof Building) && e.alive && e.team !== p.team) {
+                    if (Math.hypot(e.x - p.x, e.y - p.y) <= p.radius + e.radius) {
+                        hitEnemy = e;
+                    }
+                }
+            });
+
+            if (hitEnemy) {
+                hitEnemy.takeDamage(p.damage, p.team, 'magical');
+                damageTexts.push({ x: hitEnemy.x, y: hitEnemy.y - 40, value: `${Math.floor(p.damage)}`, color: '#ff9800', life: 1.2 });
+                hitEnemy.isStunned = true;
+                hitEnemy.setStatus('暈眩2s', 2.0);
+                setTimeout(() => { hitEnemy.isStunned = false; }, 2000);
+
+                skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 70, color: 'rgba(255, 152, 0, 0.85)', team: p.team });
+                projectiles.splice(idx, 1);
+                return;
+            }
+
+            if (p.x === p.targetX && p.y === p.targetY) {
+                projectiles.splice(idx, 1);
+            }
+            return;
+        }
+
         if (p.isLilianaHomingBall) {
             p.lifeTimer--;
             if (p.speed < p.maxSpeed) p.speed += 0.15;
@@ -2639,11 +2819,11 @@ function gameLoop() {
                     if (Math.hypot(e.x - p.x, e.y - p.y) <= p.radius + e.radius) {
                         hit = true;
                         e.takeDamage(p.damage, p.team, 'magical');
+                        damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(p.damage)}`, color: '#e040fb', life: 0.8 });
                         e.isStunned = true;
                         e.setStatus('暈眩', 1.5);
                         setTimeout(() => { e.isStunned = false; }, 1500);
                         skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 75, color: 'rgba(224, 64, 251, 0.85)', team: p.team });
-                        damageTexts.push({ x: e.x, y: e.y - 45, value: `${Math.floor(p.damage)}`, color: '#e040fb', life: 1.2 });
                     }
                 }
             });
@@ -2677,22 +2857,21 @@ function gameLoop() {
 
             if (hitEnemy) {
                 hitEnemy.takeDamage(p.damage, p.team, 'magical');
+                damageTexts.push({ x: hitEnemy.x, y: hitEnemy.y - 40, value: `${Math.floor(p.damage)}`, color: '#ff9800', life: 1.2 });
                 hitEnemy.isSlowed = true;
                 hitEnemy.slowFactor = p.slowRatio;
                 setTimeout(() => { hitEnemy.isSlowed = false; }, 2000);
                 skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 70, color: 'rgba(255, 69, 0, 0.85)', team: p.team });
-                damageTexts.push({ x: hitEnemy.x, y: hitEnemy.y - 40, value: `${Math.floor(p.damage)}`, color: '#ff4444', life: 1.2 });
 
                 if (!p.hasBounced) {
                     let secondTarget = entities.find(e => !(e instanceof Building) && e.alive && e.team !== p.team && e !== hitEnemy && Math.hypot(e.x - hitEnemy.x, e.y - hitEnemy.y) <= 200);
                     if (secondTarget) {
                         let bounceDmg = p.damage * 0.75;
                         secondTarget.takeDamage(bounceDmg, p.team, 'magical');
+                        damageTexts.push({ x: secondTarget.x, y: secondTarget.y - 40, value: `${Math.floor(bounceDmg)}`, color: '#ff9800', life: 1.2 });
                         secondTarget.isSlowed = true;
                         secondTarget.slowFactor = p.slowRatio;
                         setTimeout(() => { secondTarget.isSlowed = false; }, 2000);
-                        skillEffects.push({ x: secondTarget.x, y: secondTarget.y, life: 0.4, size: 60, color: 'rgba(255, 140, 0, 0.8)', team: p.team });
-                        damageTexts.push({ x: secondTarget.x, y: secondTarget.y - 45, value: `${Math.floor(bounceDmg)}`, color: '#ff9800', life: 1.2 });
                     }
                 }
 
@@ -3015,8 +3194,8 @@ function gameLoop() {
 
         ctx.save();
         ctx.beginPath();
-        ctx.arc(sx, sy, p.isLilianaHomingBall ? 18 : (p.isLilianaHumanBall ? 24 : (p.isRazFireball ? 22 : p.radius)), 0, Math.PI * 2);
-        ctx.fillStyle = p.isLilianaHomingBall ? 'rgba(224, 64, 251, 0.95)' : (p.isLilianaHumanBall ? 'rgba(224, 64, 251, 0.95)' : (p.isRazFireball ? 'rgba(255, 140, 0, 0.95)' : 'rgba(255, 105, 180, 0.9)'));
+        ctx.arc(sx, sy, p.isSlimzSpear ? 18 : (p.isLilianaHomingBall ? 18 : (p.isLilianaHumanBall ? 24 : (p.isRazFireball ? 22 : p.radius))), 0, Math.PI * 2);
+        ctx.fillStyle = p.isSlimzSpear ? 'rgba(255, 152, 0, 0.95)' : (p.isLilianaHomingBall ? 'rgba(224, 64, 251, 0.95)' : (p.isLilianaHumanBall ? 'rgba(224, 64, 251, 0.95)' : (p.isRazFireball ? 'rgba(255, 140, 0, 0.95)' : 'rgba(255, 105, 180, 0.9)')));
         ctx.fill();
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#ffffff';
@@ -3137,7 +3316,20 @@ function gameLoop() {
             let passiveBarY = currentBottomY + 2;
             let passiveBarH = 4;
             
-            if (e.heroKey === 'lindis') {
+            if (e.heroKey === 'slimz') {
+                let st = heroSkillStage['slimz'];
+                let slotW = (barW - 2 * 2) / 3;
+                for (let i = 0; i < 3; i++) {
+                    let slotX = barX + i * (slotW + 2);
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                    ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    if (i < st.atks) {
+                        ctx.fillStyle = '#ff9800';
+                        ctx.fillRect(slotX, passiveBarY, slotW, passiveBarH);
+                    }
+                }
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'lindis') {
                 let st = heroSkillStage['lindis'];
                 let hasB = st && st.globalButterfly && st.globalButterfly.active;
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
