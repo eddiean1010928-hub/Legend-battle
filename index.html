@@ -58,6 +58,29 @@
         .joystick-container { position: absolute; bottom: 25px; left: 25px; width: 125px; height: 125px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: auto !important; touch-action: none !important; }
         .joystick-knob { width: 45px; height: 45px; background: rgba(243, 198, 84, 0.85); border: 2px solid #fff; border-radius: 50%; position: absolute; pointer-events: none; }
 
+        /* 底部狀態欄（仿傳說對決技能增益狀態格） */
+        .status-buff-bar {
+            position: absolute; bottom: 82px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 8px; align-items: center; justify-content: center;
+            z-index: 55; pointer-events: none;
+        }
+        .status-buff-item {
+            width: 44px; height: 44px; background: rgba(10, 18, 30, 0.88);
+            border: 1.5px solid #ffd700; border-radius: 6px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; box-shadow: 0 0 10px rgba(255, 215, 0, 0.45);
+        }
+        .status-buff-icon { font-size: 1.15rem; line-height: 1; }
+        .status-buff-timer {
+            font-size: 0.68rem; font-weight: 900; color: #ffeb3b;
+            background: rgba(0,0,0,0.75); padding: 0 3px; border-radius: 3px;
+            margin-top: 2px; font-variant-numeric: tabular-nums;
+        }
+        .status-buff-name {
+            position: absolute; top: -15px; font-size: 0.6rem; color: #fff;
+            white-space: nowrap; text-shadow: 0 1px 3px #000; font-weight: bold;
+        }
+
         .controls-right { position: absolute; bottom: 15px; right: 20px; width: 320px; height: 200px; pointer-events: none !important; }
         .attack-btn { position: absolute; bottom: 10px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto !important; touch-action: none !important; }
         
@@ -108,9 +131,20 @@
         .pick-center-stage { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: radial-gradient(circle, rgba(30,50,80,0.3) 0%, rgba(5,10,18,0.8) 100%); border-radius: 12px; }
         .stage-hero-avatar { font-size: 10rem; }
         
-        .pick-right-sidebar { width: 220px; display: flex; flex-direction: column; gap: 12px; justify-content: center; pointer-events: auto !important; }
-        .team-slot { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 15px; display: flex; justify-content: space-between; font-size: 0.9rem; color: #aaa; }
+        .pick-right-sidebar { width: 240px; display: flex; flex-direction: column; gap: 10px; justify-content: center; pointer-events: auto !important; }
+        .team-slot { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; font-size: 0.9rem; color: #aaa; }
         
+        /* AI 倍率選擇區 */
+        .ai-diff-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(243,198,84,0.35); border-radius: 8px; padding: 8px 10px; }
+        .ai-diff-title { font-size: 0.8rem; color: #f3c654; font-weight: bold; margin-bottom: 6px; text-align: center; }
+        .ai-diff-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+        .ai-diff-btn {
+            background: #132238; border: 1px solid #334455; border-radius: 5px;
+            color: #cbd5e1; font-size: 0.75rem; font-weight: bold; padding: 5px 2px;
+            text-align: center; cursor: pointer; pointer-events: auto !important;
+        }
+        .ai-diff-btn.active { background: #b45309; border-color: #fde047; color: #fff; box-shadow: 0 0 8px rgba(245, 158, 11, 0.6); }
+
         .pick-confirm-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: 2px solid #fef08a; color: #fff; font-weight: bold; font-size: 1.2rem; padding: 12px; border-radius: 8px; text-align: center; cursor: pointer; pointer-events: auto !important; }
 
         .result-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: rgba(5, 10, 18, 0.9); z-index: 2000; pointer-events: auto !important; }
@@ -204,13 +238,28 @@
 
             <div class="pick-right-sidebar">
                 <div class="team-slot"><span>我方 (你)</span><span style="color:#00d2ff;">準備就緒</span></div>
-                <div class="team-slot"><span id="ai-opponent-slot">電競AI對手</span><span style="color:#ff4444;">隨機配對</span></div>
+                <div class="team-slot"><span id="ai-opponent-slot">電競AI對手</span><span style="color:#ff4444;" id="ai-mult-label">中 (*1.0)</span></div>
+                
+                <div class="ai-diff-box">
+                    <div class="ai-diff-title">⚙️ AI 屬性倍率 (血量/傷害)</div>
+                    <div class="ai-diff-grid" id="ai-diff-grid">
+                        <div class="ai-diff-btn" data-mult="0.8" data-name="弱">弱 *0.8</div>
+                        <div class="ai-diff-btn active" data-mult="1.0" data-name="中">中 *1.0</div>
+                        <div class="ai-diff-btn" data-mult="1.2" data-name="強">強 *1.2</div>
+                        <div class="ai-diff-btn" data-mult="1.5" data-name="怪物">怪物 *1.5</div>
+                        <div class="ai-diff-btn" data-mult="2.0" data-name="自虐">自虐 *2.0</div>
+                    </div>
+                </div>
+
                 <button class="pick-confirm-btn" id="btn-confirm-hero">確 定 參 戰</button>
             </div>
         </div>
     </div>
 
     <div id="hud-layer" class="hidden">
+        <!-- 底部狀態欄 -->
+        <div class="status-buff-bar" id="status-buff-bar"></div>
+
         <div class="joystick-container" id="joystick">
             <div class="joystick-knob" id="joystick-knob"></div>
         </div>
@@ -281,7 +330,6 @@ function calcRandomDmg(baseDmg) {
     return Math.max(1, Math.floor(baseDmg + fluctuation));
 }
 
-// 改用 pointerdown，讓左手拖曳搖桿時右手仍可即時點擊技能、恢復、瞬移
 function bindClickElement(el, fn) {
     if (!el) return;
     el.onpointerdown = (e) => {
@@ -295,6 +343,9 @@ function bindClick(id, fn) {
     bindClickElement(document.getElementById(id), fn);
 }
 
+let aiMultiplier = 1.0;
+let aiDiffName = '中';
+
 window.addEventListener('DOMContentLoaded', () => { 
     initUserData(); 
     buildHeroSelectGrid();
@@ -307,6 +358,17 @@ window.addEventListener('DOMContentLoaded', () => {
     bindClick('btn-heal-spell', () => castHealSpell());
     [1, 2, 3].forEach(id => {
         bindClick(`up-btn-${id}`, () => upgradeSkill(id));
+    });
+
+    document.querySelectorAll('.ai-diff-btn').forEach(btn => {
+        bindClickElement(btn, () => {
+            document.querySelectorAll('.ai-diff-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            aiMultiplier = parseFloat(btn.dataset.mult);
+            aiDiffName = btn.dataset.name;
+            const lbl = document.getElementById('ai-mult-label');
+            if (lbl) lbl.innerText = `${aiDiffName} (*${aiMultiplier.toFixed(1)})`;
+        });
     });
 });
 
@@ -410,7 +472,7 @@ const HERO_DB = {
     },
     'lindis': { 
         name: '蘭鐸', type: '射手 / 靈動刺客', role: 'shooter', baseHp: 5200, hpGrowth: 200, 
-        atk: 120, atkGrowth: 5, atkInterval: 0.3, atkRecovery: 0.15, range: 240, avatar: '🦋',
+        atk: 60, atkGrowth: 10, atkInterval: 0.3, atkRecovery: 0.15, range: 240, avatar: '🦋',
         skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
     },
     'slimz': {
@@ -547,14 +609,15 @@ function confirmStartGame() {
     blueTower = new Building(850, MAP_SIZE - 850, 'blue', 'tower');
     redTower = new Building(MAP_SIZE - 850, 850, 'red', 'tower');
 
-    player = new Hero(380, MAP_SIZE - 380, 'blue', selectedHeroKey, true);
-    aiHero = new Hero(MAP_SIZE - 380, 380, 'red', randomAiKey, false);
+    player = new Hero(380, MAP_SIZE - 380, 'blue', selectedHeroKey, true, 1.0);
+    aiHero = new Hero(MAP_SIZE - 380, 380, 'red', randomAiKey, false, aiMultiplier);
 
     entities.push(blueCore, redCore, blueTower, redTower, player, aiHero);
     minionSpawnTimer = 300; 
 
     updateTopScopeUI();
     updateSkillUI();
+    updateStatusBuffBar();
     isRunning = true;
     requestAnimationFrame(gameLoop);
 }
@@ -961,13 +1024,16 @@ class Minion extends Entity {
 }
 
 class Hero extends Entity {
-    constructor(x, y, team, heroKey, isPlayer) {
+    constructor(x, y, team, heroKey, isPlayer, statMultiplier = 1.0) {
         let data = HERO_DB[heroKey];
         super(x, y, team, 26);
         this.heroKey = heroKey;
         this.heroData = data;
-        this.maxHp = data.baseHp; this.hp = this.maxHp;
-        this.atk = data.atk; this.range = data.range;
+        this.statMultiplier = statMultiplier;
+        this.maxHp = Math.round(data.baseHp * statMultiplier); 
+        this.hp = this.maxHp;
+        this.atk = data.atk * statMultiplier; 
+        this.range = data.range;
         this.isPlayer = isPlayer;
         this.level = 1; this.exp = 0; this.gold = 300;
         this.kills = 0; this.deaths = 0; this.assists = 0;
@@ -1066,7 +1132,7 @@ class Hero extends Entity {
         if (this.heroKey === 'slimz') {
             let st = heroSkillStage['slimz'];
             if (st && st.ultActiveTimer > 0) {
-                st.ultActiveTimer -= 1 / 60;
+                st.ultActiveTimer = Math.max(0, st.ultActiveTimer - 1 / 60);
             }
         }
 
@@ -1088,7 +1154,6 @@ class Hero extends Entity {
                 let progress = (300 - gb.timer) / 300;
                 if (gb.type === 2 && gb.centerPos) {
                     let angle = -progress * Math.PI * 2;
-                    // 蘭鐸 2 技改為繞著原點（gb.centerPos）旋轉
                     gb.pos = {
                         x: gb.centerPos.x + Math.cos(angle) * 120,
                         y: gb.centerPos.y + Math.sin(angle) * 120
@@ -1322,7 +1387,7 @@ class Hero extends Entity {
     }
 
     getEffectiveAtk() {
-        let base = this.atk + (this.level - 1) * this.heroData.atkGrowth;
+        let base = this.atk + (this.level - 1) * (this.heroData.atkGrowth * this.statMultiplier);
         if (this.heroKey === 'murad' && this.muradIsUnlocked) base *= 1.3;
         return base;
     }
@@ -1337,7 +1402,7 @@ class Hero extends Entity {
             this.exp -= reqExp;
             this.level++; 
             if (this.isPlayer) unallocatedPoints++;
-            let hpGain = this.heroData.hpGrowth;
+            let hpGain = Math.round(this.heroData.hpGrowth * this.statMultiplier);
             this.maxHp += hpGain; 
             this.hp = Math.min(this.maxHp, this.hp + hpGain);
             if (this.isPlayer) { triggerAnnouncement(`🎉 恭喜升到 Lv.${this.level}！`, '#00e676'); }
@@ -1453,8 +1518,8 @@ function performAttack() {
             if (st.atks >= 3) {
                 st.atks = 0;
                 isPassiveProc = true;
-                let sLv1 = skillLevels[1] || 1;
-                let passiveDmg = 300 + (sLv1 - 1) * 10;
+                // 史蘭茲被動傷害調整為 150 (+15)
+                let passiveDmg = 150 + (player.level - 1) * 15;
                 baseDmg += passiveDmg;
             }
 
@@ -1606,7 +1671,7 @@ function executeAiSkill(aiObj, skillId, dirX, dirY) {
     
     entities.forEach(e => {
         if (!(e instanceof Building) && e.alive && e.team !== aiObj.team && Math.hypot(e.x - targetX, e.y - targetY) <= 80) {
-            let dmg = calcRandomDmg(350);
+            let dmg = calcRandomDmg(350 * aiObj.statMultiplier);
             e.takeDamage(dmg, aiObj.team, 'magical');
             damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ff4444', life: 0.8 });
         }
@@ -1647,11 +1712,12 @@ function castSkill(skillId, dirX, dirY, customDist) {
             let ty = player.y + dirY * dist;
             player.startDash(tx, ty, 45);
 
+            // 史蘭茲 2 技強化持續時間改為 3 秒
             let st = heroSkillStage['slimz'];
-            st.ultActiveTimer = Math.max(st.ultActiveTimer, 0) + 5.0;
+            st.ultActiveTimer = Math.max(st.ultActiveTimer, 3.0);
 
             skillEffects.push({ x: tx, y: ty, life: 0.4, size: 80, color: 'rgba(255, 152, 0, 0.75)', team: player.team });
-            damageTexts.push({ x: player.x, y: player.y - 45, value: '🐰 狩獵爆發啟動！', color: '#ff9800', life: 1.2 });
+            damageTexts.push({ x: player.x, y: player.y - 45, value: '🐰 狩獵爆發 3秒！', color: '#ff9800', life: 1.2 });
         } else if (skillId === 3) {
             skillCooldowns[3] = Math.max(10.0, 20.0 - (sLv - 1) * 2.0);
             let st = heroSkillStage['slimz'];
@@ -1661,6 +1727,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             damageTexts.push({ x: player.x, y: player.y - 45, value: '🔥 狂野增幅 10秒！', color: '#ff3366', life: 1.5 });
         }
         updateSkillUI();
+        updateStatusBuffBar();
         return;
     }
 
@@ -1669,7 +1736,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
         let gb = st.globalButterfly || { active: false, type: null, pos: null, timer: 0, centerPos: null, dirX: 0, dirY: 0 };
         const cdMap = { 1: 4.0, 2: 6.0, 3: 10.0 };
 
-        // 場上已有蝴蝶且按同一招 -> 返回蝴蝶處並進冷卻
         if (gb.active && gb.type === skillId) {
             if (gb.pos) {
                 player.x = gb.pos.x;
@@ -1688,7 +1754,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
 
         player.lindisPassiveNextAtk = true;
 
-        // 場上尚無蝴蝶 -> 留下蝴蝶，等二段或計時結束再進冷卻
         if (!gb.active) {
             gb.active = true;
             gb.type = skillId;
@@ -1705,7 +1770,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
             }
             st.globalButterfly = gb;
         } else {
-            // 場上已有別的蝴蝶 -> 施放效果後直接進入冷卻
             skillCooldowns[skillId] = cdMap[skillId];
         }
 
@@ -2570,7 +2634,8 @@ function castSkill(skillId, dirX, dirY, customDist) {
     } else if (heroKey === 'krixi') {
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(5.0, 7.0 - (sLv - 1) * 0.4);
-            let dmg = calcRandomDmg(700 + (sLv - 1) * 50);
+            // 克里希 1 技能傷害調整為 800 (+40)
+            let dmg = calcRandomDmg(800 + (sLv - 1) * 40);
 
             let startX = player.x;
             let startY = player.y;
@@ -2630,6 +2695,56 @@ function updateTopScopeUI() {
     document.getElementById('gold-display').innerText = `🪙 ${Math.floor(player.gold)}`;
     document.getElementById('kda-display').innerText = `KDA: ${kills} / ${deaths} / ${assists}`;
     updateUserProfileUI();
+}
+
+// 底部狀態欄更新函式（顯示持續時間倒數）
+function updateStatusBuffBar() {
+    const bar = document.getElementById('status-buff-bar');
+    if (!bar || !player || !player.alive) {
+        if (bar) bar.innerHTML = '';
+        return;
+    }
+
+    let buffs = [];
+
+    // 史蘭茲 2 技 / 大招強化狀態倒數
+    if (player.heroKey === 'slimz') {
+        let st = heroSkillStage['slimz'];
+        if (st && st.ultActiveTimer > 0) {
+            buffs.push({ icon: '🔥', name: '狂野增幅', time: st.ultActiveTimer.toFixed(1) });
+        }
+    }
+
+    // 蘭鐸蝴蝶存在倒數
+    if (player.heroKey === 'lindis') {
+        let st = heroSkillStage['lindis'];
+        if (st && st.globalButterfly && st.globalButterfly.active && st.globalButterfly.timer > 0) {
+            buffs.push({ icon: '🦋', name: `${st.globalButterfly.type}技蝴蝶`, time: (st.globalButterfly.timer / 60).toFixed(1) });
+        }
+    }
+
+    // 莫拉大招解鎖倒數
+    if (player.heroKey === 'murad' && player.muradIsUnlocked && player.muradUnlockTimer > 0) {
+        buffs.push({ icon: '⏳', name: '時空解鎖', time: player.muradUnlockTimer.toFixed(1) });
+    }
+
+    // 通用加速狀態
+    if (player.speedBuffTimer > 0) {
+        buffs.push({ icon: '⚡', name: '疾行加速', time: (player.speedBuffTimer / 60).toFixed(1) });
+    }
+
+    if (buffs.length === 0) {
+        if (bar.innerHTML !== '') bar.innerHTML = '';
+        return;
+    }
+
+    bar.innerHTML = buffs.map(b => `
+        <div class="status-buff-item">
+            <div class="status-buff-name">${b.name}</div>
+            <div class="status-buff-icon">${b.icon}</div>
+            <div class="status-buff-timer">${b.time}s</div>
+        </div>
+    `).join('');
 }
 
 function updateSkillUI() {
@@ -2772,7 +2887,6 @@ function gameLoop() {
             if (hitEnemy) {
                 hitEnemy.takeDamage(p.damage, p.team, 'magical');
                 damageTexts.push({ x: hitEnemy.x, y: hitEnemy.y - 40, value: `${Math.floor(p.damage)}`, color: '#ff9800', life: 1.2 });
-                // 僅對英雄施加暈眩，避免小兵暈眩堆積導致卡死
                 if (hitEnemy instanceof Hero) {
                     hitEnemy.isStunned = true;
                     hitEnemy.setStatus('暈眩2s', 2.0);
@@ -2844,7 +2958,6 @@ function gameLoop() {
                         hit = true;
                         e.takeDamage(p.damage, p.team, 'magical');
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(p.damage)}`, color: '#e040fb', life: 0.8 });
-                        // 僅對英雄施加暈眩
                         if (e instanceof Hero) {
                             e.isStunned = true;
                             e.setStatus('暈眩', 1.5);
@@ -3292,7 +3405,8 @@ function gameLoop() {
             if (e.statusText && e.statusDuration > 0) {
                 ctx.fillText(e.statusText, sx, barY - 4);
             } else {
-                ctx.fillText(`${heroInfo.name} Lv.${e.level || 1}`, sx, barY - 4);
+                let multTag = (!e.isPlayer && e.statMultiplier !== 1.0) ? ` [*${e.statMultiplier}]` : '';
+                ctx.fillText(`${heroInfo.name} Lv.${e.level || 1}${multTag}`, sx, barY - 4);
             }
             ctx.restore();
         }
@@ -3500,6 +3614,7 @@ function gameLoop() {
     });
 
     updateSkillUI();
+    updateStatusBuffBar();
     requestAnimationFrame(gameLoop);
 }
 </script>
