@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>傳說對決 Arena of Valor Canvas Edition</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
         body, html { width: 100%; height: 100%; overflow: hidden; background: #070d18; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #fff; }
         #game-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
         
         canvas { background: #070d14; display: block; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none !important; }
         
         .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; background: radial-gradient(circle at center, rgba(30, 60, 100, 0.4) 0%, rgba(5, 10, 18, 0.95) 100%); z-index: 999; padding: 15px; pointer-events: auto !important; }
-        .hidden { display: none !important; }
+        .hidden { display: none !important; pointer-events: none !important; }
 
         .top-navbar { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 5px 10px; z-index: 1100; pointer-events: auto !important; }
         .profile-area { display: flex; align-items: center; gap: 10px; }
@@ -55,14 +55,14 @@
 
         #hud-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none !important; z-index: 10; }
         
-        .joystick-container { position: absolute; bottom: 25px; left: 25px; width: 125px; height: 125px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: auto !important; }
+        .joystick-container { position: absolute; bottom: 25px; left: 25px; width: 125px; height: 125px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25); border-radius: 50%; display: flex; justify-content: center; align-items: center; pointer-events: auto !important; touch-action: none !important; }
         .joystick-knob { width: 45px; height: 45px; background: rgba(243, 198, 84, 0.85); border: 2px solid #fff; border-radius: 50%; position: absolute; pointer-events: none; }
 
         .controls-right { position: absolute; bottom: 15px; right: 20px; width: 320px; height: 200px; pointer-events: none !important; }
-        .attack-btn { position: absolute; bottom: 10px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto !important; touch-action: none; }
+        .attack-btn { position: absolute; bottom: 10px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto !important; touch-action: none !important; }
         
         .bottom-actions-bar { position: absolute; bottom: 15px; right: 195px; display: flex; gap: 10px; pointer-events: auto !important; z-index: 60; }
-        .action-mini-btn { width: 46px; height: 46px; background: radial-gradient(circle, #263238 0%, #0d1b2a 100%); border: 2px solid #f3c654; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; position: relative; pointer-events: auto !important; touch-action: none; overflow: hidden; }
+        .action-mini-btn { width: 46px; height: 46px; background: radial-gradient(circle, #263238 0%, #0d1b2a 100%); border: 2px solid #f3c654; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; position: relative; pointer-events: auto !important; touch-action: none !important; overflow: hidden; }
         .action-mini-btn .label { position: absolute; bottom: -16px; font-size: 0.55rem; color: #ffeb3b; font-weight: bold; white-space: nowrap; pointer-events: none; }
         .spell-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
 
@@ -91,7 +91,7 @@
         .pick-top-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; pointer-events: auto !important; }
         .pick-tabs { display: flex; gap: 20px; font-weight: bold; font-size: 1rem; color: #888; }
         .pick-tabs .active { color: #f3c654; border-bottom: 2px solid #f3c654; }
-        .pick-cancel-btn { background: none; border: none; color: #aaa; font-size: 1rem; cursor: pointer; pointer-events: auto !important; }
+        .pick-cancel-btn { background: none; border: none; color: #aaa; font-size: 1rem; cursor: pointer; pointer-events: auto !important; padding: 5px 10px; }
         
         .pick-content-layout { display: flex; flex: 1; margin-top: 15px; gap: 20px; overflow: hidden; pointer-events: auto !important; }
         
@@ -254,7 +254,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v46';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v47';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -281,7 +281,32 @@ function calcRandomDmg(baseDmg) {
     return Math.max(1, Math.floor(baseDmg + fluctuation));
 }
 
-window.addEventListener('DOMContentLoaded', () => { initUserData(); buildHeroSelectGrid(); });
+function bindClickElement(el, fn) {
+    if (!el) return;
+    el.onclick = (e) => {
+        e.stopPropagation();
+        fn(e);
+    };
+}
+
+function bindClick(id, fn) {
+    bindClickElement(document.getElementById(id), fn);
+}
+
+window.addEventListener('DOMContentLoaded', () => { 
+    initUserData(); 
+    buildHeroSelectGrid();
+    bindClick('btn-mode-1v1', () => openHeroPick());
+    bindClick('btn-start-match', () => openHeroPick());
+    bindClick('btn-confirm-hero', () => confirmStartGame());
+    bindClick('btn-pick-back', () => backToMenuFromPick());
+    bindClick('btn-back-lobby', () => backToLobby());
+    bindClick('btn-challenger-spell', () => castChallengerSpell());
+    bindClick('btn-heal-spell', () => castHealSpell());
+    [1, 2, 3].forEach(id => {
+        bindClick(`up-btn-${id}`, () => upgradeSkill(id));
+    });
+});
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -447,31 +472,6 @@ function buildHeroSelectGrid() {
     });
 }
 
-function bindClickElement(el, fn) {
-    if (!el) return;
-    let fired = false;
-    const trigger = (e) => {
-        if (fired) return;
-        fired = true;
-        setTimeout(() => { fired = false; }, 200);
-        fn(e);
-    };
-    el.addEventListener('pointerdown', trigger);
-    el.addEventListener('click', trigger);
-}
-
-function bindClick(id, fn) {
-    bindClickElement(document.getElementById(id), fn);
-}
-
-bindClick('btn-mode-1v1', () => openHeroPick());
-bindClick('btn-start-match', () => openHeroPick());
-bindClick('btn-confirm-hero', () => confirmStartGame());
-bindClick('btn-pick-back', () => backToMenuFromPick());
-bindClick('btn-back-lobby', () => backToLobby());
-bindClick('btn-challenger-spell', () => castChallengerSpell());
-bindClick('btn-heal-spell', () => castHealSpell());
-
 function castChallengerSpell() {
     if (challengerCooldown > 0 || !player || !player.alive || player.isStunned || player.isCastingAction) return;
     challengerCooldown = 90;
@@ -509,6 +509,7 @@ function backToLobby() {
     document.getElementById('top-hud').classList.add('hidden');
     document.getElementById('menu-screen').classList.remove('hidden');
     isRunning = false;
+    activeSkillDrag = null;
 }
 
 function confirmStartGame() {
@@ -582,14 +583,10 @@ function upgradeSkill(skillId) {
     }
 }
 
-[1, 2, 3].forEach(id => {
-    bindClick(`up-btn-${id}`, () => upgradeSkill(id));
-});
-
 joystick.addEventListener('pointerdown', e => {
     if (player && player.isCastingAction) return;
     joystickTouchId = e.pointerId;
-    joystick.setPointerCapture(e.pointerId);
+    try { joystick.setPointerCapture(e.pointerId); } catch(err) {}
     const rect = joystick.getBoundingClientRect();
     joystickCenter.x = rect.left + rect.width / 2;
     joystickCenter.y = rect.top + rect.height / 2;
@@ -620,16 +617,13 @@ function updateJoystick(clientX, clientY) {
 }
 
 const attackBtn = document.getElementById('btn-attack');
-['pointerdown', 'touchstart'].forEach(evt => {
-    attackBtn.addEventListener(evt, (e) => {
-        if (e.cancelable) e.preventDefault();
-        isAttackingPressed = true;
-        performAttack();
-    }, { passive: false });
+attackBtn.addEventListener('pointerdown', (e) => {
+    if (e.cancelable) e.preventDefault();
+    isAttackingPressed = true;
+    performAttack();
 });
-['pointerup', 'pointercancel', 'touchend'].forEach(evt => {
-    window.addEventListener(evt, () => { isAttackingPressed = false; });
-});
+window.addEventListener('pointerup', () => { isAttackingPressed = false; });
+window.addEventListener('pointercancel', () => { isAttackingPressed = false; activeSkillDrag = null; });
 
 document.querySelectorAll('.skill-btn').forEach(btn => {
     btn.addEventListener('pointerdown', e => {
@@ -641,7 +635,7 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
         if (e.cancelable) e.preventDefault();
         e.stopPropagation();
 
-        btn.setPointerCapture(e.pointerId);
+        try { btn.setPointerCapture(e.pointerId); } catch(err) {}
         let rect = btn.getBoundingClientRect();
         let heroData = HERO_DB[player.heroKey];
         let cfg = (heroData.skillConfig && heroData.skillConfig[skillId]) ? heroData.skillConfig[skillId] : { type: 'direction', range: 200 };
@@ -678,7 +672,7 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
             currentDist: cfg.range,
             hasDragged: false
         };
-    }, { passive: false });
+    });
 
     btn.addEventListener('pointermove', e => {
         if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
@@ -698,7 +692,7 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
                 }
             }
         }
-    }, { passive: false });
+    });
 
     function releaseSkill(e) {
         if (activeSkillDrag && activeSkillDrag.pointerId === e.pointerId) {
@@ -814,7 +808,7 @@ class Building extends Entity {
     constructor(x, y, team, type) {
         super(x, y, team, type === 'core' ? 55 : 45);
         this.type = type;
-        this.maxHp = type === 'core' ? 300000 : 18000;[cite: 3]
+        this.maxHp = type === 'core' ? 300000 : 18000;
         this.hp = this.maxHp;
         this.atkTimer = 0;
         this.attackRange = 300; 
@@ -949,7 +943,7 @@ class Minion extends Entity {
                 if (e.heroKey === 'slimz') {
                     let st = heroSkillStage['slimz'];
                     if (st && st.ultActiveTimer > 0) {
-                        st.ultActiveTimer += 1.5; // 擊殺小兵增加1.5秒
+                        st.ultActiveTimer += 1.5;
                         damageTexts.push({ x: e.x, y: e.y - 55, value: '⏱️ 大招時間+1.5s', color: '#00e676', life: 1.0 });
                     }
                 }
@@ -1387,7 +1381,7 @@ class Hero extends Entity {
                 if (player.heroKey === 'slimz') {
                     let st = heroSkillStage['slimz'];
                     if (st && st.ultActiveTimer > 0) {
-                        st.ultActiveTimer += 4.0; // 擊殺英雄增加4秒
+                        st.ultActiveTimer += 4.0;
                         damageTexts.push({ x: player.x, y: player.y - 55, value: '⏱️ 大招時間+4s', color: '#00e676', life: 1.2 });
                     }
                 }
@@ -1647,14 +1641,14 @@ function castSkill(skillId, dirX, dirY, customDist) {
             player.startDash(tx, ty, 45);
 
             let st = heroSkillStage['slimz'];
-            st.ultActiveTimer = Math.max(st.ultActiveTimer, 0) + 5.0; // 強化5秒
+            st.ultActiveTimer = Math.max(st.ultActiveTimer, 0) + 5.0;
 
             skillEffects.push({ x: tx, y: ty, life: 0.4, size: 80, color: 'rgba(255, 152, 0, 0.75)', team: player.team });
             damageTexts.push({ x: player.x, y: player.y - 45, value: '🐰 狩獵爆發啟動！', color: '#ff9800', life: 1.2 });
         } else if (skillId === 3) {
             skillCooldowns[3] = Math.max(10.0, 20.0 - (sLv - 1) * 2.0);
             let st = heroSkillStage['slimz'];
-            st.ultActiveTimer = 10.0; // 大招持續10秒
+            st.ultActiveTimer = 10.0;
 
             skillEffects.push({ x: player.x, y: player.y, life: 0.5, size: 100, color: 'rgba(255, 69, 0, 0.85)', team: player.team });
             damageTexts.push({ x: player.x, y: player.y - 45, value: '🔥 狂野增幅 10秒！', color: '#ff3366', life: 1.5 });
