@@ -281,9 +281,11 @@ function calcRandomDmg(baseDmg) {
     return Math.max(1, Math.floor(baseDmg + fluctuation));
 }
 
+// 改用 pointerdown，讓左手拖曳搖桿時右手仍可即時點擊技能、恢復、瞬移
 function bindClickElement(el, fn) {
     if (!el) return;
-    el.onclick = (e) => {
+    el.onpointerdown = (e) => {
+        if (e.cancelable) e.preventDefault();
         e.stopPropagation();
         fn(e);
     };
@@ -406,10 +408,10 @@ const HERO_DB = {
         atk: 180, atkGrowth: 10, atkInterval: 0.5, atkRecovery: 0.3, range: 120, avatar: '🔪',
         skillConfig: { 1: { type: 'range', range: 120 }, 2: { type: 'direction', range: 180 }, 3: { type: 'pointing', range: 240, circleRadius: 65 } }
     },
-    'lindis': {
+    'lindis': { 
         name: '蘭鐸', type: '射手 / 靈動刺客', role: 'shooter', baseHp: 5200, hpGrowth: 200, 
         atk: 120, atkGrowth: 5, atkInterval: 0.3, atkRecovery: 0.15, range: 240, avatar: '🦋',
-        skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'range', range: 120 }, 3: { type: 'direction', range: 240 } }
+        skillConfig: { 1: { type: 'direction', range: 180 }, 2: { type: 'direction', range: 240 }, 3: { type: 'direction', range: 180 } }
     },
     'slimz': {
         name: '史蘭茲', type: '射手 / 長矛兔王', role: 'shooter', baseHp: 5100, hpGrowth: 190,
@@ -1086,9 +1088,10 @@ class Hero extends Entity {
                 let progress = (300 - gb.timer) / 300;
                 if (gb.type === 2 && gb.centerPos) {
                     let angle = -progress * Math.PI * 2;
+                    // 蘭鐸 2 技改為繞著原點（gb.centerPos）旋轉
                     gb.pos = {
-                        x: this.x + Math.cos(angle) * 120,
-                        y: this.y + Math.sin(angle) * 120
+                        x: gb.centerPos.x + Math.cos(angle) * 120,
+                        y: gb.centerPos.y + Math.sin(angle) * 120
                     };
                 } else if (gb.type === 3 && gb.dirX !== undefined && (300 - gb.timer) <= 180) {
                     gb.pos.x += gb.dirX * 2.5;
@@ -1096,6 +1099,10 @@ class Hero extends Entity {
                 }
 
                 if (gb.timer <= 0) {
+                    const cdMap = { 1: 4.0, 2: 6.0, 3: 10.0 };
+                    if (gb.type && skillCooldowns[gb.type] <= 0) {
+                        skillCooldowns[gb.type] = cdMap[gb.type];
+                    }
                     gb.active = false;
                     gb.type = null;
                     gb.pos = null;
@@ -1660,7 +1667,9 @@ function castSkill(skillId, dirX, dirY, customDist) {
     if (heroKey === 'lindis') {
         let st = heroSkillStage['lindis'] = heroSkillStage['lindis'] || {};
         let gb = st.globalButterfly || { active: false, type: null, pos: null, timer: 0, centerPos: null, dirX: 0, dirY: 0 };
+        const cdMap = { 1: 4.0, 2: 6.0, 3: 10.0 };
 
+        // 場上已有蝴蝶且按同一招 -> 返回蝴蝶處並進冷卻
         if (gb.active && gb.type === skillId) {
             if (gb.pos) {
                 player.x = gb.pos.x;
@@ -1672,13 +1681,14 @@ function castSkill(skillId, dirX, dirY, customDist) {
             gb.pos = null;
             gb.timer = 0;
             st.globalButterfly = gb;
-            skillCooldowns[skillId] = skillId === 1 ? 4.0 : (skillId === 2 ? 6.0 : 10.0);
+            skillCooldowns[skillId] = cdMap[skillId];
             updateSkillUI();
             return;
         }
 
         player.lindisPassiveNextAtk = true;
 
+        // 場上尚無蝴蝶 -> 留下蝴蝶，等二段或計時結束再進冷卻
         if (!gb.active) {
             gb.active = true;
             gb.type = skillId;
@@ -1693,8 +1703,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
             } else {
                 gb.pos = { x: player.x, y: player.y };
             }
+            st.globalButterfly = gb;
+        } else {
+            // 場上已有別的蝴蝶 -> 施放效果後直接進入冷卻
+            skillCooldowns[skillId] = cdMap[skillId];
         }
-        st.globalButterfly = gb;
 
         if (skillId === 1) {
             let tx = player.x + dirX * 120;
@@ -1748,9 +1761,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 75) {
                     e.takeDamage(baseDmg, player.team, 'physical');
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(baseDmg)}`, color: '#00d2ff', life: 0.8 });
-                    e.isStunned = true;
-                    e.setStatus('暈眩', 1.0);
-                    setTimeout(() => { e.isStunned = false; }, 1000);
+                    if (e instanceof Hero) {
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 1.0);
+                        setTimeout(() => { e.isStunned = false; }, 1000);
+                    }
                 }
             });
 
@@ -1770,9 +1785,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 75) {
                     e.takeDamage(baseDmg, player.team, 'physical');
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(baseDmg)}`, color: '#00d2ff', life: 0.8 });
-                    e.isStunned = true;
-                    e.setStatus('暈眩', 1.0);
-                    setTimeout(() => { e.isStunned = false; }, 1000);
+                    if (e instanceof Hero) {
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 1.0);
+                        setTimeout(() => { e.isStunned = false; }, 1000);
+                    }
                 }
             });
 
@@ -1964,9 +1981,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical');
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ff9800', life: 0.8 });
-                    e.isStunned = true;
-                    e.setStatus('暈眩', 0.67);
-                    setTimeout(() => { e.isStunned = false; }, 670);
+                    if (e instanceof Hero) {
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 0.67);
+                        setTimeout(() => { e.isStunned = false; }, 670);
+                    }
                 }
             });
         } else if (skillId === 2) {
@@ -2211,9 +2230,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
             skillEffects.push({ x: tx, y: ty, life: 0.4, size: 65, color: 'rgba(0, 210, 255, 0.75)', team: player.team });
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 65) {
-                    e.isStunned = true;
-                    e.setStatus('暈眩', 2.0);
-                    setTimeout(() => { e.isStunned = false; }, 2000);
+                    if (e instanceof Hero) {
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 2.0);
+                        setTimeout(() => { e.isStunned = false; }, 2000);
+                    }
                 }
             });
         } else if (skillId === 3) {
@@ -2281,9 +2302,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical');
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#e040fb', life: 0.8 });
-                    e.isStunned = true;
-                    e.setStatus('暈眩', 1.0);
-                    setTimeout(() => { e.isStunned = false; }, 1000);
+                    if (e instanceof Hero) {
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 1.0);
+                        setTimeout(() => { e.isStunned = false; }, 1000);
+                    }
                 }
             });
         } else if (skillId === 2) {
@@ -2337,9 +2360,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 70) {
                         e.takeDamage(dmg, player.team, 'physical');
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ba68c8', life: 0.8 });
-                        e.isStunned = true;
-                        e.setStatus('暈眩', 0.8);
-                        setTimeout(() => { e.isStunned = false; }, 800);
+                        if (e instanceof Hero) {
+                            e.isStunned = true;
+                            e.setStatus('暈眩', 0.8);
+                            setTimeout(() => { e.isStunned = false; }, 800);
+                        }
                     }
                 });
                 stInfo.stage = 2;
@@ -2386,7 +2411,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 90) {
                         e.takeDamage(strikeDmg, player.team, 'physical');
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(strikeDmg)}`, color: '#ba68c8', life: 0.8 });
-                        if (isLast) {
+                        if (isLast && e instanceof Hero) {
                             e.isStunned = true;
                             e.setStatus('暈眩', 0.5);
                             setTimeout(() => { e.isStunned = false; }, 500);
@@ -2451,7 +2476,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                         let finalDmg = isTip ? baseDmg * 1.5 : baseDmg;
                         e.takeDamage(finalDmg, player.team, 'physical');
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(finalDmg)}`, color: '#2e7d32', life: 0.8 });
-                        if (isTip) {
+                        if (isTip && e instanceof Hero) {
                             e.isStunned = true;
                             e.setStatus('暈眩', 1.0);
                             setTimeout(() => { e.isStunned = false; }, 1000);
@@ -2569,9 +2594,11 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical');
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#00d2ff', life: 0.8 });
-                    e.isStunned = true;
-                    e.setStatus('暈眩', 0.75);
-                    setTimeout(() => { e.isStunned = false; }, 750);
+                    if (e instanceof Hero) {
+                        e.isStunned = true;
+                        e.setStatus('暈眩', 0.75);
+                        setTimeout(() => { e.isStunned = false; }, 750);
+                    }
                 }
             });
         } else if (skillId === 3) {
@@ -2619,7 +2646,7 @@ function updateSkillUI() {
         } else if (player && player.heroKey === 'lindis') {
             let st = heroSkillStage['lindis'];
             let gb = st && st.globalButterfly;
-            if (gb && gb.active) {
+            if (gb && gb.active && gb.type === id) {
                 let leftSec = (gb.timer / 60).toFixed(1);
                 labelName = `${leftSec}s 回蝴蝶`;
             } else {
@@ -2745,9 +2772,12 @@ function gameLoop() {
             if (hitEnemy) {
                 hitEnemy.takeDamage(p.damage, p.team, 'magical');
                 damageTexts.push({ x: hitEnemy.x, y: hitEnemy.y - 40, value: `${Math.floor(p.damage)}`, color: '#ff9800', life: 1.2 });
-                hitEnemy.isStunned = true;
-                hitEnemy.setStatus('暈眩2s', 2.0);
-                setTimeout(() => { hitEnemy.isStunned = false; }, 2000);
+                // 僅對英雄施加暈眩，避免小兵暈眩堆積導致卡死
+                if (hitEnemy instanceof Hero) {
+                    hitEnemy.isStunned = true;
+                    hitEnemy.setStatus('暈眩2s', 2.0);
+                    setTimeout(() => { hitEnemy.isStunned = false; }, 2000);
+                }
 
                 skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 70, color: 'rgba(255, 152, 0, 0.85)', team: p.team });
                 projectiles.splice(idx, 1);
@@ -2814,9 +2844,12 @@ function gameLoop() {
                         hit = true;
                         e.takeDamage(p.damage, p.team, 'magical');
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(p.damage)}`, color: '#e040fb', life: 0.8 });
-                        e.isStunned = true;
-                        e.setStatus('暈眩', 1.5);
-                        setTimeout(() => { e.isStunned = false; }, 1500);
+                        // 僅對英雄施加暈眩
+                        if (e instanceof Hero) {
+                            e.isStunned = true;
+                            e.setStatus('暈眩', 1.5);
+                            setTimeout(() => { e.isStunned = false; }, 1500);
+                        }
                         skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 75, color: 'rgba(224, 64, 251, 0.85)', team: p.team });
                     }
                 }
