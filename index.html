@@ -254,7 +254,7 @@
 </div>
 
 <script>
-const LOCAL_STORAGE_KEY = 'aov_game_user_data_v44';
+const LOCAL_STORAGE_KEY = 'aov_game_user_data_v45';
 let currentUserData = { userId: '', name: '訪客玩家', avatar: 'https://via.placeholder.com/32', isGuest: true, gold: 300 };
 
 const LEVEL_EXP_TABLE = {
@@ -288,7 +288,7 @@ const ctx = canvas.getContext('2d');
 let MAP_SIZE = 2600; 
 let ROAD_WIDTH = 380; 
 let isRunning = false;
-let selectedHeroKey = 'liliana';
+let selectedHeroKey = 'lindis';
 let randomAiKey = 'valhein';
 let challengerCooldown = 0;
 let healSpellCooldown = 0;
@@ -326,6 +326,15 @@ window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
 const HERO_DB = {
+    'lindis': {
+        name: '蘭鐸', type: '射手 / 靈動刺客', role: 'shooter', baseHp: 5200, hpGrowth: 200, 
+        atk: 150, atkGrowth: 10, atkInterval: 0.3, atkRecovery: 0.15, range: 240, avatar: '🦋',
+        skillConfig: { 
+            1: { type: 'direction', range: 180 }, 
+            2: { type: 'range', range: 120 },     
+            3: { type: 'direction', range: 240 }  
+        }
+    },
     'valhein': { 
         name: '凡恩', type: '射手 / 遠距輸出', role: 'shooter', baseHp: 5200, hpGrowth: 200, 
         atk: 200, atkGrowth: 15, atkInterval: 0.6, atkRecovery: 0.3, range: 240, avatar: '🎯',
@@ -405,11 +414,12 @@ const SKILL_MAX_LEVEL_NORMAL = 6;
 const SKILL_MAX_LEVEL_ULT = 3;
 
 let heroSkillStage = {
+    'lindis': {},
     'nakroth': { 1: { stage: 1, timer: 0 } },
     'ryoma': { 1: { stage: 1, timer: 0 } },
     'liliana': { 2: { canSecondCast: false, hitHero: false, foxStage2Ready: false } },
     'raz': { passiveReady: false, passiveTimer: 0, atkCount: 0 },
-    'murad': { stage1Count: 1, shadowPos: null, stacks: 0, stackTimer: 0, isUnlocked: false, unlockTimer: 0 },
+    'murad': { stage1Count: 1, shadowPos: null, stacks: 0, stackTimer: 0, isUnlocked: false, unlockTimer: 0, muradTimerActive: false, muradWindowTimer: 0 },
     'butterfly': { stacks: 0, markedTarget: null }
 };
 
@@ -470,7 +480,6 @@ function castChallengerSpell() {
     let dX = joystickDir.x !== 0 ? joystickDir.x : 1;
     let dY = joystickDir.y !== 0 ? joystickDir.y : 0;
     
-    // 0.1秒跑200距離的位移與殘影
     for(let i=0; i<3; i++) {
         afterimages.push({ x: player.x + dX * (i*60), y: player.y + dY * (i*60), radius: player.radius, team: player.team, life: 0.35 });
     }
@@ -518,11 +527,12 @@ function confirmStartGame() {
     activeSkillDrag = null;
 
     heroSkillStage = {
+        'lindis': {},
         'nakroth': { 1: { stage: 1, timer: 0 } },
         'ryoma': { 1: { stage: 1, timer: 0 } },
         'liliana': { 2: { canSecondCast: false, hitHero: false, foxStage2Ready: false } },
         'raz': { passiveReady: false, passiveTimer: 0, atkCount: 0 },
-        'murad': { stage1Count: 1, shadowPos: null, stacks: 0, stackTimer: 0, isUnlocked: false, unlockTimer: 0 },
+        'murad': { stage1Count: 1, shadowPos: null, stacks: 0, stackTimer: 0, isUnlocked: false, unlockTimer: 0, muradTimerActive: false, muradWindowTimer: 0 },
         'butterfly': { stacks: 0, markedTarget: null }
     };
     entities = []; skillEffects = []; attackEffects = []; damageTexts = []; projectiles = []; afterimages = [];
@@ -539,7 +549,6 @@ function confirmStartGame() {
     aiHero = new Hero(MAP_SIZE - 380, 380, 'red', randomAiKey, false);
 
     entities.push(blueCore, redCore, blueTower, redTower, player, aiHero);
-    
     minionSpawnTimer = 300; 
 
     updateTopScopeUI();
@@ -654,7 +663,7 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
             }
         }
 
-        let initialDirX = joystickDir.x !== 0 ? joystickDir.x : 0;
+        let initialDirX = joystickDir.x !== 0 ? joystickDir.x : (player.team === 'blue' ? 1 : -1);
         let initialDirY = joystickDir.y !== 0 ? joystickDir.y : 0;
 
         activeSkillDrag = { 
@@ -710,7 +719,6 @@ document.querySelectorAll('.skill-btn').forEach(btn => {
                 let targetDist = activeSkillDrag.currentDist;
                 let hasDragged = activeSkillDrag.hasDragged;
                 
-                // === 自動瞄準系統：若沒有手動瞄準方向，自動拉到鄰近敵方英雄或小兵 ===
                 if (!hasDragged && (activeSkillDrag.type === 'pointing' || activeSkillDrag.type === 'direction' || activeSkillDrag.type === 'position')) {
                     let nearestTarget = null;
                     let minD = 9999;
@@ -984,7 +992,6 @@ class Hero extends Entity {
         this.speedBuffTimer = 0;
 
         this.lilianaForm = 'human'; 
-
         this.razPassiveTimer = 0;
         this.razAtkCount = 0;
         this.razHasEnhancedAtk = false;
@@ -995,10 +1002,15 @@ class Hero extends Entity {
         this.muradStackTimer = 0;
         this.muradIsUnlocked = false;
         this.muradUnlockTimer = 0;
+        this.muradTimerActive = false;
+        this.muradWindowTimer = 0;
 
         this.butterflyStacks = 0;
         this.butterflyMarkedTarget = null;
         this.butterflyMarkTimer = 0;
+
+        this.lindisPassiveNextAtk = false;
+        this.lindisMarks = new Map();
 
         this.valheinHitCounter = 0;
         this.valheinPassiveStacks = 0;
@@ -1045,6 +1057,47 @@ class Hero extends Entity {
         if (this.towerSlowTimer > 0) {
             this.towerSlowTimer--;
             if (this.towerSlowTimer === 0) this.towerSlowStacks = 0;
+        }
+
+        if (this.heroKey === 'murad' && this.muradTimerActive) {
+            this.muradWindowTimer--;
+            if (this.muradWindowTimer <= 0) {
+                this.muradTimerActive = false;
+                this.muradStage1Count = 1;
+                this.muradShadowPos = null;
+                skillCooldowns[1] = 6.0;
+                damageTexts.push({ x: this.x, y: this.y - 45, value: '⏳ 莫拉1技超時未施放，進入冷卻！', color: '#ff4444', life: 1.0 });
+            }
+        }
+
+        if (this.heroKey === 'lindis') {
+            let st = heroSkillStage['lindis'];
+            if (st) {
+                [1, 2, 3].forEach(id => {
+                    let sState = st[`skill_${id}`];
+                    if (sState && sState.hasButterfly && sState.timer > 0) {
+                        sState.timer--;
+                        if (id === 2 && sState.centerPos) {
+                            let progress = (300 - sState.timer) / 300;
+                            let angle = progress * Math.PI * 2;
+                            sState.butterflyPos = {
+                                x: sState.centerPos.x + Math.cos(angle) * 120,
+                                y: sState.centerPos.y + Math.sin(angle) * 120
+                            };
+                        } else if (id === 3 && (300 - sState.timer) <= 180) {
+                            sState.butterflyPos.x += sState.dirX * 2.0;
+                            sState.butterflyPos.y += sState.dirY * 2.0;
+                        }
+
+                        if (sState.timer <= 0) {
+                            sState.hasButterfly = false;
+                            sState.butterflyPos = null;
+                            skillCooldowns[id] = id === 1 ? 5.0 : (id === 2 ? 8.0 : 17.0);
+                            damageTexts.push({ x: this.x, y: this.y - 45, value: `🦋 ${id}技蝴蝶時間結束，進入冷卻！`, color: '#aaa', life: 1.0 });
+                        }
+                    }
+                });
+            }
         }
 
         if (this.heroKey === 'raz') {
@@ -1358,6 +1411,38 @@ function performAttack() {
     if (nearestTarget) {
         player.outOfCombatTimer = 0; 
         
+        if (player.heroKey === 'lindis') {
+            player.atkCooldown = Math.round(player.heroData.atkInterval * 60);
+            player.attackLockTimer = Math.round(player.heroData.atkRecovery * 60);
+            
+            let attackCount = player.lindisPassiveNextAtk ? 3 : 1;
+            player.lindisPassiveNextAtk = false; // 消耗被動
+
+            for (let i = 0; i < attackCount; i++) {
+                setTimeout(() => {
+                    if (!nearestTarget.alive) return;
+                    let baseDmg = player.getEffectiveAtk();
+                    let maxHpDmg = nearestTarget.maxHp * 0.01; // 每普攻帶有 1% 最大生命值傷害
+                    let totalDmg = calcRandomDmg(baseDmg + maxHpDmg);
+                    nearestTarget.takeDamage(totalDmg, player.team, 'physical');
+
+                    // 蘭鐸印記機制
+                    let currentMarks = (player.lindisMarks.get(nearestTarget) || 0) + 1;
+                    if (currentMarks >= 3) {
+                        let explosiveDgm = calcRandomDmg(200 + (player.level - 1) * 10);
+                        nearestTarget.takeDamage(explosiveDgm, player.team, 'magical');
+                        currentMarks = 0;
+                        damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 50, value: `🦋 3層印記爆炸！(${Math.floor(explosiveDgm)})`, color: '#00d2ff', life: 1.2 });
+                    }
+                    player.lindisMarks.set(nearestTarget, currentMarks);
+
+                    damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `🦋 普攻 #${i+1} (${Math.floor(totalDmg)})`, color: '#ffd700', life: 0.8 });
+                    attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#00d2ff' });
+                }, i * 80);
+            }
+            return;
+        }
+
         if (player.heroKey === 'murad') {
             player.muradStacks = Math.min(4, player.muradStacks + 1);
             player.muradStackTimer = 0;
@@ -1456,33 +1541,6 @@ function performAttack() {
         player.attackLockTimer = Math.round((player.heroData.atkRecovery || 0.3) * 60);
         
         let baseDmg = calcRandomDmg(player.getEffectiveAtk());
-
-        if (player.heroKey === 'valhein') {
-            baseDmg = calcRandomDmg(200 + (player.level - 1) * 15);
-            player.valheinPassiveTimer = 0;
-            player.valheinHitCounter = (player.valheinHitCounter || 0) + 1;
-            if (player.valheinHitCounter >= 3) {
-                player.valheinHitCounter = 0;
-                player.valheinPassiveStacks = Math.min(4, player.valheinPassiveStacks + 1);
-            }
-            baseDmg += player.valheinPassiveStacks * 20;
-            damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `${Math.floor(baseDmg)}`, color: '#ffd700', life: 0.8 });
-        } else if (player.heroKey === 'alice') {
-            baseDmg = calcRandomDmg(120 + (player.level - 1) * 10);
-            damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `🎀 愛麗絲普攻 (${Math.floor(baseDmg)})`, color: '#e040fb', life: 0.8 });
-        } else if (player.heroKey === 'tarra') {
-            baseDmg = calcRandomDmg(160 + (player.level - 1) * 15);
-            damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 30, value: `🪓 塔拉重斧 (${Math.floor(baseDmg)})`, color: '#ff9800', life: 0.8 });
-        } else if (player.heroKey === 'nakroth') {
-            baseDmg = calcRandomDmg(200 + (player.level - 1) * 17);
-        } else if (player.heroKey === 'ryoma') {
-            baseDmg = calcRandomDmg(180 + (player.level - 1) * 15);
-        } else if (player.heroKey === 'quillen') {
-            baseDmg = calcRandomDmg(190 + (player.level - 1) * 10);
-        } else if (player.heroKey === 'krixi') {
-            baseDmg = calcRandomDmg(120 + (player.level - 1) * 13);
-        }
-
         nearestTarget.takeDamage(baseDmg, player.team, 'physical');
         attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#f3c654' });
     }
@@ -1515,6 +1573,139 @@ function castSkill(skillId, dirX, dirY, customDist) {
     let heroKey = player.heroKey;
     player.outOfCombatTimer = 0;
 
+    if (heroKey === 'lindis') {
+        let st = heroSkillStage['lindis'] = heroSkillStage['lindis'] || {};
+        let skillState = st[`skill_${skillId}`] = st[`skill_${skillId}`] || { hasButterfly: false, butterflyPos: null, timer: 0 };
+
+        if (skillState.hasButterfly) {
+            if (skillState.butterflyPos) {
+                player.x = skillState.butterflyPos.x;
+                player.y = skillState.butterflyPos.y;
+                damageTexts.push({ x: player.x, y: player.y - 45, value: '🦋 瞬息返回蝴蝶處！', color: '#00d2ff', life: 1.0 });
+            }
+            skillState.hasButterfly = false;
+            skillState.butterflyPos = null;
+            skillState.timer = 0;
+            skillCooldowns[skillId] = skillId === 1 ? Math.max(2.0, 5.0 - (sLv - 1) * 0.2) : (skillId === 2 ? Math.max(3.5, 8.0 - (sLv - 1) * 0.4) : Math.max(8.0, 17.0 - (sLv - 1) * 2.0));
+            updateSkillUI();
+            return;
+        }
+
+        player.lindisPassiveNextAtk = true;
+
+        if (!skillState.hasButterfly) {
+            skillState.hasButterfly = true;
+            skillState.timer = 300; 
+            if (skillId === 2) {
+                skillState.centerPos = { x: player.x, y: player.y };
+                skillState.butterflyPos = { x: player.x + 120, y: player.y };
+            } else if (skillId === 3) {
+                let tx = player.x + dirX * 240;
+                let ty = player.y + dirY * 240;
+                skillState.butterflyPos = { x: tx, y: ty };
+                skillState.dirX = dirX;
+                skillState.dirY = dirY;
+            } else {
+                skillState.butterflyPos = { x: player.x, y: player.y };
+            }
+        }
+
+        if (skillId === 1) {
+            let tx = player.x + dirX * 180;
+            let ty = player.y + dirY * 180;
+            player.startDash(tx, ty, 35);
+        } else if (skillId === 2) {
+            skillEffects.push({ x: player.x, y: player.y, life: 0.4, size: 90, color: 'rgba(0, 210, 255, 0.6)', team: player.team });
+            player.isUntargetable = true;
+            setTimeout(() => { if (player) player.isUntargetable = false; }, 500);
+        } else if (skillId === 3) {
+            let tx = player.x + dirX * 240;
+            let ty = player.y + dirY * 240;
+            player.startDash(tx, ty, 40);
+            skillState.butterflyPos = { x: tx, y: ty };
+
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 80) {
+                    e.takeDamage(calcRandomDmg(600 + (sLv - 1) * 100), player.team, 'physical');
+                    let pushX = e.x + dirX * 120;
+                    let pushY = e.y + dirY * 120;
+                    let clamped = clampPosition(pushX, pushY, e.radius);
+                    e.x = clamped.x; e.y = clamped.y;
+                }
+            });
+        }
+        updateSkillUI();
+        return;
+    }
+
+    if (heroKey === 'murad' && skillId === 1) {
+        let muradStage = player.muradStage1Count || 1; 
+        let baseDmg = calcRandomDmg(650 + (sLv - 1) * 30);
+
+        if (!player.muradTimerActive) {
+            player.muradTimerActive = true;
+            player.muradWindowTimer = 420; 
+        }
+
+        if (muradStage === 1) {
+            player.muradShadowPos = { x: player.x, y: player.y };
+            let tx = player.x + dirX * 200;
+            let ty = player.y + dirY * 200;
+            player.startDash(tx, ty, 40);
+
+            player.muradStacks = Math.min(4, player.muradStacks + 1);
+            player.muradStackTimer = 0;
+
+            skillEffects.push({ x: tx, y: ty, life: 0.4, size: 70, color: 'rgba(0, 210, 255, 0.8)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 75) {
+                    e.takeDamage(baseDmg, player.team, 'physical');
+                    e.isStunned = true;
+                    e.setStatus('暈眩', 1.0);
+                    setTimeout(() => { e.isStunned = false; }, 1000);
+                }
+            });
+
+            damageTexts.push({ x: player.x, y: player.y - 45, value: '⏳ 莫拉1技第1段 (暈眩+印記+留影子)', color: '#00d2ff', life: 1.2 });
+            player.muradStage1Count = 2;
+            player.muradWindowTimer = 420; 
+            skillCooldowns[1] = 0; 
+        } else if (muradStage === 2) {
+            let tx = player.x + dirX * 200;
+            let ty = player.y + dirY * 200;
+            player.startDash(tx, ty, 40);
+
+            player.muradStacks = Math.min(4, player.muradStacks + 1);
+            player.muradStackTimer = 0;
+
+            skillEffects.push({ x: tx, y: ty, life: 0.4, size: 70, color: 'rgba(0, 210, 255, 0.8)', team: player.team });
+            entities.forEach(e => {
+                if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 75) {
+                    e.takeDamage(baseDmg, player.team, 'physical');
+                    e.isStunned = true;
+                    e.setStatus('暈眩', 1.0);
+                    setTimeout(() => { e.isStunned = false; }, 1000);
+                }
+            });
+
+            damageTexts.push({ x: player.x, y: player.y - 45, value: '⏳ 莫拉1技第2段 (暈眩+印記)', color: '#00d2ff', life: 1.2 });
+            player.muradStage1Count = 3;
+            player.muradWindowTimer = 420; 
+            skillCooldowns[1] = 0; 
+        } else if (muradStage === 3) {
+            if (player.muradShadowPos) {
+                player.startDash(player.muradShadowPos.x, player.muradShadowPos.y, 50);
+                damageTexts.push({ x: player.x, y: player.y - 45, value: '⏳ 莫拉返回初始影子處！', color: '#00d2ff', life: 1.2 });
+            }
+            player.muradStage1Count = 1;
+            player.muradShadowPos = null;
+            player.muradTimerActive = false;
+            skillCooldowns[1] = Math.max(3.5, 6.0 - (sLv - 1) * 0.5); 
+        }
+        updateSkillUI();
+        return;
+    }
+
     if (heroKey === 'butterfly') {
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(2.0, 5.0 - (sLv - 1) * 0.3);
@@ -1525,7 +1716,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
             setTimeout(() => { if (player) player.shield = Math.max(0, (player.shield || 0) - shieldAmt); }, 3000);
 
             player.speedBuffTimer = 150; 
-
             skillEffects.push({ x: player.x, y: player.y, life: 0.4, size: 85, color: 'rgba(231, 76, 60, 0.75)', team: player.team });
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 85) {
@@ -1543,7 +1733,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
             skillCooldowns[2] = Math.max(3.5, 7.0 - (sLv - 1) * 0.6);
             let dmg = calcRandomDmg(800 + (sLv - 1) * 50);
             let slowRatio = Math.min(0.56, 0.32 + (sLv - 1) * 0.04);
-
             let hitX = player.x + dirX * 120;
             let hitY = player.y + dirY * 120;
 
@@ -1564,7 +1753,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 damageTexts.push({ x: player.x, y: player.y - 60, value: '✨ 3層被動觸發：2技能立即刷新！', color: '#ffd700', life: 1.2 });
             }
         } else if (skillId === 3) {
-            // 刀鋒大招：指向技（先標記，再位移與造成 15% 已損生命值傷害）
             let baseDmg = 1100 + (sLv - 1) * 200;
             let cR = 65;
             let dist = customDist || 240;
@@ -1590,17 +1778,14 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 return;
             }
 
-            // 先標記目標，確保在傷害結算前已完成標記
             player.butterflyMarkedTarget = targetEnemy;
-
             skillCooldowns[3] = Math.max(5.0, 11.0 - (sLv - 1) * 1.0);
 
             player.x = targetEnemy.x - Math.cos(dirX) * 40;
             player.y = targetEnemy.y - Math.sin(dirY) * 40;
 
-            // 附帶傷害調整為 15% 已損生命值
             let missingHp = Math.max(0, targetEnemy.maxHp - targetEnemy.hp);
-            let bonusDmg = missingHp * 0.15;
+            let bonusDmg = missingHp * 0.15; // 15% 附帶傷害
             let totalDmg = calcRandomDmg(baseDmg + bonusDmg);
 
             targetEnemy.takeDamage(totalDmg, player.team, 'physical');
@@ -1618,64 +1803,8 @@ function castSkill(skillId, dirX, dirY, customDist) {
         return;
     }
 
-    if (heroKey === 'murad') {
-        if (skillId === 1) {
-            let stageCount = player.muradStage1Count || 1;
-            let dmg = calcRandomDmg((650 + (sLv - 1) * 30) * (player.muradIsUnlocked ? 1.3 : 1.0));
-
-            if (stageCount === 1) {
-                player.muradShadowPos = { x: player.x, y: player.y };
-                let targetX = player.x + dirX * 200;
-                let targetY = player.y + dirY * 200;
-                player.startDash(targetX, targetY, 40);
-
-                player.muradStacks = Math.min(4, player.muradStacks + 1);
-                player.muradStackTimer = 0;
-
-                skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 70, color: 'rgba(0, 210, 255, 0.8)', team: player.team });
-                entities.forEach(e => {
-                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
-                        e.takeDamage(dmg, player.team, 'physical');
-                        e.isStunned = true;
-                        e.setStatus('暈眩', 0.8);
-                        setTimeout(() => { e.isStunned = false; }, 800);
-                    }
-                });
-                damageTexts.push({ x: player.x, y: player.y - 45, value: `⏳ 莫拉1技第1段 (印記:+1)`, color: '#00d2ff', life: 1.0 });
-
-                player.muradStage1Count = 2;
-                skillCooldowns[1] = 0; 
-            } else if (stageCount === 2) {
-                let targetX = player.x + dirX * 200;
-                let targetY = player.y + dirY * 200;
-                player.startDash(targetX, targetY, 40);
-
-                player.muradStacks = Math.min(4, player.muradStacks + 1);
-                player.muradStackTimer = 0;
-
-                skillEffects.push({ x: targetX, y: targetY, life: 0.4, size: 70, color: 'rgba(0, 210, 255, 0.8)', team: player.team });
-                entities.forEach(e => {
-                    if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
-                        e.takeDamage(dmg, player.team, 'physical');
-                        e.isStunned = true;
-                        e.setStatus('暈眩', 0.8);
-                        setTimeout(() => { e.isStunned = false; }, 800);
-                    }
-                });
-                damageTexts.push({ x: player.x, y: player.y - 45, value: `⏳ 莫拉1技第2段暈眩! (印記:+1)`, color: '#00d2ff', life: 1.0 });
-
-                player.muradStage1Count = 3;
-                skillCooldowns[1] = 0;
-            } else {
-                if (player.muradShadowPos) {
-                    player.startDash(player.muradShadowPos.x, player.muradShadowPos.y, 50);
-                    damageTexts.push({ x: player.x, y: player.y - 45, value: '⏳ 莫拉返回影子處！', color: '#00d2ff', life: 1.2 });
-                }
-                player.muradStage1Count = 1;
-                player.muradShadowPos = null;
-                skillCooldowns[1] = Math.max(3.5, 6.0 - (sLv - 1) * 0.5);
-            }
-        } else if (skillId === 2) {
+    if (heroKey === 'murad' && skillId > 1) {
+        if (skillId === 2) {
             skillCooldowns[2] = Math.max(4.0, 7.0 - (sLv - 1) * 0.5);
             let dmg = calcRandomDmg((700 + (sLv - 1) * 20) * (player.muradIsUnlocked ? 1.3 : 1.0));
 
@@ -1843,7 +1972,6 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     }
                 });
             } else if (skillId === 2) {
-                // 莉莉安人型2技：修正卡住問題，純直線飛行的非指向法球
                 skillCooldowns[2] = Math.max(4.5, 7.0 - (sLv - 1) * 0.5);
                 let dmg = calcRandomDmg(200 + (sLv - 1) * 30);
                 let startX = player.x, startY = player.y;
@@ -2395,7 +2523,11 @@ function updateSkillUI() {
         let sLv = skillLevels[id];
 
         let labelName = `技能${id}`;
-        if (player && player.heroKey === 'liliana') {
+        if (player && player.heroKey === 'lindis') {
+            let st = heroSkillStage['lindis'];
+            let hasB = st && st[`skill_${id}`] && st[`skill_${id}`].hasButterfly;
+            labelName = id === 1 ? (hasB ? '回到蝴蝶' : '1技位移') : (id === 2 ? (hasB ? '回到蝴蝶' : '2技繞圈') : (hasB ? '回到蝴蝶' : '3技擊退'));
+        } else if (player && player.heroKey === 'liliana') {
             if (player.lilianaForm === 'human') {
                 labelName = id === 1 ? '人1技' : (id === 2 ? '人2技' : '切換狐狸');
             } else {
@@ -2691,6 +2823,32 @@ function gameLoop() {
     });
     ctx.restore();
 
+    if (player && player.heroKey === 'lindis') {
+        let st = heroSkillStage['lindis'];
+        if (st) {
+            [1, 2, 3].forEach(id => {
+                let sState = st[`skill_${id}`];
+                if (sState && sState.hasButterfly && sState.butterflyPos) {
+                    let bx = sState.butterflyPos.x - camera.x;
+                    let by = sState.butterflyPos.y - camera.y;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(bx, by, 16, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(0, 210, 255, 0.65)';
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#fff';
+                    ctx.stroke();
+                    ctx.font = 'bold 12px Arial';
+                    ctx.fillStyle = '#00d2ff';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`🦋 蝴蝶#${id}`, bx, by - 22);
+                    ctx.restore();
+                }
+            });
+        }
+    }
+
     if (player && player.heroKey === 'murad' && player.muradShadowPos) {
         let sx = player.muradShadowPos.x - camera.x;
         let sy = player.muradShadowPos.y - camera.y;
@@ -2783,7 +2941,6 @@ function gameLoop() {
             ctx.strokeStyle = '#00ffff';
             ctx.stroke();
         } else if (activeSkillDrag.type === 'pointing') {
-            // 指向技：有目標標示與距離伸縮
             let clampedDist = Math.min(activeSkillDrag.currentDist, maxR);
             let targetX = px + dx * clampedDist;
             let targetY = py + dy * clampedDist;
@@ -3022,7 +3179,15 @@ function gameLoop() {
             let passiveBarY = currentBottomY + 2;
             let passiveBarH = 4;
             
-            if (e.heroKey === 'murad') {
+            if (e.heroKey === 'lindis') {
+                let st = heroSkillStage['lindis'];
+                let hasB = st && st.skill_1 && st.skill_1.hasButterfly;
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(barX, passiveBarY, barW, passiveBarH);
+                ctx.fillStyle = '#00d2ff';
+                ctx.fillRect(barX, passiveBarY, hasB ? barW : 0, passiveBarH);
+                currentBottomY = passiveBarY + passiveBarH;
+            } else if (e.heroKey === 'murad') {
                 let slotW = (barW - 3 * 2) / 4;
                 for (let i = 0; i < 4; i++) {
                     let slotX = barX + i * (slotW + 2);
@@ -3146,7 +3311,6 @@ function gameLoop() {
         if (eff.life <= 0) skillEffects.splice(idx, 1);
     });
 
-    damageTexts.push( ...[] ); // keep damage texts safe
     damageTexts.forEach((d, idx) => {
         d.y -= 0.6; d.life -= 1 / 60;
         ctx.save();
