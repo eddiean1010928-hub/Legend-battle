@@ -62,15 +62,15 @@
         .level-text { color: #00e676; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 10px; }
         .econ-hint-badge { font-size: 0.7rem; background: rgba(243, 198, 84, 0.2); color: #f3c654; padding: 1px 6px; border-radius: 8px; border: 1px solid rgba(243,198,84,0.5); }
 
-        /* 左上角商店與預購快捷按鈕 */
+        /* 左上角商店與預購快捷按鈕（方便左手食指操作） */
         .hud-top-left-tools {
             position: absolute; top: 12px; left: 15px; z-index: 80;
             display: flex; flex-direction: column; gap: 6px; pointer-events: auto !important;
         }
         .hud-tool-btn {
-            background: rgba(13, 27, 46, 0.92); border: 1.5px solid #f3c654;
-            border-radius: 10px; padding: 6px 12px; color: #ffd700;
-            font-size: 0.85rem; font-weight: bold; cursor: pointer;
+            background: rgba(13, 27, 46, 0.94); border: 1.5px solid #f3c654;
+            border-radius: 10px; padding: 7px 14px; color: #ffd700;
+            font-size: 0.9rem; font-weight: bold; cursor: pointer;
             display: flex; align-items: center; gap: 5px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5); pointer-events: auto !important;
         }
@@ -136,28 +136,28 @@
         #skill-2 { bottom: 85px; right: 90px; border-color: #00e676; }
         #skill-1 { bottom: 10px; right: 150px; border-color: #ff9100; }
 
-        /* 彈窗通用樣式（經濟面板 & 商店面板） */
+        /* 彈窗通用樣式（經濟面板 & 仿傳說左側分類商店面板） */
         .modal-backdrop {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(4, 9, 18, 0.88); z-index: 1800;
             display: flex; justify-content: center; align-items: center;
-            pointer-events: auto !important; padding: 12px;
+            pointer-events: auto !important; padding: 10px;
         }
         .modal-card {
-            background: #0b1628; border: 2px solid #f3c654; border-radius: 14px;
-            width: 96%; max-width: 720px; max-height: 90vh;
+            background: #0b1628; border: 2px solid #f3c654; border-radius: 12px;
+            width: 96%; max-width: 780px; height: 86vh; max-height: 460px;
             display: flex; flex-direction: column; overflow: hidden;
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.85); pointer-events: auto !important;
         }
         .modal-header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 14px; background: rgba(20, 38, 66, 0.95);
-            border-bottom: 1px solid rgba(243, 198, 84, 0.35); flex-wrap: wrap; gap: 6px;
+            padding: 8px 14px; background: rgba(16, 32, 56, 0.98);
+            border-bottom: 1px solid rgba(243, 198, 84, 0.35); gap: 8px;
         }
-        .modal-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+        .modal-tabs { display: flex; gap: 8px; }
         .modal-tab-btn {
             background: rgba(255, 255, 255, 0.06); border: 1px solid #334155;
-            color: #94a3b8; padding: 5px 11px; border-radius: 6px;
+            color: #94a3b8; padding: 5px 12px; border-radius: 6px;
             font-size: 0.82rem; font-weight: bold; cursor: pointer; pointer-events: auto !important;
         }
         .modal-tab-btn.active { background: #d97706; border-color: #fde047; color: #fff; }
@@ -166,44 +166,67 @@
             color: #fca5a5; border-radius: 6px; padding: 4px 10px;
             font-weight: bold; cursor: pointer; pointer-events: auto !important;
         }
-        .modal-body { padding: 12px; overflow-y: auto; flex: 1; }
+        .modal-body { padding: 10px; overflow-y: auto; flex: 1; }
 
         .stat-compare-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .stat-compare-table th, .stat-compare-table td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: center; }
         .stat-compare-table th { color: #f3c654; background: rgba(0,0,0,0.3); }
 
-        /* 商店樣式 */
-        .shop-layout { display: grid; grid-template-columns: 1.35fr 1fr; gap: 12px; }
-        @media (max-width: 600px) { .shop-layout { grid-template-columns: 1fr; } }
-        .shop-item-list { display: flex; flex-direction: column; gap: 8px; max-height: 52vh; overflow-y: auto; padding-right: 4px; }
+        /* 仿傳說對決商店（種類在左側，方便左手食指點擊） */
+        .aov-shop-main {
+            display: flex; flex: 1; overflow: hidden;
+        }
+        .aov-shop-sidebar {
+            width: 82px; background: rgba(8, 16, 30, 0.96);
+            border-right: 1px solid rgba(243, 198, 84, 0.25);
+            display: flex; flex-direction: column;
+        }
+        .aov-cat-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            font-size: 0.88rem; font-weight: bold; color: #94a3b8;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer; pointer-events: auto !important;
+            transition: background 0.15s, color 0.15s;
+        }
+        .aov-cat-btn.active {
+            background: linear-gradient(90deg, rgba(243, 198, 84, 0.28), rgba(243, 198, 84, 0.05));
+            color: #fde047; border-left: 3px solid #f3c654;
+        }
+        .aov-shop-center {
+            flex: 1.35; padding: 10px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .aov-shop-right {
+            flex: 1; padding: 10px; background: rgba(6, 12, 22, 0.65);
+            border-left: 1px solid rgba(255,255,255,0.08);
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
         .shop-item-card {
             background: rgba(255,255,255,0.05); border: 1px solid #334155; border-radius: 8px;
             padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;
             cursor: pointer; pointer-events: auto !important;
         }
-        .shop-item-card.selected { border-color: #f3c654; background: rgba(243, 198, 84, 0.12); }
-        .shop-detail-box {
-            background: rgba(0,0,0,0.4); border: 1px solid rgba(243,198,84,0.3);
-            border-radius: 8px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
-        }
+        .shop-item-card.selected { border-color: #f3c654; background: rgba(243, 198, 84, 0.14); }
         .owned-slots-bar {
-            display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 14px;
-            background: rgba(0,0,0,0.45); border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex; gap: 10px; padding: 7px 14px;
+            background: rgba(6, 12, 22, 0.96); border-top: 1px solid rgba(243, 198, 84, 0.25);
             align-items: center; justify-content: space-between;
         }
-        .owned-slot {
-            background: #1e293b; border: 1px solid #475569; border-radius: 6px;
-            padding: 4px 8px; font-size: 0.75rem; display: flex; align-items: center; gap: 4px;
+        .owned-icon-slot {
+            width: 38px; height: 38px; background: #1e293b;
+            border: 1.5px solid #475569; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.35rem; cursor: pointer; position: relative;
+            pointer-events: auto !important;
         }
-        .sell-mini-btn {
-            background: #dc2626; color: #fff; border: none; border-radius: 4px;
-            padding: 1px 5px; font-size: 0.68rem; cursor: pointer; margin-left: 4px; pointer-events: auto !important;
+        .owned-icon-slot.selected-sell {
+            border-color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
         }
         .buy-action-btn {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
             border: 1px solid #fef08a; color: #fff; font-weight: bold;
             padding: 8px; border-radius: 6px; text-align: center; cursor: pointer;
-            margin-top: 8px; pointer-events: auto !important; font-size: 0.88rem;
+            margin-top: 6px; pointer-events: auto !important; font-size: 0.85rem;
         }
         .buy-action-btn.disabled { opacity: 0.45; filter: grayscale(1); }
 
@@ -254,7 +277,7 @@
 <div id="game-container">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- 左上角商店與預購快捷按鈕 -->
+    <!-- 左上角商店與預購快捷按鈕（方便左手食指點擊） -->
     <div id="hud-left-tools" class="hud-top-left-tools hidden">
         <div class="hud-tool-btn" id="btn-open-shop">🛒 商店</div>
         <div class="hud-tool-btn hidden" id="btn-quick-buy" style="border-color:#00e676; color:#00e676;">
@@ -274,9 +297,9 @@
         <span class="econ-hint-badge">📊 面板</span>
     </div>
 
-    <!-- 經濟與屬性面板 Modal（仿傳說對陣屬性 / 英雄屬性） -->
+    <!-- 經濟與屬性面板 Modal（顯示總經濟與英雄屬性） -->
     <div id="economy-modal" class="modal-backdrop hidden">
-        <div class="modal-card">
+        <div class="modal-card" style="height:auto; max-height:85vh;">
             <div class="modal-header">
                 <div class="modal-tabs">
                     <button class="modal-tab-btn active" id="econ-tab-1">對陣屬性</button>
@@ -288,28 +311,31 @@
         </div>
     </div>
 
-    <!-- 裝備商店 Modal（含預購按鈕） -->
+    <!-- 仿傳說對決裝備商店 Modal（種類在左側、下方僅顯示已購裝備圖示） -->
     <div id="shop-modal" class="modal-backdrop hidden">
         <div class="modal-card">
             <div class="modal-header">
-                <div class="modal-tabs">
-                    <button class="modal-tab-btn active" data-shop-cat="all">全部</button>
-                    <button class="modal-tab-btn" data-shop-cat="attack">攻擊</button>
-                    <button class="modal-tab-btn" data-shop-cat="magic">魔法</button>
-                    <button class="modal-tab-btn" data-shop-cat="defense">防禦</button>
-                    <button class="modal-tab-btn" data-shop-cat="movement">移動</button>
-                </div>
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="color:#ffd700; font-weight:bold; font-size:0.9rem;" id="shop-gold-text">🪙 300</span>
-                    <button class="modal-close-btn" id="btn-close-shop">✕ 關閉</button>
+                    <span style="font-weight:900; color:#f3c654; font-size:1rem;">🛒 商店</span>
+                    <span style="color:#ffd700; font-weight:bold; font-size:0.95rem;" id="shop-gold-text">🪙 300</span>
                 </div>
+                <button class="modal-close-btn" id="btn-close-shop">✕</button>
             </div>
-            <div class="modal-body">
-                <div class="shop-layout">
-                    <div class="shop-item-list" id="shop-item-list"></div>
-                    <div class="shop-detail-box" id="shop-detail-box"></div>
+            <div class="aov-shop-main">
+                <!-- 左側種類選單（方便左手食指按） -->
+                <div class="aov-shop-sidebar">
+                    <div class="aov-cat-btn active" data-shop-cat="all">推薦</div>
+                    <div class="aov-cat-btn" data-shop-cat="attack">攻擊</div>
+                    <div class="aov-cat-btn" data-shop-cat="magic">魔法</div>
+                    <div class="aov-cat-btn" data-shop-cat="defense">防禦</div>
+                    <div class="aov-cat-btn" data-shop-cat="movement">移動</div>
                 </div>
+                <!-- 中間裝備列表 -->
+                <div class="aov-shop-center" id="shop-item-list"></div>
+                <!-- 右側裝備詳情與購買/預購/出售 -->
+                <div class="aov-shop-right" id="shop-detail-box"></div>
             </div>
+            <!-- 下方已買裝備（純圖示列） -->
             <div class="owned-slots-bar" id="shop-owned-bar"></div>
         </div>
     </div>
@@ -457,7 +483,7 @@ const LEVEL_EXP_TABLE = {
     8: 180, 9: 200, 10: 220, 11: 240, 12: 260, 13: 280, 14: 300  
 };
 
-// 最新裝備資料庫（唯一被動同名不可疊加）
+// 裝備資料庫（含 isBoot 標記限制每人限購一雙鞋子，唯一被動同名不可疊加）
 const ITEM_DB = {
     // 攻擊
     'short_sword': {
@@ -515,13 +541,13 @@ const ITEM_DB = {
         desc: '+900 生命值'
     },
     'boots': {
-        id: 'boots', name: '布鞋', category: 'movement', price: 250, icon: '👟',
+        id: 'boots', name: '布鞋', category: 'movement', price: 250, icon: '👟', isBoot: true,
         stats: {},
         uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }],
         desc: '唯一被動：跑速 - 移速加 20%'
     },
     'war_boots': {
-        id: 'war_boots', name: '攻速之靴', category: 'movement', price: 750, icon: '👢',
+        id: 'war_boots', name: '攻速之靴', category: 'movement', price: 750, icon: '👢', isBoot: true,
         recipe: ['dagger', 'boots'],
         stats: { atkSpeed: 0.20 },
         uniquePassives: [
@@ -531,7 +557,7 @@ const ITEM_DB = {
         desc: '合成：短刀 + 布鞋 + 280\n獲得 20% 攻擊速度\n唯一被動：跑速 - 移速加 20%\n唯一被動：吸取 - 獲得 5% 物理吸血'
     },
     'flashy_boots': {
-        id: 'flashy_boots', name: '吟遊之靴', category: 'movement', price: 750, icon: '👞',
+        id: 'flashy_boots', name: '吟遊之靴', category: 'movement', price: 750, icon: '👞', isBoot: true,
         recipe: ['magic_bracelet', 'boots'],
         stats: { cdr: 0.10 },
         uniquePassives: [
@@ -541,7 +567,7 @@ const ITEM_DB = {
         desc: '合成：魔力手鐲 + 布鞋 + 200\n冷卻 - 獲得 10% 冷卻縮減\n唯一被動：跑速 - 移速加 20%\n唯一被動：冷縮 - 獲得挑戰者技能 10% 冷卻縮減'
     },
     'gilded_greaves': {
-        id: 'gilded_greaves', name: '聖騎士之靴', category: 'movement', price: 750, icon: '🥾',
+        id: 'gilded_greaves', name: '聖騎士之靴', category: 'movement', price: 750, icon: '🥾', isBoot: true,
         recipe: ['magic_gloves', 'boots'],
         stats: { mDef: 140 },
         uniquePassives: [
@@ -551,7 +577,7 @@ const ITEM_DB = {
         desc: '合成：護手 + 布鞋 + 280\n獲得 140 魔法防禦\n唯一被動：跑速 - 移速加 20%\n唯一被動：韌性 - 獲得 15% 韌性'
     },
     'sonic_boots': {
-        id: 'sonic_boots', name: '物防鞋', category: 'movement', price: 750, icon: '🦿',
+        id: 'sonic_boots', name: '物防鞋', category: 'movement', price: 750, icon: '🦿', isBoot: true,
         recipe: ['cloth_armor', 'boots'],
         stats: { pDef: 140 },
         uniquePassives: [
@@ -561,7 +587,7 @@ const ITEM_DB = {
         desc: '合成：布甲 + 布鞋 + 280\n獲得 140 物理防禦\n唯一被動：跑速 - 移速加 20%\n唯一被動：物防 - 對方的物理攻擊少 10%'
     },
     'hermes_select': {
-        id: 'hermes_select', name: '遊蕩者之靴', category: 'movement', price: 750, icon: '🪽',
+        id: 'hermes_select', name: '遊蕩者之靴', category: 'movement', price: 750, icon: '🪽', isBoot: true,
         recipe: ['boots'],
         stats: {},
         uniquePassives: [
@@ -575,6 +601,7 @@ const ITEM_DB = {
 let currentEconTab = 1;
 let currentShopCategory = 'all';
 let selectedShopItemId = 'short_sword';
+let selectedOwnedSlotIdx = null;
 let preorderedItemId = null;
 
 function initUserData() {
@@ -646,6 +673,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // 商店與預購快捷購買綁定
     bindClick('btn-open-shop', () => {
+        selectedOwnedSlotIdx = null;
         document.getElementById('shop-modal').classList.remove('hidden');
         renderShopModal();
     });
@@ -656,6 +684,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!preorderedItemId || !player) return;
         let targetId = preorderedItemId;
         let item = ITEM_DB[targetId];
+        if (!canHeroBuyItem(player, item)) return;
         let cost = getEffectiveBuyPrice(player, item);
         if (player.gold >= cost) {
             buyItemForHero(player, targetId);
@@ -690,6 +719,20 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// 檢查一個人只能有一個鞋子（合成進階鞋消耗布鞋時允許）
+function canHeroBuyItem(hero, item) {
+    if (!item || !item.isBoot) return true;
+    let tempInv = [...hero.inventory];
+    if (item.recipe) {
+        item.recipe.forEach(compId => {
+            let idx = tempInv.indexOf(compId);
+            if (idx !== -1) tempInv.splice(idx, 1);
+        });
+    }
+    let alreadyHasOtherBoot = tempInv.some(id => ITEM_DB[id] && ITEM_DB[id].isBoot);
+    return !alreadyHasOtherBoot;
+}
+
 function getEffectiveBuyPrice(hero, item) {
     if (!item.recipe) return item.price;
     let discount = 0;
@@ -707,6 +750,12 @@ function getEffectiveBuyPrice(hero, item) {
 function buyItemForHero(hero, itemId) {
     let item = ITEM_DB[itemId];
     if (!item) return;
+
+    if (!canHeroBuyItem(hero, item)) {
+        triggerAnnouncement('⚠️ 一個人只能擁有一雙鞋子！', '#ff4444');
+        return;
+    }
+
     let cost = getEffectiveBuyPrice(hero, item);
     if (hero.gold < cost) return;
 
@@ -727,19 +776,22 @@ function buyItemForHero(hero, itemId) {
     hero.inventory = tempInv;
     hero.recalculateEquipmentStats();
     if (preorderedItemId === itemId) preorderedItemId = null;
+    selectedOwnedSlotIdx = null;
     updateTopScopeUI();
     updateQuickBuyButton();
     renderShopModal();
 }
 
+// 賣裝備返還 70% 價格
 function sellItemForHero(hero, slotIndex) {
-    if (slotIndex < 0 || slotIndex >= hero.inventory.length) return;
+    if (slotIndex === null || slotIndex < 0 || slotIndex >= hero.inventory.length) return;
     let itemId = hero.inventory[slotIndex];
     let item = ITEM_DB[itemId];
-    let refund = Math.floor(item.price * 0.6);
+    let refund = Math.floor(item.price * 0.70);
     hero.gold += refund;
     hero.inventory.splice(slotIndex, 1);
     hero.recalculateEquipmentStats();
+    selectedOwnedSlotIdx = null;
     updateTopScopeUI();
     updateQuickBuyButton();
     renderShopModal();
@@ -752,7 +804,7 @@ function updateQuickBuyButton() {
         return;
     }
     let item = ITEM_DB[preorderedItemId];
-    if (!item) {
+    if (!item || !canHeroBuyItem(player, item)) {
         btn.classList.add('hidden');
         return;
     }
@@ -777,21 +829,22 @@ function renderShopModal() {
 
     listEl.innerHTML = items.map(it => {
         let effPrice = getEffectiveBuyPrice(player, it);
-        let canAfford = player.gold >= effPrice;
+        let bootAllowed = canHeroBuyItem(player, it);
+        let canAfford = player.gold >= effPrice && bootAllowed;
         let isPreordered = (preorderedItemId === it.id);
         return `
-            <div class="shop-item-card ${it.id === selectedShopItemId ? 'selected' : ''}" data-select-item="${it.id}">
+            <div class="shop-item-card ${selectedOwnedSlotIdx === null && it.id === selectedShopItemId ? 'selected' : ''}" data-select-item="${it.id}">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:1.3rem;">${it.icon}</span>
+                    <span style="font-size:1.35rem;">${it.icon}</span>
                     <div>
-                        <div style="font-weight:bold; font-size:0.9rem; color:#fff;">
-                            ${it.name} ${isPreordered ? '<span style="color:#00d2ff; font-size:0.72rem;">[預購中]</span>' : ''}
+                        <div style="font-weight:bold; font-size:0.88rem; color:#fff;">
+                            ${it.name} ${isPreordered ? '<span style="color:#00d2ff; font-size:0.7rem;">[預購]</span>' : ''}
                         </div>
-                        <div style="font-size:0.72rem; color:#94a3b8;">${it.desc.split('\n')[0]}</div>
+                        <div style="font-size:0.7rem; color:#94a3b8;">${it.desc.split('\n')[0]}</div>
                     </div>
                 </div>
-                <div style="font-weight:bold; font-size:0.85rem; color:${canAfford ? '#ffd700' : '#ef4444'};">
-                    🪙 ${effPrice}
+                <div style="font-weight:bold; font-size:0.85rem; color:${!bootAllowed ? '#64748b' : (canAfford ? '#ffd700' : '#ef4444')};">
+                    ${!bootAllowed ? '限1鞋' : `🪙 ${effPrice}`}
                 </div>
             </div>
         `;
@@ -799,64 +852,106 @@ function renderShopModal() {
 
     listEl.querySelectorAll('[data-select-item]').forEach(card => {
         bindClickElement(card, () => {
+            selectedOwnedSlotIdx = null;
             selectedShopItemId = card.dataset.selectItem;
             renderShopModal();
         });
     });
 
     const detailEl = document.getElementById('shop-detail-box');
-    let selItem = ITEM_DB[selectedShopItemId];
-    if (selItem) {
-        let effPrice = getEffectiveBuyPrice(player, selItem);
-        let canBuy = player.gold >= effPrice;
-        let isPreordered = (preorderedItemId === selItem.id);
+    if (selectedOwnedSlotIdx !== null && player.inventory[selectedOwnedSlotIdx]) {
+        let ownedId = player.inventory[selectedOwnedSlotIdx];
+        let ownedItem = ITEM_DB[ownedId];
+        let sellPrice = Math.floor(ownedItem.price * 0.70);
         detailEl.innerHTML = `
             <div>
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                    <span style="font-size:1.8rem;">${selItem.icon}</span>
+                    <span style="font-size:1.8rem;">${ownedItem.icon}</span>
                     <div>
-                        <div style="font-size:1.05rem; font-weight:bold; color:#f3c654;">${selItem.name}</div>
-                        <div style="font-size:0.8rem; color:#ffd700;">價格：🪙 ${effPrice} ${effPrice < selItem.price ? `(原價 ${selItem.price} 折抵合成)` : ''}</div>
+                        <div style="font-size:1.05rem; font-weight:bold; color:#f3c654;">${ownedItem.name}</div>
+                        <div style="font-size:0.78rem; color:#94a3b8;">已裝備欄位 #${selectedOwnedSlotIdx + 1}</div>
                     </div>
                 </div>
-                <div style="font-size:0.8rem; color:#cbd5e1; white-space:pre-line; line-height:1.45;">${selItem.desc}</div>
+                <div style="font-size:0.78rem; color:#cbd5e1; white-space:pre-line; line-height:1.4;">${ownedItem.desc}</div>
             </div>
             <div>
-                <div class="buy-action-btn ${canBuy ? '' : 'disabled'}" id="btn-buy-selected-item">
-                    ${canBuy ? `購買裝備 (🪙 ${effPrice})` : '金幣不足'}
-                </div>
-                <div class="buy-action-btn" style="background:#1e3a5f; border-color:#00d2ff; margin-top:6px;" id="btn-preorder-item">
-                    ${isPreordered ? '✅ 已設為預購（點擊取消）' : '📌 設為預購裝備'}
+                <div class="buy-action-btn" style="background:linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); border-color:#fca5a5;" id="btn-sell-selected-owned">
+                    出售裝備 (+🪙 ${sellPrice} / 70%)
                 </div>
             </div>
         `;
-        bindClick('btn-buy-selected-item', () => {
-            if (canBuy) buyItemForHero(player, selItem.id);
+        bindClick('btn-sell-selected-owned', () => {
+            sellItemForHero(player, selectedOwnedSlotIdx);
         });
-        bindClick('btn-preorder-item', () => {
-            preorderedItemId = isPreordered ? null : selItem.id;
-            updateQuickBuyButton();
-            renderShopModal();
-        });
+    } else {
+        let selItem = ITEM_DB[selectedShopItemId];
+        if (selItem) {
+            let effPrice = getEffectiveBuyPrice(player, selItem);
+            let bootAllowed = canHeroBuyItem(player, selItem);
+            let canBuy = player.gold >= effPrice && bootAllowed;
+            let isPreordered = (preorderedItemId === selItem.id);
+            let btnText = !bootAllowed ? '已擁有鞋子（限1雙）' : (canBuy ? `購買 (🪙 ${effPrice})` : '金幣不足');
+
+            detailEl.innerHTML = `
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <span style="font-size:1.8rem;">${selItem.icon}</span>
+                        <div>
+                            <div style="font-size:1.02rem; font-weight:bold; color:#f3c654;">${selItem.name}</div>
+                            <div style="font-size:0.78rem; color:#ffd700;">🪙 ${effPrice} ${effPrice < selItem.price ? `(合成折抵)` : ''}</div>
+                        </div>
+                    </div>
+                    <div style="font-size:0.76rem; color:#cbd5e1; white-space:pre-line; line-height:1.4;">${selItem.desc}</div>
+                </div>
+                <div>
+                    <div class="buy-action-btn ${canBuy ? '' : 'disabled'}" id="btn-buy-selected-item">
+                        ${btnText}
+                    </div>
+                    <div class="buy-action-btn" style="background:#1e3a5f; border-color:#00d2ff; margin-top:6px;" id="btn-preorder-item">
+                        ${isPreordered ? '✅ 取消預購' : '📌 預購裝備'}
+                    </div>
+                </div>
+            `;
+            bindClick('btn-buy-selected-item', () => {
+                if (canBuy) buyItemForHero(player, selItem.id);
+            });
+            bindClick('btn-preorder-item', () => {
+                if (!bootAllowed && !isPreordered) {
+                    triggerAnnouncement('⚠️ 一個人只能擁有一雙鞋子！', '#ff4444');
+                    return;
+                }
+                preorderedItemId = isPreordered ? null : selItem.id;
+                updateQuickBuyButton();
+                renderShopModal();
+            });
+        }
     }
 
+    // 下方已買裝備：純圖示列（點擊圖示可切換右側為出售模式）
     const ownedBar = document.getElementById('shop-owned-bar');
+    let slotsHtml = '';
+    for (let i = 0; i < 6; i++) {
+        let id = player.inventory[i];
+        let it = id ? ITEM_DB[id] : null;
+        let isSel = (selectedOwnedSlotIdx === i);
+        slotsHtml += `<div class="owned-icon-slot ${isSel ? 'selected-sell' : ''}" data-owned-slot="${i}">${it ? it.icon : ''}</div>`;
+    }
     ownedBar.innerHTML = `
-        <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-            <span style="font-size:0.78rem; color:#94a3b8;">已裝備 (${player.inventory.length}/6)：</span>
-            ${player.inventory.map((id, idx) => {
-                let it = ITEM_DB[id];
-                return `<div class="owned-slot">${it.icon} ${it.name} <button class="sell-mini-btn" data-sell-idx="${idx}">售</button></div>`;
-            }).join('') || '<span style="font-size:0.75rem; color:#64748b;">無</span>'}
-        </div>
+        <div style="display:flex; gap:8px; align-items:center;">${slotsHtml}</div>
+        <span style="font-size:0.72rem; color:#94a3b8;">點擊下方圖示可出售 (70%)</span>
     `;
-    ownedBar.querySelectorAll('[data-sell-idx]').forEach(btn => {
-        bindClickElement(btn, () => {
-            sellItemForHero(player, parseInt(btn.dataset.sellIdx));
+    ownedBar.querySelectorAll('[data-owned-slot]').forEach(slotEl => {
+        bindClickElement(slotEl, () => {
+            let idx = parseInt(slotEl.dataset.ownedSlot);
+            if (player.inventory[idx]) {
+                selectedOwnedSlotIdx = (selectedOwnedSlotIdx === idx) ? null : idx;
+                renderShopModal();
+            }
         });
     });
 }
 
+// 經濟面板：顯示「總經濟 totalGold」與英雄屬性（不顯示減傷%）
 function renderEconomyModal() {
     if (!player || !aiHero) return;
     const body = document.getElementById('economy-modal-body');
@@ -887,7 +982,7 @@ function renderEconomyModal() {
                         ${pStatus}
                     </div>
                     <div style="font-size:0.85rem; color:#fde047; font-weight:bold; margin-bottom:8px;">
-                        ⚔️ ${kills} / ${deaths} / ${assists} &nbsp;|&nbsp; 🪙 ${Math.floor(player.gold)}
+                        ⚔️ ${kills} / ${deaths} / ${assists} &nbsp;|&nbsp; 總經濟 🪙 ${Math.floor(player.totalGold)}
                     </div>
                     <div style="display:flex; gap:4px; flex-wrap:wrap;">${renderSlots(player.inventory)}</div>
                 </div>
@@ -899,7 +994,7 @@ function renderEconomyModal() {
                         ${aiStatus}
                     </div>
                     <div style="font-size:0.85rem; color:#fde047; font-weight:bold; margin-bottom:8px;">
-                        ⚔️ ${aiHero.kills} / ${aiHero.deaths} / ${aiHero.assists} &nbsp;|&nbsp; 🪙 ${Math.floor(aiHero.gold)}
+                        ⚔️ ${aiHero.kills} / ${aiHero.deaths} / ${aiHero.assists} &nbsp;|&nbsp; 總經濟 🪙 ${Math.floor(aiHero.totalGold)}
                     </div>
                     <div style="display:flex; gap:4px; flex-wrap:wrap;">${renderSlots(aiHero.inventory)}</div>
                 </div>
@@ -908,10 +1003,6 @@ function renderEconomyModal() {
     } else {
         let pS = player.getFullStats();
         let aS = aiHero.getFullStats();
-        let pDefPct = ((pS.pDef / (600 + pS.pDef)) * 100).toFixed(1);
-        let pMDefPct = ((pS.mDef / (600 + pS.mDef)) * 100).toFixed(1);
-        let aDefPct = ((aS.pDef / (600 + aS.pDef)) * 100).toFixed(1);
-        let aMDefPct = ((aS.mDef / (600 + aS.mDef)) * 100).toFixed(1);
 
         body.innerHTML = `
             <table class="stat-compare-table">
@@ -923,11 +1014,12 @@ function renderEconomyModal() {
                     </tr>
                 </thead>
                 <tbody>
+                    <tr><td>總經濟</td><td>🪙 ${Math.floor(player.totalGold)}</td><td>🪙 ${Math.floor(aiHero.totalGold)}</td></tr>
                     <tr><td>最大生命值</td><td>${Math.floor(pS.maxHp)}</td><td>${Math.floor(aS.maxHp)}</td></tr>
                     <tr><td>物理攻擊 / 物理穿透</td><td>${Math.floor(pS.pAtk)} / +${player.equipBonuses.pPierce}</td><td>${Math.floor(aS.pAtk)} / +${aiHero.equipBonuses.pPierce}</td></tr>
-                    <tr><td>物理防禦 (減傷%)</td><td>${Math.floor(pS.pDef)} (${pDefPct}%)</td><td>${Math.floor(aS.pDef)} (${aDefPct}%)</td></tr>
+                    <tr><td>物理防禦</td><td>${Math.floor(pS.pDef)}</td><td>${Math.floor(aS.pDef)}</td></tr>
                     <tr><td>魔法攻擊</td><td>${Math.floor(pS.mAtk)}</td><td>${Math.floor(aS.mAtk)}</td></tr>
-                    <tr><td>魔法防禦 (減傷%)</td><td>${Math.floor(pS.mDef)} (${pMDefPct}%)</td><td>${Math.floor(aS.mDef)} (${aMDefPct}%)</td></tr>
+                    <tr><td>魔法防禦</td><td>${Math.floor(pS.mDef)}</td><td>${Math.floor(aS.mDef)}</td></tr>
                     <tr><td>冷卻縮減 / 攻速加成</td><td>${Math.round(pS.cdr * 100)}% / +${Math.round(player.equipBonuses.atkSpeed * 100)}%</td><td>${Math.round(aS.cdr * 100)}% / +${Math.round(aiHero.equipBonuses.atkSpeed * 100)}%</td></tr>
                 </tbody>
             </table>
@@ -1407,10 +1499,11 @@ class Entity {
         this.shield = 0;
         this.pDef = 0;
         this.mDef = 0;
+        this.lastAttacker = null;
     }
-    // 防禦減傷公式：防禦減傷% = 有效防禦值 / (600 + 有效防禦值)；收到傷害 = 攻擊 * (1 - 防禦減傷%)
     takeDamage(dmg, sourceTeam, type = 'physical', attackerEntity = null) {
         if (!this.alive) return;
+        if (attackerEntity) this.lastAttacker = attackerEntity;
         
         if (this instanceof Hero) {
             this.outOfCombatTimer = 0; 
@@ -1421,7 +1514,6 @@ class Entity {
             let attackerPierce = (attackerEntity && attackerEntity.equipBonuses) ? (attackerEntity.equipBonuses.pPierce || 0) : 0;
 
             if (type === 'physical') {
-                // 物防鞋唯一被動：對方的物理攻擊少 10%
                 if (stats.physDmgReduce > 0) {
                     dmg *= (1 - stats.physDmgReduce);
                 }
@@ -1435,7 +1527,6 @@ class Entity {
             }
         }
 
-        // 物理吸血處理
         if (attackerEntity && attackerEntity instanceof Hero && type === 'physical' && attackerEntity.equipBonuses.physLifesteal > 0 && dmg > 0) {
             let heal = dmg * attackerEntity.equipBonuses.physLifesteal;
             attackerEntity.hp = Math.min(attackerEntity.maxHp, attackerEntity.hp + heal);
@@ -1477,8 +1568,9 @@ class Building extends Entity {
         this.currentTarget = null;
         this.towerAtkStack = 0;
     }
-    takeDamage(dmg, sourceTeam, type = 'physical') {
+    takeDamage(dmg, sourceTeam, type = 'physical', attackerEntity = null) {
         if (!this.alive) return;
+        if (attackerEntity) this.lastAttacker = attackerEntity;
         if (this.type === 'tower' || this.type === 'core') {
             let hasMinionNearby = entities.some(e => 
                 e.alive && e instanceof Minion && e.team !== this.team && Math.hypot(e.x - this.x, e.y - this.y) <= 300
@@ -1523,7 +1615,7 @@ class Building extends Entity {
                 let finalTowerDmg = calcRandomDmg(baseTowerDmg * Math.pow(1.5, this.towerAtkStack));
                 this.towerAtkStack++;
 
-                this.currentTarget.takeDamage(finalTowerDmg, this.team, 'true');
+                this.currentTarget.takeDamage(finalTowerDmg, this.team, 'true', this);
                 
                 if (this.currentTarget instanceof Hero) {
                     this.currentTarget.towerSlowStacks = Math.min(2, (this.currentTarget.towerSlowStacks || 0) + 1);
@@ -1553,10 +1645,13 @@ class Building extends Entity {
 }
 
 class Minion extends Entity {
-    constructor(x, y, team) {
-        super(x, y, team, 18);
-        this.maxHp = 2000; this.hp = 2000; 
-        this.atk = 45; this.range = 120;
+    constructor(x, y, team, minionType = 'melee') {
+        super(x, y, team, minionType === 'ranged' ? 16 : 19);
+        this.minionType = minionType; // 'melee' 近戰 (50~70) 或 'ranged' 遠程 (80~120)
+        this.maxHp = minionType === 'ranged' ? 1600 : 2200;
+        this.hp = this.maxHp; 
+        this.atk = minionType === 'ranged' ? 60 : 40;
+        this.range = minionType === 'ranged' ? 210 : 90;
         this.targetX = team === 'blue' ? MAP_SIZE - 450 : 450;
         this.targetY = team === 'blue' ? 450 : MAP_SIZE - 450;
         this.moveSpeed = 1.6;
@@ -1580,7 +1675,7 @@ class Minion extends Entity {
             if (this.atkCooldown === 0) {
                 this.atkCooldown = 60;
                 let dmg = calcRandomDmg(this.atk);
-                nearestTarget.takeDamage(dmg, this.team, 'physical');
+                nearestTarget.takeDamage(dmg, this.team, 'physical', this);
                 damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `${Math.floor(dmg)}`, color: '#f3c654', life: 0.8 });
             }
         } else {
@@ -1596,9 +1691,23 @@ class Minion extends Entity {
         }
     }
     onDeath(sourceTeam) {
+        // 小兵經濟：近戰 50~70、遠程 80~120；尾刀（非小兵或防禦塔擊殺）經濟 * 1.2
+        let baseGold = this.minionType === 'ranged'
+            ? Math.floor(80 + Math.random() * 41)
+            : Math.floor(50 + Math.random() * 21);
+        let isHeroLastHit = (this.lastAttacker instanceof Hero && this.lastAttacker.team === sourceTeam);
+        let finalGold = isHeroLastHit ? Math.round(baseGold * 1.2) : baseGold;
+
         entities.forEach(e => {
             if (e instanceof Hero && e.alive && e.team === sourceTeam) {
-                e.gainExpAndGold(10, 25);
+                e.gainExpAndGold(12, finalGold);
+                if (e.isPlayer) {
+                    damageTexts.push({
+                        x: this.x, y: this.y - 30,
+                        value: `+${finalGold}🪙${isHeroLastHit ? ' (尾刀!)' : ''}`,
+                        color: '#ffd700', life: 1.0
+                    });
+                }
                 if (e.heroKey === 'butterfly') {
                     e.butterflyStacks = Math.min(3, e.butterflyStacks + 1);
                 }
@@ -1636,7 +1745,9 @@ class Hero extends Entity {
         this.baseMAtk = 0;
         this.range = data.range;
         this.isPlayer = isPlayer;
-        this.level = 1; this.exp = 0; this.gold = 300;
+        this.level = 1; this.exp = 0;
+        this.gold = 300;
+        this.totalGold = 300; // 總經濟（只增不減，用於經濟面板）
         this.kills = 0; this.deaths = 0; this.assists = 0;
         this.respawnRemaining = 0;
 
@@ -1711,7 +1822,6 @@ class Hero extends Entity {
         this.rotation = team === 'blue' ? -Math.PI / 4 : Math.PI * 3 / 4;
     }
 
-    // 重算裝備屬性：同名「唯一被動」只會生效一次（不可疊加）
     recalculateEquipmentStats() {
         let prevMaxHp = this.maxHp;
         let b = {
@@ -1738,7 +1848,7 @@ class Hero extends Entity {
 
             if (it.uniquePassives) {
                 it.uniquePassives.forEach(up => {
-                    if (appliedUniquePassives.has(up.name)) return; // 同名唯一被動不疊加
+                    if (appliedUniquePassives.has(up.name)) return;
                     appliedUniquePassives.add(up.name);
 
                     if (up.key === 'armor_pierce') b.pPierce += 60;
@@ -2139,6 +2249,7 @@ class Hero extends Entity {
 
     gainExpAndGold(expAmt, goldAmt) {
         this.gold += goldAmt;
+        this.totalGold += goldAmt;
         if (this.isPlayer) { currentUserData.gold = this.gold; saveUserData(); }
         this.exp += expAmt;
         let reqExp = LEVEL_EXP_TABLE[this.level] || 150;
@@ -2164,12 +2275,18 @@ class Hero extends Entity {
         this.respawnRemaining = respawnTime;
         this.deaths++;
 
+        // 擊殺英雄獲得 150~250 金幣
+        let killGold = Math.floor(150 + Math.random() * 101);
+
         if (this.isPlayer) {
             deaths++;
             aiKillStreak++;
             playerKillStreak = 0;
             redKills++; 
-            if (aiHero) aiHero.kills++;
+            if (aiHero) {
+                aiHero.kills++;
+                if (aiHero.alive) aiHero.gainExpAndGold(25, killGold);
+            }
             triggerAnnouncement(`YOU HAVE BEEN SLAIN (復活倒數 ${respawnTime} 秒)`, '#ff3366');
 
             setTimeout(() => {
@@ -2189,13 +2306,13 @@ class Hero extends Entity {
             
             if (!hasFirstBloodOccurred) {
                 hasFirstBloodOccurred = true;
-                triggerAnnouncement('FIRST BLOOD 擊殺首血！', '#ffd700');
+                triggerAnnouncement(`FIRST BLOOD 擊殺首血！(+${killGold}🪙)`, '#ffd700');
             } else {
-                triggerAnnouncement(`ENEMY SLAIN (敵方 ${respawnTime} 秒後復活)`, '#00e676');
+                triggerAnnouncement(`ENEMY SLAIN 擊殺敵方！(+${killGold}🪙)`, '#00e676');
             }
 
             if (player && player.alive) {
-                player.gainExpAndGold(20, 150);
+                player.gainExpAndGold(25, killGold);
                 if (player.heroKey === 'quillen') {
                     skillCooldowns = { 1: 0, 2: 0, 3: 0 };
                 }
@@ -2426,7 +2543,7 @@ function performAttack() {
             return;
         }
 
-        // 其餘英雄（納克羅斯、龍馬、奎倫、克里希、愛麗絲、塔拉）普攻
+        // 其餘英雄普攻
         if (player.heroKey === 'nakroth') {
             player.nakrothPassiveCounter++;
             if (player.nakrothPassiveCounter >= 4) {
@@ -3633,16 +3750,18 @@ function gameLoop() {
     if (challengerCooldown > 0) challengerCooldown = Math.max(0, challengerCooldown - 1 / 60);
     if (healSpellCooldown > 0) healSpellCooldown = Math.max(0, healSpellCooldown - 1 / 60);
 
+    // 雙方兵線一致：每波 2 隻近戰兵 + 1 隻遠程兵
     minionSpawnTimer++;
     if (minionSpawnTimer >= 900) {
         minionSpawnTimer = 0;
-        for (let i = 0; i < 3; i++) {
+        const waveTypes = ['melee', 'melee', 'ranged'];
+        waveTypes.forEach((mType, i) => {
             setTimeout(() => {
                 if (!isRunning) return;
-                entities.push(new Minion(450 - i * 15, MAP_SIZE - 450 + i * 15, 'blue'));
-                entities.push(new Minion(MAP_SIZE - 450 + i * 15, 450 - i * 15, 'red'));
-            }, i * 300);
-        }
+                entities.push(new Minion(450 - i * 25, MAP_SIZE - 450 + i * 25, 'blue', mType));
+                entities.push(new Minion(MAP_SIZE - 450 + i * 25, 450 - i * 25, 'red', mType));
+            }, i * 350);
+        });
     }
 
     entities.forEach(e => e.update());
@@ -4118,145 +4237,212 @@ function gameLoop() {
         ctx.fill();
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#ffffff';
-        ctx.shadowColor = '#ffaa00';
-        ctx.shadowBlur = 18;
         ctx.stroke();
+
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.isSlimzSpear ? '🔱' : (p.isLilianaHomingBall ? '🔮' : (p.isLilianaHumanBall ? '💫' : (p.isRazFireball ? '🔥' : '🦋'))), sx, sy);
         ctx.restore();
     });
 
+    skillEffects.forEach((se, idx) => {
+        se.life -= 1 / 60;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(se.x - camera.x, se.y - camera.y, se.size, 0, Math.PI * 2);
+        ctx.fillStyle = se.color;
+        ctx.fill();
+        ctx.restore();
+        if (se.life <= 0) skillEffects.splice(idx, 1);
+    });
+
+    // 繪製實體、血條、以及血條下方的「經驗條」與「特殊被動條」
     entities.forEach(e => {
         if (!e.alive) return;
         let sx = e.x - camera.x;
         let sy = e.y - camera.y;
-
-        if (e instanceof Hero) {
-            ctx.save();
-            let isEnhanced = (e.heroKey === 'nakroth' && e.hasEnhancedAttack) || (e.heroKey === 'ryoma' && e.hasEnhancedAttack) || (e.heroKey === 'liliana' && e.hasEnhancedAttack) || (e.heroKey === 'raz' && e.razHasEnhancedAtk);
-            let drawRange = e.heroKey === 'liliana' ? (e.lilianaForm === 'human' ? 240 : (isEnhanced ? 180 : 120)) : (e.heroKey === 'raz' ? (isEnhanced ? 180 : 120) : (isEnhanced ? 180 : e.range));
-
-            if (isEnhanced || (e.isPlayer && isAttackingPressed)) {
-                ctx.beginPath();
-                ctx.arc(sx, sy, drawRange, 0, Math.PI * 2);
-                ctx.strokeStyle = isEnhanced ? 'rgba(255, 215, 0, 0.9)' : 'rgba(243, 198, 84, 0.6)';
-                ctx.lineWidth = isEnhanced ? 2.5 : 1.5;
-                ctx.setLineDash([4, 4]);
-                ctx.stroke();
-            }
-            ctx.restore();
-        }
-
+        
         ctx.save();
         ctx.beginPath();
         ctx.arc(sx, sy, e.radius, 0, Math.PI * 2);
-        
-        if (e instanceof Building) {
-            ctx.fillStyle = e.team === 'blue' ? '#00d2ff' : '#ff4444';
-        } else if (e instanceof Minion) {
-            ctx.fillStyle = e.team === 'blue' ? '#4dabf7' : '#ff6b6b';
-        } else {
-            ctx.fillStyle = e.team === 'blue' ? '#2e86de' : '#ee5253';
-        }
+        ctx.fillStyle = e.team === 'blue' ? '#0088cc' : '#cc2222';
         ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = e.isUntargetable ? '#00ffff' : '#fff';
         ctx.stroke();
 
-        if (e instanceof Building) {
-            ctx.font = '22px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#fff';
-            ctx.fillText(e.type === 'core' ? '🏰' : '🗼', sx, sy);
+        ctx.font = 'bold 14px Arial';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        let displayLabel = e instanceof Building ? (e.type === 'core' ? '主堡' : '防禦塔') : (e instanceof Minion ? (e.minionType === 'ranged' ? '遠兵' : '近兵') : e.heroData.name);
+        if (e instanceof Hero && e.heroKey === 'liliana' && e.lilianaForm === 'fox') {
+            displayLabel = '🦊九尾狐';
         }
+        ctx.fillText(displayLabel, sx, sy);
         ctx.restore();
 
-        let barW = e instanceof Building ? 70 : 50, barH = 6;
-        let barX = sx - barW / 2;
-        let barY = sy - e.radius - 24;
+        let barW = e instanceof Building ? 90 : (e instanceof Hero ? 72 : 44);
+        let barH = e instanceof Hero ? 7 : 6;
+        let hpRatio = Math.max(0, Math.min(1, e.hp / e.maxHp));
+        let barTopY = sy - e.radius - 18;
         
+        // 1. 血條底框與血量
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.fillRect(sx - barW / 2, barTopY, barW, barH);
+        ctx.fillStyle = e.team === 'blue' ? '#00e676' : '#ff3d00';
+        ctx.fillRect(sx - barW / 2, barTopY, barW * hpRatio, barH);
+
+        // 護盾條
+        if (e.shield > 0) {
+            let shieldRatio = Math.min(1, e.shield / e.maxHp);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(sx - barW / 2, barTopY, barW * shieldRatio, barH);
+        }
+
+        // 2. 英雄專屬：血條下方的「經驗條」與「被動條（特殊被動）」
         if (e instanceof Hero) {
-            ctx.save();
-            ctx.font = 'bold 12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillStyle = e.team === 'blue' ? '#00d2ff' : '#ff4444';
-            let heroInfo = HERO_DB[e.heroKey];
-            
-            if (e.statusText && e.statusDuration > 0) {
-                ctx.fillText(e.statusText, sx, barY - 4);
-            } else {
-                let multTag = (!e.isPlayer && e.statMultiplier !== 1.0) ? ` [*${e.statMultiplier}]` : '';
-                ctx.fillText(`${heroInfo.name} Lv.${e.level || 1}${multTag}`, sx, barY - 4);
+            let expBarY = barTopY + barH + 1;
+            let expBarH = 3.5;
+            let reqExp = LEVEL_EXP_TABLE[e.level] || 150;
+            let expRatio = e.level >= 15 ? 1 : Math.max(0, Math.min(1, e.exp / reqExp));
+
+            // 經驗條（藍色進度）
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(sx - barW / 2, expBarY, barW, expBarH);
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(sx - barW / 2, expBarY, barW * expRatio, expBarH);
+
+            // 特殊被動條（位於經驗條正下方）
+            let passiveBarY = expBarY + expBarH + 1;
+            let passiveBarH = 4;
+            let pRatio = 0;
+            let pColor = '#ffd700';
+            let pLabel = '';
+
+            if (e.heroKey === 'valhein') {
+                pRatio = e.valheinPassiveStacks / 4;
+                pColor = e.valheinPassiveStacks === 4 ? '#00e5ff' : '#ffd700';
+                pLabel = `獵手 ${e.valheinPassiveStacks}/4`;
+            } else if (e.heroKey === 'murad') {
+                if (e.muradIsUnlocked) {
+                    pRatio = Math.max(0, e.muradUnlockTimer / 5.0);
+                    pColor = '#00e5ff';
+                    pLabel = '時空解鎖';
+                } else {
+                    pRatio = e.muradStacks / 4;
+                    pColor = '#38bdf8';
+                    pLabel = `劍氣 ${e.muradStacks}/4`;
+                }
+            } else if (e.heroKey === 'butterfly') {
+                pRatio = e.butterflyStacks / 3;
+                pColor = e.butterflyStacks === 3 ? '#ff3366' : '#f59e0b';
+                pLabel = `印記 ${e.butterflyStacks}/3`;
+            } else if (e.heroKey === 'nakroth') {
+                pRatio = e.nakrothPassiveCounter / 4;
+                pColor = '#c084fc';
+                pLabel = `挑飛 ${e.nakrothPassiveCounter}/4`;
+            } else if (e.heroKey === 'slimz') {
+                let st = heroSkillStage['slimz'];
+                let atks = st ? st.atks : 0;
+                pRatio = atks / 3;
+                pColor = '#ff9800';
+                pLabel = `貫穿 ${atks}/3`;
+            } else if (e.heroKey === 'raz') {
+                if (e.razHasEnhancedAtk) {
+                    pRatio = 1;
+                    pColor = '#ff9800';
+                    pLabel = '波動拳就緒';
+                } else {
+                    pRatio = Math.min(1, e.razPassiveTimer / 5.0);
+                    pColor = '#fbbf24';
+                }
+            } else if (e.heroKey === 'ryoma') {
+                if (e.hasEnhancedAttack) {
+                    pRatio = 1;
+                    pColor = '#00e676';
+                    pLabel = '拔刀斬就緒';
+                } else {
+                    pRatio = Math.max(0, 1 - e.ryomaPassiveTimer / 5.0);
+                    pColor = '#4ade80';
+                }
+            } else if (e.heroKey === 'tarra') {
+                pRatio = e.tarraBuffStacks / 3;
+                pColor = '#f97316';
+                pLabel = e.tarraBuffStacks > 0 ? `戰意 ${e.tarraBuffStacks}/3` : '';
+            } else if (e.heroKey === 'lindis') {
+                pRatio = e.lindisPassiveNextAtk ? 1 : 0;
+                pColor = '#00d2ff';
+                pLabel = e.lindisPassiveNextAtk ? '三連射就緒' : '';
+            } else if (e.heroKey === 'liliana') {
+                pRatio = 1;
+                pColor = e.lilianaForm === 'fox' ? '#e040fb' : '#f472b6';
+                pLabel = e.lilianaForm === 'fox' ? '九尾型態' : '人型態';
             }
+
+            if (pRatio > 0 || pLabel) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.fillRect(sx - barW / 2, passiveBarY, barW, passiveBarH);
+                ctx.fillStyle = pColor;
+                ctx.fillRect(sx - barW / 2, passiveBarY, barW * pRatio, passiveBarH);
+            }
+
+            // 血條上方等級與精簡血量數字
+            ctx.font = 'bold 10px Arial';
+            ctx.fillStyle = '#fde047';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Lv.${e.level}`, sx - barW / 2, barTopY - 3);
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'right';
+            ctx.fillText(`${Math.floor(e.hp)}`, sx + barW / 2, barTopY - 3);
+        } else {
+            ctx.font = 'bold 10px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${Math.floor(e.hp)}/${Math.floor(e.maxHp)}`, sx, barTopY - 3);
+        }
+
+        if (e.statusDuration > 0 && e.statusText) {
+            ctx.save();
+            ctx.font = 'bold 11px Arial';
+            ctx.fillStyle = '#ffd700';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${e.statusText} (${e.statusDuration.toFixed(1)}s)`, sx, barTopY - 16);
             ctx.restore();
         }
-
-        let maxHp = e.maxHp;
-        let hpRatio = Math.max(0, Math.min(1, e.hp / maxHp));
-        let shieldRatio = Math.max(0, Math.min(1, (e.shield || 0) / maxHp));
-        
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(barX, barY, barW, barH);
-        
-        ctx.fillStyle = e.team === 'blue' ? '#00e676' : '#ff3366';
-        ctx.fillRect(barX, barY, barW * hpRatio, barH);
-
-        ctx.save();
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.lineWidth = 1.5;
-        let stepHp = 2000; 
-        for (let hMark = stepHp; hMark < maxHp; hMark += stepHp) {
-            let markRatio = hMark / maxHp;
-            let markX = barX + barW * markRatio;
-            ctx.beginPath();
-            ctx.moveTo(markX, barY);
-            ctx.lineTo(markX, barY + barH);
-            ctx.stroke();
-        }
-        ctx.restore();
-
-        if (shieldRatio > 0) {
-            ctx.fillStyle = '#ffffff';
-            let shieldStartX = barX + (barW * hpRatio);
-            let shieldW = Math.min(barW - (barW * hpRatio), barW * shieldRatio);
-            ctx.fillRect(shieldStartX, barY, shieldW, barH);
-        }
-
-        if (e instanceof Hero && e.statusText && e.statusDuration > 0) {
-            let statusLineY = barY - 8;
-            let statusRatio = Math.max(0, Math.min(1, e.statusDuration / e.statusMaxDuration));
-            ctx.fillStyle = 'rgba(0,0,0,0.5)';
-            ctx.fillRect(barX, statusLineY, barW, 3);
-            ctx.fillStyle = '#ffd700';
-            ctx.fillRect(barX, statusLineY, barW * statusRatio, 3);
-        }
-    });
-
-    skillEffects.forEach((eff, idx) => {
-        eff.life -= 1 / 60;
-        let sx = eff.x - camera.x;
-        let sy = eff.y - camera.y;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(sx, sy, eff.size, 0, Math.PI * 2);
-        ctx.fillStyle = eff.color;
-        ctx.fill();
-        ctx.restore();
-        if (eff.life <= 0) skillEffects.splice(idx, 1);
     });
 
     damageTexts.forEach((dt, idx) => {
-        dt.y -= 0.8;
         dt.life -= 1 / 60;
-        let sx = dt.x - camera.x;
-        let sy = dt.y - camera.y;
+        dt.y -= 0.8;
         ctx.save();
         ctx.font = 'bold 16px Arial';
         ctx.fillStyle = dt.color;
         ctx.textAlign = 'center';
-        ctx.fillText(dt.value, sx, sy);
+        ctx.fillText(dt.value, dt.x - camera.x, dt.y - camera.y);
         ctx.restore();
         if (dt.life <= 0) damageTexts.splice(idx, 1);
     });
+
+    if (player && player.alive && player.heroKey === 'butterfly' && player.butterflyMarkedTarget && player.butterflyMarkedTarget.alive) {
+        let mt = player.butterflyMarkedTarget;
+        let msx = mt.x - camera.x;
+        let msy = mt.y - camera.y;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(msx, msy, mt.radius + 10, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff3366';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 5]);
+        ctx.stroke();
+        ctx.font = 'bold 12px Arial';
+        ctx.fillStyle = '#ff3366';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎯 斬殺印記', msx, msy - mt.radius - 28);
+        ctx.restore();
+    }
 
     updateSkillUI();
     updateStatusBuffBar();
