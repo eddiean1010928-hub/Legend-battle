@@ -104,20 +104,13 @@
             white-space: nowrap; text-shadow: 0 1px 3px #000; font-weight: bold;
         }
 
-        .spell-status-badge {
-            position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
-            font-size: 0.6rem; color: #00e676; font-weight: bold; white-space: nowrap;
-            background: rgba(0,0,0,0.75); padding: 1px 4px; border-radius: 3px;
-            border: 1px solid rgba(0,230,118,0.4); pointer-events: none;
-        }
-
         .controls-right { position: absolute; bottom: 15px; right: 20px; width: 320px; height: 200px; pointer-events: none !important; }
         .attack-btn { position: absolute; bottom: 10px; right: 5px; width: 78px; height: 78px; background: radial-gradient(circle, #f3c654 0%, #8f5c0a 100%); border: 3px solid #ffe596; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.8rem; color: #fff; cursor: pointer; pointer-events: auto !important; touch-action: none !important; }
         
         .bottom-actions-bar { position: absolute; bottom: 15px; right: 195px; display: flex; gap: 10px; pointer-events: auto !important; z-index: 60; }
-        .action-mini-btn { width: 46px; height: 46px; background: radial-gradient(circle, #263238 0%, #0d1b2a 100%); border: 2px solid #f3c654; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; position: relative; pointer-events: auto !important; touch-action: none !important; overflow: visible; }
+        .action-mini-btn { width: 46px; height: 46px; background: radial-gradient(circle, #263238 0%, #0d1b2a 100%); border: 2px solid #f3c654; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; position: relative; pointer-events: auto !important; touch-action: none !important; overflow: hidden; }
         .action-mini-btn .label { position: absolute; bottom: -16px; font-size: 0.55rem; color: #ffeb3b; font-weight: bold; white-space: nowrap; pointer-events: none; }
-        .spell-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; color: #ffeb3b; font-weight: bold; pointer-events: none; z-index: 5; }
+        .spell-cd-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; color: #ffeb3b; font-weight: bold; pointer-events: none; }
 
         .skill-btn { position: absolute; width: 62px; height: 62px; background: rgba(15, 25, 40, 0.9); border: 2px solid #00aaff; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 0.75rem; font-weight: bold; color: #fff; cursor: pointer; pointer-events: auto !important; touch-action: none !important; }
         .skill-btn.locked { border-color: #555; opacity: 0.5; filter: grayscale(1); }
@@ -140,7 +133,6 @@
         #skill-2 { bottom: 85px; right: 90px; border-color: #00e676; }
         #skill-1 { bottom: 10px; right: 150px; border-color: #ff9100; }
 
-        /* 彈窗通用樣式（分類在左邊的商店與經濟面板） */
         .modal-backdrop {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(4, 9, 18, 0.88); z-index: 1800;
@@ -176,7 +168,6 @@
         .stat-compare-table th, .stat-compare-table td { padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.08); text-align: center; }
         .stat-compare-table th { color: #f3c654; background: rgba(0,0,0,0.3); }
 
-        /* 商店樣式：總類在左邊 */
         .shop-layout-new { display: flex; gap: 12px; height: 100%; }
         .shop-category-sidebar {
             width: 130px; display: flex; flex-direction: column; gap: 6px;
@@ -292,7 +283,6 @@
         <span class="econ-hint-badge">📊 面板</span>
     </div>
 
-    <!-- 經濟與屬性面板 Modal -->
     <div id="economy-modal" class="modal-backdrop hidden">
         <div class="modal-card">
             <div class="modal-header">
@@ -306,7 +296,6 @@
         </div>
     </div>
 
-    <!-- 裝備商店 Modal -->
     <div id="shop-modal" class="modal-backdrop hidden">
         <div class="modal-card" style="max-width: 800px;">
             <div class="modal-header">
@@ -318,7 +307,6 @@
             </div>
             <div class="modal-body">
                 <div class="shop-layout-new">
-                    <!-- 左側類別選單 -->
                     <div class="shop-category-sidebar">
                         <button class="shop-cat-btn active" data-shop-cat="all">全部裝備</button>
                         <button class="shop-cat-btn" data-shop-cat="attack">攻擊</button>
@@ -326,7 +314,6 @@
                         <button class="shop-cat-btn" data-shop-cat="defense">防禦</button>
                         <button class="shop-cat-btn" data-shop-cat="movement">移動 (鞋類)</button>
                     </div>
-                    <!-- 右側商品與詳情 -->
                     <div class="shop-main-area">
                         <div class="shop-item-list" id="shop-item-list"></div>
                         <div class="shop-detail-box" id="shop-detail-box"></div>
@@ -357,23 +344,19 @@
                     <span id="user-name" class="user-name">訪客玩家</span>
                 </div>
             </div>
-
             <div class="resource-group">
                 <div class="res-item res-gold" id="header-gold">🟡 300</div>
             </div>
         </div>
-
         <div class="main-content">
             <div class="hero-heroine-bg">
                 <div class="heroine-avatar">🎯</div>
             </div>
         </div>
-
         <div class="bottom-bar">
             <div class="bottom-nav">
                 <div class="nav-btn active">🛡️ 英雄對戰</div>
             </div>
-
             <div class="start-group">
                 <div class="mode-select-btn" id="btn-mode-1v1">
                     <span class="icon">⚔️</span>
@@ -393,10 +376,8 @@
             </div>
             <button class="pick-cancel-btn" id="btn-pick-back">取消 ✕</button>
         </div>
-
         <div class="pick-content-layout">
             <div class="pick-hero-sidebar" id="hero-select-grid"></div>
-
             <div class="pick-center-stage">
                 <div class="stage-hero-avatar" id="stage-hero-avatar">🎯</div>
                 <div class="stage-hero-info">
@@ -404,11 +385,9 @@
                     <p id="selected-hero-type" style="color:#aaa; font-size: 0.95rem;">射手 / 遠距輸出</p>
                 </div>
             </div>
-
             <div class="pick-right-sidebar">
                 <div class="team-slot"><span>我方 (你)</span><span style="color:#00d2ff;">準備就緒</span></div>
                 <div class="team-slot"><span id="ai-opponent-slot">電競AI對手</span><span style="color:#ff4444;" id="ai-mult-label">中 (*1.0)</span></div>
-                
                 <div class="ai-diff-box">
                     <div class="ai-diff-title">⚙️ AI 屬性倍率 (血量/傷害)</div>
                     <div class="ai-diff-grid" id="ai-diff-grid">
@@ -419,7 +398,6 @@
                         <div class="ai-diff-btn" data-mult="2.0" data-name="自虐">自虐 *2.0</div>
                     </div>
                 </div>
-
                 <button class="pick-confirm-btn" id="btn-confirm-hero">確 定 參 戰</button>
             </div>
         </div>
@@ -427,29 +405,23 @@
 
     <div id="hud-layer" class="hidden">
         <div class="status-buff-bar" id="status-buff-bar"></div>
-
         <div class="joystick-container" id="joystick">
             <div class="joystick-knob" id="joystick-knob"></div>
         </div>
-        
         <div class="controls-right">
             <div class="attack-btn" id="btn-attack">⚔️</div>
-            
             <div class="bottom-actions-bar">
                 <div class="action-mini-btn" id="btn-heal-spell">
-                    <div class="spell-status-badge" id="badge-heal">就緒</div>
                     <span>💚</span>
                     <div class="label">恢復</div>
                     <div class="spell-cd-overlay hidden" id="cd-heal"></div>
                 </div>
                 <div class="action-mini-btn" id="btn-challenger-spell">
-                    <div class="spell-status-badge" id="badge-challenger">就緒</div>
                     <span id="challenger-icon">✨</span>
                     <div class="label" id="lbl-challenger">順移</div>
                     <div class="spell-cd-overlay hidden" id="cd-challenger"></div>
                 </div>
             </div>
-
             <div class="skill-btn" id="skill-3" data-skill="3">
                 <div class="skill-upgrade-btn hidden" id="up-btn-3">+</div>
                 大招
@@ -482,24 +454,37 @@ const LEVEL_EXP_TABLE = {
 };
 
 const ITEM_DB = {
-    'short_sword': { id: 'short_sword', name: '短劍', category: 'attack', price: 250, icon: '🗡️', stats: { pAtk: 50 }, desc: '+50 物理攻擊' },
-    'dagger': { id: 'dagger', name: '短刀', category: 'attack', price: 220, icon: '🔪', stats: { atkSpeed: 0.10 }, desc: '+10% 攻擊速度' },
-    'gladiator_spear': { id: 'gladiator_spear', name: '角鬥士長矛', category: 'attack', price: 850, icon: '🔱', recipe: ['short_sword'], stats: { pAtk: 50 }, uniquePassives: [{ key: 'armor_pierce', name: '破甲', desc: '+60 物理穿透' }], desc: '合成：短劍 + 600\n+50 物理攻擊\n唯一被動：破甲 - +60 物理穿透' },
+    'short_sword': { id: 'short_sword', name: '短劍', category: 'attack', price: 250, icon: '🗡️', stats: { pAtk: 50 }, desc: '+50物理攻擊' },
+    'dagger': { id: 'dagger', name: '短刀', category: 'attack', price: 220, icon: '🔪', stats: { atkSpeed: 0.10 }, desc: '+10%攻擊速度' },
+    'knight_broadsword': { id: 'knight_broadsword', name: '騎士寬劍', category: 'attack', price: 900, icon: '⚔️', recipe: ['short_sword', 'short_sword'], stats: { pAtk: 80 }, desc: '合成：短劍*2\n+80物理攻擊' },
+    'gladiator_spear': { id: 'gladiator_spear', name: '角鬥士長矛', category: 'attack', price: 850, icon: '🔱', recipe: ['short_sword'], stats: { pAtk: 50 }, uniquePassives: [{ key: 'armor_pierce', name: '破甲', desc: '+60物理穿透' }], desc: '合成：短劍\n+50物理攻擊\n唯一被動：破甲-+60物理穿透' },
+    'shuriken': { id: 'shuriken', name: '手裡劍', category: 'attack', price: 800, icon: '🥷', recipe: ['dagger', 'dagger'], stats: { atkSpeed: 0.20 }, uniquePassives: [{ key: 'dragon_breath', name: '龍息', desc: '普攻造成傷害後額外造成20的物理攻擊(冷卻0.5秒)' }], desc: '合成：短刀*2\n+20%攻擊速度\n唯一被動：龍息-普攻造成傷害後額外造成20的物理攻擊' },
+    'steel_lance': { id: 'steel_lance', name: '鋼鐵長槍', category: 'attack', price: 1800, icon: '🛡️', recipe: ['dagger', 'gladiator_spear', 'magic_bracelet'], stats: { pAtk: 60, cdr: 0.15, maxHp: 500 }, uniquePassives: [{ key: 'armor_pierce', name: '破甲', desc: '+60物理穿透' }, { key: 'lance_shred', name: '穿透', desc: '造成傷害後對目標減少60點物理防禦，最多四層，持續5秒' }], desc: '合成：短刀+角鬥士長矛+魔力手鐲\n+60物理攻擊、15%冷卻縮減、500最大生命\n唯一被動：破甲-+60物理穿透\n唯一被動：穿透-減少目標60物防(最多4層)' },
+    'break_heaven': { id: 'break_heaven', name: '破陣戰矛', category: 'attack', price: 2250, icon: '🗡️', recipe: ['knight_broadsword', 'gladiator_spear'], stats: { pAtk: 120 }, uniquePassives: [{ key: 'pierce_flat', name: '物理穿透', desc: '+200物理穿透' }, { key: 'gale_step', name: '疾風步', desc: '脱戰後額外獲得90～150的跑速' }], desc: '合成：騎士寬劍+角鬥士長矛\n+120物理攻擊、+200物理穿透\n唯一被動-疾風步' },
+    'muramasa': { id: 'muramasa', name: '天叢雲之刃', category: 'attack', price: 2200, icon: '⚔️', recipe: ['short_sword', 'short_sword', 'gladiator_spear'], stats: { pAtk: 100 }, uniquePassives: [{ key: 'percent_pierce', name: '刺穿', desc: '獲得15%百分比穿透' }], desc: '合成：短劍*2+角鬥士長矛\n+100物理攻擊\n唯一被動：刺穿-獲得15%百分比穿透' },
+    'bone_dragon_sword': { id: 'bone_dragon_sword', name: '龍骨劍', category: 'attack', price: 2100, icon: '🐉', recipe: ['shuriken', 'short_sword'], stats: { atkSpeed: 0.30, pAtk: 60, physLifesteal: 0.10 }, uniquePassives: [{ key: 'dragon_breath_pct', name: '龍息', desc: '普通攻擊附帶目標當前生命值8%的物理傷害(冷卻0.3秒)' }], desc: '合成：手裡劍+短劍\n+30%攻速、+60物理攻擊、+10%物理吸血\n唯一被動：龍息-普攻附帶目標當前生命值8%物理傷害' },
 
-    'magic_book': { id: 'magic_book', name: '魔法書', category: 'magic', price: 250, icon: '📘', stats: { mAtk: 50 }, desc: '+50 魔法攻擊' },
-    'magic_bracelet': { id: 'magic_bracelet', name: '魔力手鐲', category: 'magic', price: 300, icon: '📿', stats: {}, uniquePassives: [{ key: 'magic_cdr', name: '魔力冷卻', desc: '獲得 5% 冷卻縮減' }], desc: '唯一被動：魔力冷卻 - 獲得 5% 冷卻縮減' },
+    'magic_book': { id: 'magic_book', name: '魔法書', category: 'magic', price: 250, icon: '📘', stats: { mAtk: 50 }, desc: '+50魔法攻擊' },
+    'magic_bracelet': { id: 'magic_bracelet', name: '魔力手鐲', category: 'magic', price: 300, icon: '📿', stats: {}, uniquePassives: [{ key: 'magic_cdr', name: '魔力冷卻', desc: '獲得5%冷卻縮減' }], desc: '唯一被動：魔力冷卻-獲得5%冷卻縮減' },
+    'magic_orb': { id: 'magic_orb', name: '法球', category: 'magic', price: 800, icon: '🔮', recipe: ['magic_book'], stats: { mAtk: 50 }, uniquePassives: [{ key: 'burst', name: '爆裂', desc: '技能擊中敵方單位後會爆炸，造成200魔法傷害，冷卻5秒' }], desc: '合成：魔法書\n+50魔法攻擊\n唯一被動：爆裂-技能擊中造成200魔法傷害(CD 5s)' },
+    'evil_smile': { id: 'evil_smile', name: '惡魔的微笑', category: 'magic', price: 1800, icon: '😈', recipe: ['magic_book', 'magic_orb', 'magic_bracelet'], stats: { mAtk: 180, cdr: 0.05 }, uniquePassives: [{ key: 'burn', name: '燃燒', desc: '技能擊中敵方單位後會燃燒對方3秒，每0.5秒造成50(+4%魔法攻擊)+對方0.5%最大生命值' }], desc: '合成：魔法書+法球+魔力手鐲\n+180法攻、5%冷卻\n唯一被動：燃燒' },
+    'boom_staff': { id: 'boom_staff', name: '爆裂法杖', category: 'magic', price: 1800, icon: '💥', recipe: ['magic_book', 'magic_orb'], stats: { mAtk: 220 }, uniquePassives: [{ key: 'burst_staff', name: '爆裂', desc: '技能擊中敵方單位後會爆炸，造成180(+20%魔法攻擊)，冷卻5秒' }], desc: '合成：魔法書+法球\n+220法攻\n唯一被動：爆裂-造成180(+20%法攻)傷害(CD 5s)' },
 
-    'cloth_armor': { id: 'cloth_armor', name: '布甲', category: 'defense', price: 220, icon: '🦺', stats: { pDef: 90 }, desc: '+90 物理防禦' },
-    'magic_gloves': { id: 'magic_gloves', name: '護手', category: 'defense', price: 220, icon: '🧤', stats: { mDef: 90 }, desc: '+90 魔法防禦' },
-    'silver_bracer': { id: 'silver_bracer', name: '銀輝護腕', category: 'defense', price: 660, icon: '🛡️', stats: { cdr: 0.10, maxHp: 500 }, desc: '獲得 10% 冷卻縮減、500 生命值' },
+    'cloth_armor': { id: 'cloth_armor', name: '布甲', category: 'defense', price: 220, icon: '🦺', stats: { pDef: 90 }, desc: '+90物理防禦' },
+    'magic_gloves': { id: 'magic_gloves', name: '護手', category: 'defense', price: 220, icon: '🧤', stats: { mDef: 90 }, desc: '+90魔法防禦' },
+    'life_pendant': { id: 'life_pendant', name: '生命吊墜', category: 'defense', price: 600, icon: '📿', stats: { maxHp: 550 }, desc: '+550生命值' },
+    'silver_bracer': { id: 'silver_bracer', name: '銀輝護腕', category: 'defense', price: 660, icon: '🛡️', stats: { cdr: 0.10, maxHp: 500 }, desc: '獲得10%冷卻縮減、500生命值' },
+    'greaves_hp': { id: 'greaves_hp', name: '護脛', category: 'defense', price: 990, icon: '🦵', stats: { maxHp: 900 }, desc: '+900生命值' },
+    'holy_shield': { id: 'holy_shield', name: '聖光圓盾', category: 'defense', price: 1800, icon: '🛡️', recipe: ['silver_bracer', 'greaves_hp'], stats: { cdr: 0.15, maxHp: 1200 }, uniquePassives: [{ key: 'shield_passive', name: '護盾', desc: '每7秒(狀態欄)獲得一個20%最大生命值的護盾(持續5秒後消失)' }], desc: '合成：銀輝護腕+護脛\n+15%冷卻、+1200生命\n唯一被動：護盾(每7秒獲得20%最大生命護盾)' },
+    'nirvana_blade': { id: 'nirvana_blade', name: '涅槃之刃', category: 'defense', price: 2400, icon: '✨', recipe: ['cloth_armor', 'knight_broadsword'], stats: { pAtk: 120, pDef: 110 }, uniquePassives: [{ key: 'battle_will', name: '戰意', desc: '提升10%物理傷害' }, { key: 'nirvana_revive', name: '涅槃', desc: '血量為0時在原地2秒後復活並獲得4000生命值(不可打斷、不可攻擊、不可被攻擊)，冷卻90秒(狀態欄)' }], desc: '合成：布甲+騎士寬劍\n+120物攻、+110物防\n唯一被動：戰意(提升10%物傷)、涅槃(原地復活)' },
 
-    'greaves_hp': { id: 'greaves_hp', name: '護脛', category: 'movement', price: 990, icon: '🦵', isBoot: true, stats: { maxHp: 900 }, desc: '+900 生命值 (鞋類)' },
-    'boots': { id: 'boots', name: '布鞋', category: 'movement', price: 250, icon: '👟', isBoot: true, stats: {}, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }], desc: '唯一被動：跑速 - 移速加 20% (鞋類)' },
-    'war_boots': { id: 'war_boots', name: '攻速之靴', category: 'movement', price: 750, icon: '👢', isBoot: true, recipe: ['dagger', 'boots'], stats: { atkSpeed: 0.20 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }, { key: 'life_steal', name: '吸取', desc: '獲得 5% 物理吸血' }], desc: '合成：短刀 + 布鞋 + 280 (鞋類)' },
-    'flashy_boots': { id: 'flashy_boots', name: '吟遊之靴', category: 'movement', price: 750, icon: '👞', isBoot: true, recipe: ['magic_bracelet', 'boots'], stats: { cdr: 0.10 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }, { key: 'flashy_cdr', name: '冷縮', desc: '獲得挑戰者技能 10% 冷卻縮減' }], desc: '合成：魔力手鐲 + 布鞋 + 200 (鞋類)' },
-    'gilded_greaves': { id: 'gilded_greaves', name: '聖騎士之靴', category: 'movement', price: 750, icon: '🥾', isBoot: true, recipe: ['magic_gloves', 'boots'], stats: { mDef: 140 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }, { key: 'tenacity', name: '韌性', desc: '獲得 15% 韌性' }], desc: '合成：護手 + 布鞋 + 280 (鞋類)' },
-    'sonic_boots': { id: 'sonic_boots', name: '物防鞋', category: 'movement', price: 750, icon: '🦿', isBoot: true, recipe: ['cloth_armor', 'boots'], stats: { pDef: 140 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }, { key: 'sonic_def', name: '物防', desc: '對方的物理攻擊少 10%' }], desc: '合成：布甲 + 布鞋 + 280 (鞋類)' },
-    'hermes_select': { id: 'hermes_select', name: '遊蕩者之靴', category: 'movement', price: 750, icon: '🪽', isBoot: true, recipe: ['boots'], stats: {}, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }, { key: 'hermes_ooc', name: '遊蕩', desc: '脫戰後跑速多增加 30%' }], desc: '合成：布鞋 + 500 (鞋類)' }
+    'boots': { id: 'boots', name: '布鞋', category: 'movement', price: 250, icon: '👟', isBoot: true, stats: {}, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加20%' }], desc: '唯一被動：跑速-移速加20%(鞋類)' },
+    'magic_boots': { id: 'magic_boots', name: '法術之靴', category: 'movement', price: 750, icon: '🥿', isBoot: true, recipe: ['magic_book', 'boots'], stats: {}, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加20%' }, { key: 'magic_pierce_flat', name: '法術穿透', desc: '獲得90魔法穿透' }], desc: '合成：魔法書+布鞋\n獲得90魔法穿透(鞋類)' },
+    'war_boots': { id: 'war_boots', name: '攻速之靴', category: 'movement', price: 750, icon: '👢', isBoot: true, recipe: ['dagger', 'boots'], stats: { atkSpeed: 0.20 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加20%' }, { key: 'life_steal', name: '吸取', desc: '獲得5%物理吸血' }], desc: '合成：短刀+布鞋\n+20%攻速+5%物理吸血(鞋類)' },
+    'flashy_boots': { id: 'flashy_boots', name: '吟遊之靴', category: 'movement', price: 750, icon: '👞', isBoot: true, recipe: ['magic_bracelet', 'boots'], stats: { cdr: 0.10 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加20%' }, { key: 'flashy_cdr', name: '冷縮', desc: '獲得挑戰者技能10%冷卻縮減與10%冷卻縮減' }], desc: '合成：魔力手鐲+布鞋\n+10%冷卻、挑戰者技能10%冷卻(鞋類)' },
+    'gilded_greaves': { id: 'gilded_greaves', name: '聖騎士之靴', category: 'movement', price: 750, icon: '🥾', isBoot: true, recipe: ['magic_gloves', 'boots'], stats: { mDef: 90 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加20%' }, { key: 'tenacity', name: '韌性', desc: '獲得15%韌性(控制效果減少)' }], desc: '合成：護手+布鞋\n+90魔防、+15%韌性(鞋類)' },
+    'sonic_boots': { id: 'sonic_boots', name: '物防鞋', category: 'movement', price: 750, icon: '🦿', isBoot: true, recipe: ['cloth_armor', 'boots'], stats: { pDef: 140 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加20%' }, { key: 'sonic_def', name: '物防', desc: '對方的物理攻擊少10%' }], desc: '合成：布甲+布鞋\n+140物防、對方物理攻擊少10%(鞋類)' },
+    'hermes_select': { id: 'hermes_select', name: '遊蕩者之靴', category: 'movement', price: 750, icon: '🪽', isBoot: true, recipe: ['boots'], stats: {}, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加20%' }, { key: 'hermes_ooc', name: '遊蕩', desc: '脱戰後跑速多增加30%' }], desc: '合成：布鞋\n脱戰後跑速多增加30%(鞋類)' }
 };
 
 let currentEconTab = 1;
@@ -632,6 +617,22 @@ function getEffectiveBuyPrice(hero, item) {
     return Math.max(0, item.price - discount);
 }
 
+function getCheapestMissingRecipeItem(hero, itemId) {
+    let item = ITEM_DB[itemId];
+    if (!item || !item.recipe) return itemId;
+    let tempInv = [...hero.inventory];
+    for (let compId of item.recipe) {
+        let idx = tempInv.indexOf(compId);
+        if (idx !== -1) {
+            tempInv.splice(idx, 1);
+        } else {
+            let sub = getCheapestMissingRecipeItem(hero, compId);
+            if (sub) return sub;
+        }
+    }
+    return itemId;
+}
+
 function buyItemForHero(hero, itemId) {
     let item = ITEM_DB[itemId];
     if (!item) return;
@@ -693,10 +694,13 @@ function updateQuickBuyButton() {
         btn.classList.add('hidden');
         return;
     }
-    let cost = getEffectiveBuyPrice(player, item);
+    let buyTargetId = getCheapestMissingRecipeItem(player, preorderedItemId);
+    let targetItem = ITEM_DB[buyTargetId] || item;
+    let cost = getEffectiveBuyPrice(player, targetItem);
+    
     if (player.gold >= cost) {
         btn.classList.remove('hidden');
-        btn.innerHTML = `⚡ ${item.icon} ${item.name} (🪙${cost})`;
+        btn.innerHTML = `⚡ 推薦小件: ${targetItem.icon} ${targetItem.name} (🪙${cost})`;
     } else {
         btn.classList.add('hidden');
     }
@@ -873,6 +877,7 @@ function renderEconomyModal() {
         `;
     }
 }
+</script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 let MAP_SIZE = 2600; 
@@ -1490,7 +1495,7 @@ class Building extends Entity {
 class Minion extends Entity {
     constructor(x, y, team, type = 'melee') {
         super(x, y, team, 18);
-        this.type = type; 
+        this.type = type; // 'melee' 或 'ranged'
         this.maxHp = 2000; this.hp = 2000; 
         this.atk = type === 'melee' ? 45 : 60; 
         this.range = type === 'melee' ? 120 : 300;
@@ -1708,9 +1713,9 @@ class Hero extends Entity {
 
     getFullStats() {
         let pAtk = this.getEffectiveAtk();
-        let pDef = 0 + (this.level - 1) * 15 + this.equipBonuses.pDef;
-        let mDef = 0 + (this.level - 1) * 10 + this.equipBonuses.mDef;
-        let mAtk = 0 + this.equipBonuses.mAtk;
+        let pDef = this.basePDef + (this.level - 1) * 15 + this.equipBonuses.pDef;
+        let mDef = this.baseMDef + (this.level - 1) * 10 + this.equipBonuses.mDef;
+        let mAtk = this.baseMAtk + this.equipBonuses.mAtk;
 
         if (this.heroKey === 'tarra' && this.tarraBuffStacks > 0) {
             pAtk += this.tarraBuffStacks * 35;
@@ -1805,7 +1810,7 @@ class Hero extends Entity {
             if (this.tarraHealTimer > 0) {
                 this.tarraHealTimer--;
                 if (this.tarraHealTimer % 60 === 0) {
-                    let healAmt = this.maxHp * 0.07;
+                    let healAmt = this.maxHp * 0.02;
                     this.hp = Math.min(this.maxHp, this.hp + healAmt);
                 }
             }
@@ -1814,7 +1819,7 @@ class Hero extends Entity {
                 this.tarraUltTick++;
                 if (this.tarraUltTick >= 30) {
                     this.tarraUltTick = 0;
-                    let ultHeal = this.maxHp * 0.06;
+                    let ultHeal = this.maxHp * 0.04;
                     this.hp = Math.min(this.maxHp, this.hp + ultHeal);
                     damageTexts.push({ x: this.x, y: this.y - 40, value: `+${Math.floor(ultHeal)}`, color: '#00e676', life: 0.6 });
                 }
@@ -1857,7 +1862,7 @@ class Hero extends Entity {
                 }
 
                 if (gb.timer <= 0) {
-                    const cdMap = { 1: 5.0, 2: 8.0, 3: 17.0 };
+                    const cdMap = { 1: 4.0, 2: 6.0, 3: 10.0 };
                     if (gb.type && skillCooldowns[gb.type] <= 0) {
                         skillCooldowns[gb.type] = cdMap[gb.type] * (1 - this.equipBonuses.cdr);
                     }
@@ -1902,7 +1907,6 @@ class Hero extends Entity {
         if (this.speedBuffTimer > 0) this.speedBuffTimer--;
 
         if (this.heroKey === 'ryoma') {
-            let requiredRyomaTime = Math.max(1.0, 5.0 - (this.level - 1) * 0.1);
             if (this.ryomaPassiveTimer > 0) {
                 this.ryomaPassiveTimer -= 1 / 60;
                 if (this.ryomaPassiveTimer <= 0) {
@@ -2079,10 +2083,6 @@ class Hero extends Entity {
     getEffectiveAtk() {
         let base = this.atk + (this.level - 1) * (this.heroData.atkGrowth * this.statMultiplier) + this.equipBonuses.pAtk;
         if (this.heroKey === 'murad' && this.muradIsUnlocked) base *= 1.3;
-        if (this.heroKey === 'tarra' && this.tarraBuffStacks > 0) {
-            let missingHpPercent = Math.max(0, (this.maxHp - this.hp) / this.maxHp * 100);
-            base += missingHpPercent * 0.5;
-        }
         return base;
     }
 
@@ -2202,35 +2202,24 @@ function performAttack() {
         player.outOfCombatTimer = 0; 
         let equipAtkSpeedMult = 1 / (1 + (player.equipBonuses.atkSpeed || 0));
 
-        let currentInterval = player.heroData.atkInterval;
-        let pAtkVal = player.getEffectiveAtk();
-        let frequencyBonusRatio = currentInterval * pAtkVal * 0.2;
-        let baseDmgVal = calcRandomDmg(pAtkVal + frequencyBonusRatio);
-
-        if (player.heroKey === 'quillen') {
-            let angleToTarget = Math.atan2(nearestTarget.y - player.y, nearestTarget.x - player.x);
-            let diffAngle = Math.abs(player.rotation - angleToTarget);
-            let isBehind = diffAngle > Math.PI / 2;
-            if (isBehind) {
-                baseDmgVal *= 2.0;
-                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 50, value: '💥 背擊必爆', color: '#ff3366', life: 1.0 });
-            } else {
-                baseDmgVal = 0; 
-                damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 50, value: '🚫 正面不爆', color: '#888888', life: 0.8 });
-            }
-        }
+        // 依據玩家最新給定公式：
+        // 普攻的傷害 = 普攻傷害（含每等的增加）+ ［自身普攻頻率（一秒） * 物理攻擊］ * 0.2
+        // 如果頻率為 0.5 就是加上 10% 物理攻擊，頻率為 0.2 就是加上 4% 物理攻擊
+        let baseAtkInterval = player.heroData.atkInterval || 0.5;
+        let extraAtkFormulaRatio = baseAtkInterval * 0.2; // 例如 0.5 * 0.2 = 0.1 (10%)
+        let bonusFromAtkFreq = (player.getEffectiveAtk() * extraAtkFormulaRatio);
 
         if (player.heroKey === 'slimz') {
             let intervalReduction = (player.level - 1) * 0.01;
-            let currentIntervalSlimz = Math.max(0.1, (0.4 - intervalReduction) * equipAtkSpeedMult);
+            let currentInterval = Math.max(0.1, (0.4 - intervalReduction) * equipAtkSpeedMult);
             let st = heroSkillStage['slimz'];
-            if (st && st.s2ActiveTimer > 0) currentIntervalSlimz = Math.max(0.05, currentIntervalSlimz - 0.05);
+            if (st && st.s2ActiveTimer > 0) currentInterval = Math.max(0.05, currentInterval - 0.05);
 
-            player.atkCooldown = Math.round(currentIntervalSlimz * 60);
+            player.atkCooldown = Math.round(currentInterval * 60);
             player.attackLockTimer = Math.round(0.1 * 60);
 
             st.atks++;
-            let baseDmg = baseDmgVal;
+            let baseDmg = (player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq;
             if (st && st.s2ActiveTimer > 0) baseDmg *= 1.5;
             if (st && st.ultActiveTimer > 0) {
                 let sLv = skillLevels[3] || 1;
@@ -2256,14 +2245,14 @@ function performAttack() {
 
         if (player.heroKey === 'valhein') {
             player.addValheinPassiveStack();
-            let atkSpeedBonus = player.valheinPassiveStacks * 0.10 + (player.equipBonuses.atkSpeed || 0);
+            let atkSpeedBonus = player.valheinPassiveStacks * 0.08 + (player.equipBonuses.atkSpeed || 0);
             let interval = Math.max(0.2, 0.6 / (1 + atkSpeedBonus));
             player.atkCooldown = Math.round(interval * 60);
-            player.attackLockTimer = Math.round(0.3 * 60);
+            player.attackLockTimer = Math.round(0.25 * 60);
 
-            let baseDmg = baseDmgVal;
+            let baseDmg = calcRandomDmg((player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq);
             if (player.valheinPassiveStacks === 4) {
-                baseDmg += calcRandomDmg(20 + player.valheinPassiveStacks * 20);
+                baseDmg += calcRandomDmg(120 + (player.level - 1) * 12);
             }
             nearestTarget.takeDamage(baseDmg, player.team, 'physical', player);
             damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `${Math.floor(baseDmg)}`, color: player.valheinPassiveStacks === 4 ? '#00d2ff' : '#ffd700', life: 0.8 });
@@ -2281,7 +2270,7 @@ function performAttack() {
             for (let i = 0; i < attackCount; i++) {
                 setTimeout(() => {
                     if (!nearestTarget.alive) return;
-                    let baseDmg = baseDmgVal;
+                    let baseDmg = (player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq;
                     let maxHpDmg = nearestTarget.maxHp * 0.01; 
                     let totalDmg = calcRandomDmg(baseDmg + maxHpDmg);
                     nearestTarget.takeDamage(totalDmg, player.team, 'physical', player);
@@ -2312,7 +2301,7 @@ function performAttack() {
 
             player.atkCooldown = Math.round(36 * equipAtkSpeedMult);
             player.attackLockTimer = 12;
-            let baseDmg = baseDmgVal;
+            let baseDmg = calcRandomDmg((player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq);
             nearestTarget.takeDamage(baseDmg, player.team, 'physical', player);
             damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `${Math.floor(baseDmg)}`, color: '#00d2ff', life: 0.8 });
             attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#00d2ff' });
@@ -2324,12 +2313,12 @@ function performAttack() {
             if (player.lilianaForm === 'human') {
                 player.atkCooldown = Math.round(30 * equipAtkSpeedMult); 
                 player.attackLockTimer = 18; 
-                baseDmg = calcRandomDmg(player.getEffectiveAtk() + player.equipBonuses.mAtk * 0.5);
+                baseDmg = calcRandomDmg((player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq + player.equipBonuses.mAtk * 0.5);
                 nearestTarget.takeDamage(baseDmg, player.team, 'magical', player);
             } else {
                 player.atkCooldown = Math.round(24 * equipAtkSpeedMult); 
                 player.attackLockTimer = 12; 
-                baseDmg = calcRandomDmg(player.getEffectiveAtk() + 10);
+                baseDmg = calcRandomDmg((player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq + 10);
                 nearestTarget.takeDamage(baseDmg, player.team, 'physical', player);
             }
             damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `${Math.floor(baseDmg)}`, color: '#e040fb', life: 0.8 });
@@ -2340,7 +2329,7 @@ function performAttack() {
         if (player.heroKey === 'butterfly') {
             player.atkCooldown = Math.round(30 * equipAtkSpeedMult);
             player.attackLockTimer = 15;
-            let baseDmg = baseDmgVal;
+            let baseDmg = calcRandomDmg((player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq);
             nearestTarget.takeDamage(baseDmg, player.team, 'physical', player);
             damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `${Math.floor(baseDmg)}`, color: '#e74c3c', life: 0.8 });
             attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#e74c3c' });
@@ -2350,7 +2339,7 @@ function performAttack() {
         if (player.heroKey === 'raz') {
             player.atkCooldown = Math.round(42 * equipAtkSpeedMult); 
             player.attackLockTimer = 24; 
-            let baseDmg = calcRandomDmg(player.getEffectiveAtk() + player.equipBonuses.mAtk * 0.4);
+            let baseDmg = calcRandomDmg((player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq + player.equipBonuses.mAtk * 0.4);
 
             if (player.razHasEnhancedAtk) {
                 player.razHasEnhancedAtk = false;
@@ -2401,18 +2390,14 @@ function performAttack() {
         player.atkCooldown = Math.round(interval * 60);
         player.attackLockTimer = Math.round((player.heroData.atkRecovery || 0.3) * 60);
         
-        let baseDmg = baseDmgVal;
+        let rawAtk = (player.heroData.atk + (player.level - 1) * (player.heroData.atkGrowth * player.statMultiplier)) + bonusFromAtkFreq + player.equipBonuses.pAtk;
         if (player.hasEnhancedAttack) {
             player.hasEnhancedAttack = false;
-            baseDmg *= (player.heroKey === 'ryoma' ? 2.0 : 1.35);
-            if (player.heroKey === 'ryoma') {
-                player.ryomaPassiveTimer = Math.max(1.0, 5.0 - (player.level - 1) * 0.1);
-                nearestTarget.isSlowed = true;
-                nearestTarget.slowFactor = 0.6;
-                setTimeout(() => { nearestTarget.isSlowed = false; }, 2000);
-            }
+            rawAtk *= 1.35;
+            if (player.heroKey === 'ryoma') player.ryomaPassiveTimer = Math.max(1.0, 5.0 - (player.level - 1) * 0.1);
         }
 
+        let baseDmg = calcRandomDmg(rawAtk);
         nearestTarget.takeDamage(baseDmg, player.team, 'physical', player);
         damageTexts.push({ x: nearestTarget.x, y: nearestTarget.y - 35, value: `${Math.floor(baseDmg)}`, color: '#f3c654', life: 0.8 });
         attackEffects.push({ x: nearestTarget.x, y: nearestTarget.y, life: 0.3, radius: 25, color: '#f3c654' });
@@ -2448,13 +2433,13 @@ function castSkill(skillId, dirX, dirY, customDist) {
     let heroKey = player.heroKey;
     let cdrMult = 1 - (player.equipBonuses.cdr || 0);
     let mAtkBonus = player.equipBonuses.mAtk || 0;
-    let pAtkBonus = player.getEffectiveAtk();
+    let pAtkBonus = player.equipBonuses.pAtk || 0;
     player.outOfCombatTimer = 0;
 
     if (heroKey === 'slimz') {
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(2.0, 7.0 - (sLv - 1) * 0.5) * cdrMult;
-            let dmg = calcRandomDmg(600 + (sLv - 1) * 50 + pAtkBonus * 0.5);
+            let dmg = calcRandomDmg(600 + (sLv - 1) * 50 + pAtkBonus * 0.8);
             let startX = player.x, startY = player.y;
             let targetX = startX + dirX * 480;
             let targetY = startY + dirY * 480;
@@ -2492,7 +2477,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
     if (heroKey === 'lindis') {
         let st = heroSkillStage['lindis'] = heroSkillStage['lindis'] || {};
         let gb = st.globalButterfly || { active: false, type: null, pos: null, timer: 0, centerPos: null, dirX: 0, dirY: 0 };
-        const cdMap = { 1: 5.0, 2: 8.0, 3: 17.0 };
+        const cdMap = { 1: 4.0, 2: 6.0, 3: 10.0 };
 
         if (gb.active && gb.type === skillId) {
             if (gb.pos) {
@@ -2532,14 +2517,14 @@ function castSkill(skillId, dirX, dirY, customDist) {
         }
 
         if (skillId === 1) {
-            let tx = player.x + dirX * 180;
-            let ty = player.y + dirY * 180;
+            let tx = player.x + dirX * 120;
+            let ty = player.y + dirY * 120;
             player.startDash(tx, ty, 35);
             damageTexts.push({ x: player.x, y: player.y - 35, value: '✨ 1技短位移', color: '#00d2ff', life: 0.8 });
         } else if (skillId === 2) {
             skillEffects.push({ x: player.x, y: player.y, life: 0.4, size: 90, color: 'rgba(0, 210, 255, 0.6)', team: player.team });
             player.isUntargetable = true;
-            damageTexts.push({ x: player.x, y: player.y - 35, value: '🛡️ 2技免疫普攻塔傷', color: '#00d2ff', life: 0.8 });
+            damageTexts.push({ x: player.x, y: player.y - 35, value: '🛡️ 2技擋塔傷', color: '#00d2ff', life: 0.8 });
             setTimeout(() => { if (player) player.isUntargetable = false; }, 500);
         } else if (skillId === 3) {
             let pushDist = 180;
@@ -2554,7 +2539,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     damageTexts.push({ x: e.x, y: e.y - 45, value: `${Math.floor(strikeDmg)}`, color: '#e74c3c', life: 1.0 });
                 }
             });
-            damageTexts.push({ x: player.x, y: player.y - 35, value: '💥 3技擊退', color: '#00d2ff', life: 0.8 });
+            damageTexts.push({ x: player.x, y: player.y - 35, value: '💥 3技純擊退', color: '#00d2ff', life: 0.8 });
         }
         updateSkillUI();
         return;
@@ -2562,7 +2547,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
 
     if (heroKey === 'murad' && skillId === 1) {
         let muradStage = player.muradStage1Count || 1; 
-        let baseDmg = calcRandomDmg(650 + (sLv - 1) * 30 + pAtkBonus * 1.0);
+        let baseDmg = calcRandomDmg(650 + (sLv - 1) * 30 + pAtkBonus * 0.8);
 
         if (!player.muradTimerActive) {
             player.muradTimerActive = true;
@@ -2583,7 +2568,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 75) {
                     e.takeDamage(baseDmg, player.team, 'physical', player);
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(baseDmg)}`, color: '#00d2ff', life: 0.8 });
-                    if (e instanceof Hero) e.applyStun(1.0, '暈眩');
+                    if (e instanceof Hero) e.applyStun(1.0);
                 }
             });
 
@@ -2603,7 +2588,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 75) {
                     e.takeDamage(baseDmg, player.team, 'physical', player);
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(baseDmg)}`, color: '#00d2ff', life: 0.8 });
-                    if (e instanceof Hero) e.applyStun(1.0, '暈眩');
+                    if (e instanceof Hero) e.applyStun(1.0);
                 }
             });
 
@@ -2626,7 +2611,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
     if (heroKey === 'butterfly') {
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(2.0, 5.0 - (sLv - 1) * 0.3) * cdrMult;
-            let dmg = calcRandomDmg(600 + (sLv - 1) * 40 + pAtkBonus * 0.7);
+            let dmg = calcRandomDmg(600 + (sLv - 1) * 40 + pAtkBonus * 0.8);
             let shieldRatio = 0.20 + (sLv - 1) * 0.05;
             let shieldAmt = player.maxHp * Math.min(0.50, shieldRatio);
             player.shield = Math.min(player.maxHp * 0.6, (player.shield || 0) + shieldAmt);
@@ -2647,10 +2632,10 @@ function castSkill(skillId, dirX, dirY, customDist) {
             }
         } else if (skillId === 2) {
             skillCooldowns[2] = Math.max(3.5, 7.0 - (sLv - 1) * 0.6) * cdrMult;
-            let dmg = calcRandomDmg(800 + (sLv - 1) * 50 + pAtkBonus * 1.0);
+            let dmg = calcRandomDmg(800 + (sLv - 1) * 50 + pAtkBonus * 0.9);
             let slowRatio = Math.min(0.56, 0.32 + (sLv - 1) * 0.04);
-            let hitX = player.x + dirX * 180;
-            let hitY = player.y + dirY * 180;
+            let hitX = player.x + dirX * 120;
+            let hitY = player.y + dirY * 120;
 
             skillEffects.push({ x: hitX, y: hitY, life: 0.35, size: 80, color: 'rgba(231, 76, 60, 0.8)', team: player.team });
             entities.forEach(e => {
@@ -2668,7 +2653,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 skillCooldowns[2] = 0;
             }
         } else if (skillId === 3) {
-            let baseDmg = 1100 + (sLv - 1) * 200 + pAtkBonus * 1.0;
+            let baseDmg = 1100 + (sLv - 1) * 200 + pAtkBonus * 1.1;
             let cR = 65;
             let dist = customDist || 240;
             let tx = player.x + dirX * dist;
@@ -2700,7 +2685,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             player.startDash(dashBackX, dashBackY, 60);
 
             let missingHp = Math.max(0, targetEnemy.maxHp - targetEnemy.hp);
-            let bonusDmg = missingHp * 0.23; 
+            let bonusDmg = missingHp * 0.15; 
             let totalDmg = calcRandomDmg(baseDmg + bonusDmg);
 
             targetEnemy.takeDamage(totalDmg, player.team, 'physical', player);
@@ -2720,7 +2705,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
     if (heroKey === 'murad' && skillId > 1) {
         if (skillId === 2) {
             skillCooldowns[2] = Math.max(4.0, 7.0 - (sLv - 1) * 0.5) * cdrMult;
-            let dmg = calcRandomDmg((700 + (sLv - 1) * 20 + pAtkBonus * 1.3) * (player.muradIsUnlocked ? 1.3 : 1.0));
+            let dmg = calcRandomDmg((700 + (sLv - 1) * 20 + pAtkBonus * 0.8) * (player.muradIsUnlocked ? 1.3 : 1.0));
 
             player.isUntargetable = true; 
             player.isCastingAction = true;
@@ -2758,7 +2743,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     
                     entities.forEach(target => {
                         if (!(target instanceof Building) && target.alive && target.team !== player.team && Math.hypot(target.x - player.x, target.y - player.y) <= 140) {
-                            let baseDmg = 240 + (sLv - 1) * 50 + pAtkBonus * 0.3;
+                            let baseDmg = 240 + (sLv - 1) * 50 + pAtkBonus * 0.4;
                             let missingHp = Math.max(0, target.maxHp - target.hp);
                             let bonusDmg = missingHp * 0.03;
                             let totalDmg = calcRandomDmg((baseDmg + bonusDmg) * (player.muradIsUnlocked ? 1.3 : 1.0));
@@ -2782,7 +2767,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
     if (heroKey === 'raz') {
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(3.6, 6.0 - (sLv - 1) * 0.4) * cdrMult;
-            let dmg = calcRandomDmg(500 + (sLv - 1) * 50 + mAtkBonus * 0.5);
+            let dmg = calcRandomDmg(500 + (sLv - 1) * 50 + mAtkBonus * 0.8);
             let targetX = player.x + dirX * 180;
             let targetY = player.y + dirY * 180;
 
@@ -2793,12 +2778,12 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical', player);
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ff9800', life: 0.8 });
-                    if (e instanceof Hero) e.applyStun(0.67, '擊飛');
+                    if (e instanceof Hero) e.applyStun(0.67);
                 }
             });
         } else if (skillId === 2) {
             skillCooldowns[2] = Math.max(2.5, 5.0 - (sLv - 1) * 0.6) * cdrMult;
-            let dmg = calcRandomDmg(900 + (sLv - 1) * 100 + mAtkBonus * 1.2);
+            let dmg = calcRandomDmg(900 + (sLv - 1) * 100 + mAtkBonus * 1.0);
             let slowRatio = 0.40 + (sLv - 1) * 0.08;
             let defReduce = 100 + (sLv - 1) * 20;
 
@@ -2814,7 +2799,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             });
         } else if (skillId === 3) {
             skillCooldowns[3] = Math.max(5.0, 14.0 - (sLv - 1) * 3.0) * cdrMult;
-            let segDmg = calcRandomDmg(420 + (sLv - 1) * 60 + mAtkBonus * 1.0);
+            let segDmg = calcRandomDmg(420 + (sLv - 1) * 60 + mAtkBonus * 0.5);
             let targetX = player.x + dirX * 180;
             let targetY = player.y + dirY * 180;
 
@@ -2866,7 +2851,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
         if (player.lilianaForm === 'human') {
             if (skillId === 1) {
                 skillCooldowns[1] = Math.max(3.6, 6.0 - (sLv - 1) * 0.4) * cdrMult;
-                let dmg = calcRandomDmg(800 + (sLv - 1) * 60 + mAtkBonus * 1.0);
+                let dmg = calcRandomDmg(800 + (sLv - 1) * 60 + mAtkBonus * 0.9);
                 let dist = customDist || 240;
                 let tx = player.x + dirX * dist;
                 let ty = player.y + dirY * dist;
@@ -2880,7 +2865,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 });
             } else if (skillId === 2) {
                 skillCooldowns[2] = Math.max(4.5, 7.0 - (sLv - 1) * 0.5) * cdrMult;
-                let dmg = calcRandomDmg(200 + (sLv - 1) * 30 + mAtkBonus * 0.5);
+                let dmg = calcRandomDmg(200 + (sLv - 1) * 30 + mAtkBonus * 0.6);
                 let startX = player.x, startY = player.y;
                 let targetX = startX + dirX * 240;
                 let targetY = startY + dirY * 240;
@@ -2907,7 +2892,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 setTimeout(() => {
                     if (!isRunning) return;
                     player.isSuperArmor = false; player.isDamageReduced = false;
-                    let dmg = calcRandomDmg(400 + (sLv - 1) * 100 + mAtkBonus * 0.5);
+                    let dmg = calcRandomDmg(400 + (sLv - 1) * 100 + mAtkBonus * 0.7);
                     [ {x: startX, y: startY}, {x: targetX, y: targetY} ].forEach(pos => {
                         skillEffects.push({ x: pos.x, y: pos.y, life: 0.4, size: 75, color: 'rgba(171, 71, 188, 0.8)', team: player.team });
                         entities.forEach(e => {
@@ -2922,7 +2907,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
         } else {
             if (skillId === 1) {
                 skillCooldowns[1] = Math.max(5.0, 8.0 - (sLv - 1) * 0.5) * cdrMult;
-                let dmg = calcRandomDmg(400 + (sLv - 1) * 50 + mAtkBonus * 0.5);
+                let dmg = calcRandomDmg(400 + (sLv - 1) * 50 + mAtkBonus * 0.7);
                 let tx = player.x + dirX * 120;
                 let ty = player.y + dirY * 120;
 
@@ -2947,7 +2932,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                         let targets = entities.filter(e => e.alive && e.team !== player.team);
                         if (targets.length > 0) {
                             targets.forEach(target => {
-                                let baseDmg = 1000 + (sLv - 1) * 70 + mAtkBonus * 2.0;
+                                let baseDmg = 1000 + (sLv - 1) * 70 + mAtkBonus * 1.1;
                                 projectiles.push({
                                     x: player.x, y: player.y,
                                     startX: player.x, startY: player.y,
@@ -2971,7 +2956,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     let dashX = player.x + dirX * 120;
                     let dashY = player.y + dirY * 120;
                     player.startDash(dashX, dashY, 40);
-                    let dmg = calcRandomDmg(200 + (sLv - 1) * 30);
+                    let dmg = calcRandomDmg(200 + (sLv - 1) * 30 + mAtkBonus * 0.6);
 
                     let hitHeroFound = false;
                     entities.forEach(e => {
@@ -3017,8 +3002,8 @@ function castSkill(skillId, dirX, dirY, customDist) {
 
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(4.5, 7.0 - (sLv - 1) * 0.5) * cdrMult;
-            let hitDmg = calcRandomDmg(500 + (sLv - 1) * 40 + pAtkBonus * 1.0);
-            let expDmg = calcRandomDmg(250 + (sLv - 1) * 20 + pAtkBonus * 1.0);
+            let hitDmg = calcRandomDmg(500 + (sLv - 1) * 40 + pAtkBonus * 0.6 + mAtkBonus * 0.6);
+            let expDmg = calcRandomDmg(250 + (sLv - 1) * 20 + mAtkBonus * 0.3);
             let hitAny = false;
 
             skillEffects.push({ x: tx, y: ty, life: 0.4, size: 65, color: 'rgba(255, 215, 0, 0.75)', team: player.team });
@@ -3043,14 +3028,16 @@ function castSkill(skillId, dirX, dirY, customDist) {
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - tx, e.y - ty) <= 65) {
                     hitAny = true;
-                    e.takeDamage(100, player.team, 'magical', player);
-                    if (e instanceof Hero) e.applyStun(2.0, '暈眩2s');
+                    let stunDmg = calcRandomDmg(250 + (sLv - 1) * 30 + mAtkBonus * 0.5);
+                    e.takeDamage(stunDmg, player.team, 'magical', player);
+                    damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(stunDmg)}`, color: '#00d2ff', life: 0.8 });
+                    if (e instanceof Hero) e.applyStun(2.0);
                 }
             });
             if (hitAny) player.addValheinPassiveStack();
         } else if (skillId === 3) {
             skillCooldowns[3] = Math.max(9.0, 15.0 - (sLv - 1) * 2.0) * cdrMult;
-            let dmg = calcRandomDmg(500 + (sLv - 1) * 100 + pAtkBonus * 1.2);
+            let dmg = calcRandomDmg(500 + (sLv - 1) * 100 + pAtkBonus * 0.8 + mAtkBonus * 0.8);
             player.valheinPassiveStacks = 4;
             player.valheinPassiveTimer = 300;
             skillEffects.push({ x: player.x, y: player.y, life: 0.4, size: 220, color: 'rgba(255, 215, 0, 0.35)', team: player.team });
@@ -3070,7 +3057,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
 
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(2.5, 5.0 - (sLv - 1) * 0.2) * cdrMult;
-            let dmg = calcRandomDmg(250 + (sLv - 1) * 40 + pAtkBonus * 0.5);
+            let dmg = calcRandomDmg(250 + (sLv - 1) * 40 + pAtkBonus * 0.6);
             skillEffects.push({ x: player.x, y: player.y, life: 0.35, size: 85, color: 'rgba(255, 152, 0, 0.7)', team: player.team });
             entities.forEach(e => {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 85) {
@@ -3080,7 +3067,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             });
         } else if (skillId === 2) {
             skillCooldowns[2] = Math.max(4.5, 9.0 - (sLv - 1) * 0.6) * cdrMult;
-            let dmg = calcRandomDmg(200 + (sLv - 1) * 30 + pAtkBonus * 0.8);
+            let dmg = calcRandomDmg(200 + (sLv - 1) * 30 + pAtkBonus * 0.5);
             let dist = customDist || 240;
             let targetX = player.x + dirX * dist;
             let targetY = player.y + dirY * dist;
@@ -3103,7 +3090,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
     } else if (heroKey === 'alice') {
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(3.0, 6.0 - (sLv - 1) * 0.3) * cdrMult;
-            let dmg = calcRandomDmg(600 + (sLv - 1) * 50 + mAtkBonus * 1.0);
+            let dmg = calcRandomDmg(600 + (sLv - 1) * 50 + mAtkBonus * 0.8);
             let dist = customDist || 240;
             let targetX = player.x + dirX * dist;
             let targetY = player.y + dirY * dist;
@@ -3113,12 +3100,12 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical', player);
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#e040fb', life: 0.8 });
-                    if (e instanceof Hero) e.applyStun(1.0, '暈眩1s');
+                    if (e instanceof Hero) e.applyStun(1.0);
                 }
             });
         } else if (skillId === 2) {
             skillCooldowns[2] = Math.max(4.0, 8.0 - (sLv - 1) * 0.5) * cdrMult;
-            let shieldAmt = player.equipBonuses.mAtk;
+            let shieldAmt = player.maxHp * 0.20 + player.level * 100 + mAtkBonus * 0.5;
 
             entities.forEach(e => {
                 if (e instanceof Hero && e.alive && e.team === player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 240) {
@@ -3131,7 +3118,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             });
         } else if (skillId === 3) {
             skillCooldowns[3] = Math.max(11.0, 23.0 - (sLv - 1) * 4.0) * cdrMult;
-            let secDmg = calcRandomDmg(300 + (sLv - 1) * 50 + mAtkBonus * 0.3);
+            let secDmg = calcRandomDmg(300 + (sLv - 1) * 50 + mAtkBonus * 0.4);
             let dist = customDist || 240;
             let targetX = player.x + dirX * dist;
             let targetY = player.y + dirY * dist;
@@ -3159,7 +3146,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             let dist = customDist || 240;
             let dashX = player.x + dirX * dist;
             let dashY = player.y + dirY * dist;
-            let dmg = calcRandomDmg(600 + (sLv - 1) * 40 + pAtkBonus * 0.4);
+            let dmg = calcRandomDmg(600 + (sLv - 1) * 40 + pAtkBonus * 0.8);
 
             if (stInfo.stage === 1) {
                 player.startDash(dashX, dashY, 40);
@@ -3167,7 +3154,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - dashX, e.y - dashY) <= 70) {
                         e.takeDamage(dmg, player.team, 'physical', player);
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#ba68c8', life: 0.8 });
-                        if (e instanceof Hero) e.applyStun(0.8, '擊飛');
+                        if (e instanceof Hero) e.applyStun(0.8);
                     }
                 });
                 stInfo.stage = 2;
@@ -3196,7 +3183,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             player.isSuperArmor = true;
             player.setStatus('霸體連刺', 0.9);
             player.isCastingAction = true; 
-            let strikeDmg = calcRandomDmg(50 + (sLv - 1) * 20 + pAtkBonus * 0.3);
+            let strikeDmg = calcRandomDmg(50 + (sLv - 1) * 20 + pAtkBonus * 0.35);
 
             let strikesDone = 0;
             let nakrothUltInterval = setInterval(() => {
@@ -3214,7 +3201,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
                     if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - player.x, e.y - player.y) <= 90) {
                         e.takeDamage(strikeDmg, player.team, 'physical', player);
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(strikeDmg)}`, color: '#ba68c8', life: 0.8 });
-                        if (isLast && e instanceof Hero) e.applyStun(0.5, '擊飛');
+                        if (isLast && e instanceof Hero) e.applyStun(0.5);
                     }
                 });
             }, 150);
@@ -3222,7 +3209,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
     } else if (heroKey === 'ryoma') {
         if (skillId === 1) {
             let stInfo = heroSkillStage['ryoma'][1];
-            let dmg = calcRandomDmg(400 + (sLv - 1) * 30 + pAtkBonus * 0.8);
+            let dmg = calcRandomDmg(400 + (sLv - 1) * 30 + pAtkBonus * 0.7);
 
             if (!stInfo.canSecondCast) {
                 let dashX = player.x - dirX * 180;
@@ -3262,7 +3249,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             }
         } else if (skillId === 2) {
             skillCooldowns[2] = Math.max(5.0, 8.0 - (sLv - 1) * 0.6) * cdrMult;
-            let baseDmg = calcRandomDmg(700 + (sLv - 1) * 50 + pAtkBonus * 1.2);
+            let baseDmg = calcRandomDmg(700 + (sLv - 1) * 50 + pAtkBonus * 0.9);
             let tipHitX = player.x + dirX * 200;
             let tipHitY = player.y + dirY * 200;
             skillEffects.push({ x: tipHitX, y: tipHitY, life: 0.35, size: 70, color: 'rgba(46, 125, 50, 0.8)', team: player.team });
@@ -3275,13 +3262,13 @@ function castSkill(skillId, dirX, dirY, customDist) {
                         let finalDmg = isTip ? baseDmg * 1.5 : baseDmg;
                         e.takeDamage(finalDmg, player.team, 'physical', player);
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(finalDmg)}`, color: '#2e7d32', life: 0.8 });
-                        if (isTip && e instanceof Hero) e.applyStun(1.0, '暈眩');
+                        if (isTip && e instanceof Hero) e.applyStun(1.0);
                     }
                 }
             });
         } else if (skillId === 3) {
             skillCooldowns[3] = Math.max(8.0, 13.0 - (sLv - 1) * 1.5) * cdrMult;
-            let strikeDmg = calcRandomDmg(300 + (sLv - 1) * 100 + pAtkBonus * 0.6);
+            let strikeDmg = calcRandomDmg(300 + (sLv - 1) * 100 + pAtkBonus * 0.45);
             let healPercent = 0.07 + (sLv - 1) * 0.02;
             player.isCastingAction = true;
             player.setStatus('施法中', 0.6);
@@ -3365,7 +3352,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
     } else if (heroKey === 'krixi') {
         if (skillId === 1) {
             skillCooldowns[1] = Math.max(5.0, 7.0 - (sLv - 1) * 0.4) * cdrMult;
-            let dmg = calcRandomDmg(800 + (sLv - 1) * 40 + mAtkBonus * 0.6);
+            let dmg = calcRandomDmg(800 + (sLv - 1) * 40 + mAtkBonus * 0.9);
 
             let startX = player.x;
             let startY = player.y;
@@ -3380,7 +3367,7 @@ function castSkill(skillId, dirX, dirY, customDist) {
             });
         } else if (skillId === 2) {
             skillCooldowns[2] = Math.max(6.0, 8.0 - (sLv - 1) * 0.5) * cdrMult;
-            let dmg = calcRandomDmg(200 + (sLv - 1) * 20 + mAtkBonus * 0.5);
+            let dmg = calcRandomDmg(200 + (sLv - 1) * 20 + mAtkBonus * 0.6);
             let dist = customDist || 240;
             let targetX = player.x + dirX * dist;
             let targetY = player.y + dirY * dist;
@@ -3389,12 +3376,12 @@ function castSkill(skillId, dirX, dirY, customDist) {
                 if (!(e instanceof Building) && e.alive && e.team !== player.team && Math.hypot(e.x - targetX, e.y - targetY) <= 75) {
                     e.takeDamage(dmg, player.team, 'magical', player);
                     damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(dmg)}`, color: '#00d2ff', life: 0.8 });
-                    if (e instanceof Hero) e.applyStun(0.75, '暈眩');
+                    if (e instanceof Hero) e.applyStun(0.75);
                 }
             });
         } else if (skillId === 3) {
             skillCooldowns[3] = Math.max(16.0, 24.0 - (sLv - 1) * 4.0) * cdrMult;
-            let perHitDmg = calcRandomDmg(400 + (sLv - 1) * 50 + mAtkBonus * 0.3);
+            let perHitDmg = calcRandomDmg(400 + (sLv - 1) * 50 + mAtkBonus * 0.5);
 
             for (let i = 0; i < 6; i++) {
                 setTimeout(() => {
@@ -3664,7 +3651,7 @@ function gameLoop() {
                 if (dist <= p.speed + p.targetEntity.radius) {
                     let baseDmg = p.damage;
                     let missingHp = Math.max(0, p.targetEntity.maxHp - p.targetEntity.hp);
-                    let bonusDmg = missingHp * 0.10;
+                    let bonusDmg = missingHp * 0.30;
                     let totalDmg = calcRandomDmg(baseDmg + bonusDmg);
 
                     p.targetEntity.takeDamage(totalDmg, p.team, 'magical', p.owner);
@@ -3706,7 +3693,7 @@ function gameLoop() {
                         hit = true;
                         e.takeDamage(p.damage, p.team, 'magical', p.owner);
                         damageTexts.push({ x: e.x, y: e.y - 40, value: `${Math.floor(p.damage)}`, color: '#e040fb', life: 0.8 });
-                        if (e instanceof Hero) e.applyStun(1.5, '暈眩1.5s');
+                        if (e instanceof Hero) e.applyStun(1.5);
                         skillEffects.push({ x: p.x, y: p.y, life: 0.4, size: 75, color: 'rgba(224, 64, 251, 0.85)', team: p.team });
                     }
                 }
