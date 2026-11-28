@@ -475,16 +475,16 @@ const LEVEL_EXP_TABLE = {
 const ITEM_DB = {
     'short_sword': { id: 'short_sword', name: '短劍', category: 'attack', price: 250, icon: '🗡️', stats: { pAtk: 50 }, desc: '+50 物理攻擊' },
     'dagger': { id: 'dagger', name: '短刀', category: 'attack', price: 220, icon: '🔪', stats: { atkSpeed: 0.10 }, desc: '+10% 攻擊速度' },
-    'gladiator_spear': { id: 'gladiator_spear', name: '角鬥士長矛', category: 'attack', price: 850, icon: '🔱', recipe: ['short_sword'], stats: { pAtk: 50 }, uniquePassives: [{ key: 'armor_pierce', name: '破甲', desc: '+60 物理穿透' }], desc: '合成：短劍 + 600\n+50 物理攻擊\n唯一被動：破甲 - +60 物理穿透' },
+    'gladiator_spear': { id: 'gladiator_spear', name: '角鬥士長矛', category: 'attack', price: 1250, icon: '🔱', recipe: ['short_sword'], stats: { pAtk: 100, cdr: 0.15 }, uniquePassives: [{ key: 'armor_pierce', name: '破甲', desc: '+60 物理穿透' }], desc: '合成：短劍 + 1000\n+100 物理攻擊\n+10% 冷卻縮減\n唯一被動：破甲 - +60 物理穿透' },
 
-    'magic_book': { id: 'magic_book', name: '魔法書', category: 'magic', price: 250, icon: '📘', stats: { mAtk: 50 }, desc: '+50 魔法攻擊' },
+    'magic_book': { id: 'magic_book', name: '魔法書', category: 'magic', price: 4000, icon: '📘', stats: { mAtk: 100, cdr:8 }, desc: '+100 魔法攻擊' },
     'magic_bracelet': { id: 'magic_bracelet', name: '魔力手鐲', category: 'magic', price: 300, icon: '📿', stats: {}, uniquePassives: [{ key: 'magic_cdr', name: '魔力冷卻', desc: '獲得 5% 冷卻縮減' }], desc: '唯一被動：魔力冷卻 - 獲得 5% 冷卻縮減' },
 
     'cloth_armor': { id: 'cloth_armor', name: '布甲', category: 'defense', price: 220, icon: '🦺', stats: { pDef: 90 }, desc: '+90 物理防禦' },
     'magic_gloves': { id: 'magic_gloves', name: '護手', category: 'defense', price: 220, icon: '🧤', stats: { mDef: 90 }, desc: '+90 魔法防禦' },
     'silver_bracer': { id: 'silver_bracer', name: '銀輝護腕', category: 'defense', price: 660, icon: '🛡️', stats: { cdr: 0.10, maxHp: 500 }, desc: '獲得 10% 冷卻縮減、500 生命值' },
 
-    'greaves_hp': { id: 'greaves_hp', name: '護脛', category: 'movement', price: 990, icon: '🦵', isBoot: true, stats: { maxHp: 900 }, desc: '+900 生命值 (鞋類)' },
+    'greaves_hp': { id: 'greaves_hp', name: '護脛', category: 'defense', price: 990, icon: '🦵', isBoot: true, stats: { maxHp: 900 }, desc: '+900 生命值 (鞋類)' },
     'boots': { id: 'boots', name: '布鞋', category: 'movement', price: 250, icon: '👟', isBoot: true, stats: {}, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }], desc: '唯一被動：跑速 - 移速加 20% (鞋類)' },
     'war_boots': { id: 'war_boots', name: '攻速之靴', category: 'movement', price: 750, icon: '👢', isBoot: true, recipe: ['dagger', 'boots'], stats: { atkSpeed: 0.20 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }, { key: 'life_steal', name: '吸取', desc: '獲得 5% 物理吸血' }], desc: '合成：短刀 + 布鞋 + 280 (鞋類)' },
     'flashy_boots': { id: 'flashy_boots', name: '吟遊之靴', category: 'movement', price: 750, icon: '👞', isBoot: true, recipe: ['magic_bracelet', 'boots'], stats: { cdr: 0.15 }, uniquePassives: [{ key: 'boot_speed', name: '跑速', desc: '移速加 20%' }, { key: 'flashy_cdr', name: '冷縮', desc: '獲得挑戰者技能 15% 冷卻縮減' }], desc: '合成：魔力手鐲 + 布鞋 + 200 (鞋類)' },
